@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "My Banks",
+    "slug": "my-banks",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6750A4"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.mybanks.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6750A4"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.mybanks.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-camera"
+    ]
+  }
+}

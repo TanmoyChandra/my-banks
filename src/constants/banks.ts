@@ -1,0 +1,17 @@
+export const BANKS = [
+  { name: 'State Bank of India', logo: 'https://companieslogo.com/img/orig/SBIN.NS-9642283a.png' },
+  { name: 'HDFC Bank', logo: 'https://companieslogo.com/img/orig/HDB-5d1532f4.png' },
+  { name: 'ICICI Bank', logo: 'https://companieslogo.com/img/orig/IBN-16b7713d.png' },
+  { name: 'Axis Bank', logo: 'https://companieslogo.com/img/orig/AXISBANK.NS-432d664c.png' },
+  { name: 'Kotak Mahindra Bank', logo: 'https://companieslogo.com/img/orig/KOTAKBANK.NS-97a2283e.png' },
+  { name: 'Punjab National Bank', logo: 'https://companieslogo.com/img/orig/PNB.NS-1b3383a5.png' },
+  { name: 'Bank of Baroda', logo: 'https://companieslogo.com/img/orig/BANKBARODA.NS-7e248b1d.png' },
+  { name: 'Union Bank of India', logo: 'https://companieslogo.com/img/orig/UNIONBANK.NS-0b299e5a.png' },
+  { name: 'Canara Bank', logo: 'https://companieslogo.com/img/orig/CANBK.NS-4e1b782b.png' },
+  { name: 'IndusInd Bank', logo: 'https://companieslogo.com/img/orig/INDUSINDBK.NS-82e1657c.png' },
+  { name: 'Yes Bank', logo: 'https://companieslogo.com/img/orig/YESBANK.NS-0f56f140.png' },
+  { name: 'IDFC FIRST Bank', logo: 'https://companieslogo.com/img/orig/IDFCFIRSTB.NS-272e2934.png' },
+  { name: 'Central Bank of India', logo: 'https://companieslogo.com/img/orig/CENTRALBK.NS-2e2d83a1.png' },
+  { name: 'Indian Bank', logo: 'https://companieslogo.com/img/orig/INDIANB.NS-4b19782f.png' },
+  { name: 'Bank of India', logo: 'https://companieslogo.com/img/orig/BANKINDIA.NS-8e2b83a3.png' },
+];
