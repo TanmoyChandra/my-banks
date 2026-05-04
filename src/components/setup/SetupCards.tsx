@@ -79,6 +79,13 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
     setForm(p => ({ ...p, expiry: clean }));
   };
 
+  const confirmDelete = (id: string) => {
+    Alert.alert('Delete Card', 'Are you sure you want to delete this card?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => onDelete(id) },
+    ]);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header elevated style={{ backgroundColor: theme.colors.primary }}>

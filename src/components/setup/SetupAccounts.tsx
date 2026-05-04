@@ -64,6 +64,13 @@ const SetupAccounts: React.FC<SetupAccountsProps> = ({ accounts, onAdd, onUpdate
     setShowForm(false);
   };
 
+  const confirmDelete = (id: string) => {
+    Alert.alert('Delete Account', 'Are you sure you want to delete this account?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => onDelete(id) },
+    ]);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header elevated style={{ backgroundColor: theme.colors.primary }}>

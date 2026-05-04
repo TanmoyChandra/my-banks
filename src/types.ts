@@ -1,7 +1,9 @@
 export interface QREntry {
   id: string;
+  name: string;
   bankName: string;
   upiId: string;
+  qrValue: string;
   mobileNumber: string;
   address: string;
   notes: string;

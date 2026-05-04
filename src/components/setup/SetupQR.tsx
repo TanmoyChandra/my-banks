@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { 
   Appbar, 
@@ -17,6 +17,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import { WebView } from 'react-native-webview';
 import { QREntry } from '../../types';
 import BankPicker from '../BankPicker';
+import { extractQRData } from '../../utils/qrExtraction';
 
 interface SetupQRProps {
   entries: QREntry[];
@@ -27,12 +28,16 @@ interface SetupQRProps {
 }
 
 const emptyForm = (): Omit<QREntry, 'id'> => ({
+  name: '',
   bankName: '',
   upiId: '',
+  qrValue: '',
   mobileNumber: '',
   address: '',
   notes: '',
 });
+
+const SCAN_TIMEOUT_MS = 30000;
 
 const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, onBack }) => {
   const [form, setForm] = useState<Omit<QREntry, 'id'>>(emptyForm());
@@ -41,23 +46,70 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
   const [bankPickerVisible, setBankPickerVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const webViewRef = useRef<WebView>(null);
+  const pendingImageRef = useRef<string | null>(null);
+  const decoderReadyRef = useRef(false);
+  const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const theme = useTheme();
 
-  const handleSave = () => {
-    if (!form.bankName.trim() || !form.upiId.trim()) {
-      Alert.alert('Required Fields', 'Please enter both Bank Name and UPI ID.');
+  useEffect(() => {
+    return () => {
+      if (scanTimeoutRef.current) {
+        clearTimeout(scanTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const clearScanTimeout = () => {
+    if (scanTimeoutRef.current) {
+      clearTimeout(scanTimeoutRef.current);
+      scanTimeoutRef.current = null;
+    }
+  };
+
+  const startScanTimeout = () => {
+    clearScanTimeout();
+    scanTimeoutRef.current = setTimeout(() => {
+      pendingImageRef.current = null;
+      setLoading(false);
+      Alert.alert('Scan Timed Out', 'The QR decoder did not respond. Please try a clearer image.');
+    }, SCAN_TIMEOUT_MS);
+  };
+
+  const sendImageToDecoder = (dataUri: string) => {
+    if (!decoderReadyRef.current) {
+      startScanTimeout();
+      pendingImageRef.current = dataUri;
       return;
     }
+
+    startScanTimeout();
+    const escapedDataUri = JSON.stringify(dataUri);
+    webViewRef.current?.injectJavaScript(`
+      window.scanQRCode(${escapedDataUri});
+      true;
+    `);
+  };
+
+  const handleSave = () => {
+    if (!form.upiId.trim() && !form.qrValue.trim()) {
+      Alert.alert('Required Fields', 'Please enter a UPI ID or scan a QR code.');
+      return;
+    }
+    const qrValue = form.qrValue.trim() || `upi://pay?pa=${encodeURIComponent(form.upiId.trim())}&pn=${encodeURIComponent(form.name.trim() || form.bankName.trim())}&cu=INR`;
+    const entry = { ...form, qrValue };
     if (editId) {
-      onUpdate(editId, form);
+      onUpdate(editId, entry);
     } else {
-      onAdd(form);
+      onAdd(entry);
     }
     handleCancel();
   };
 
   const handleEdit = (entry: QREntry) => {
-    setForm({ ...entry });
+    setForm({
+      ...emptyForm(),
+      ...entry,
+    });
     setEditId(entry.id);
     setShowForm(true);
   };
@@ -66,6 +118,8 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
     setForm(emptyForm());
     setEditId(null);
     setShowForm(false);
+    pendingImageRef.current = null;
+    clearScanTimeout();
     setLoading(false);
   };
 
@@ -95,10 +149,15 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
 
         if (manipulated.base64) {
           const dataUri = `data:image/jpeg;base64,${manipulated.base64}`;
-          webViewRef.current?.postMessage(dataUri);
+          sendImageToDecoder(dataUri);
+        } else {
+          setLoading(false);
+          Alert.alert('Scan Failed', 'Could not read the selected image.');
         }
       }
     } catch (e) {
+      pendingImageRef.current = null;
+      clearScanTimeout();
       setLoading(false);
       Alert.alert('Error', 'Failed to pick image.');
     }
@@ -107,36 +166,52 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
   const onWebViewMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'ready') {
+        decoderReadyRef.current = true;
+        if (pendingImageRef.current) {
+          const pendingImage = pendingImageRef.current;
+          pendingImageRef.current = null;
+          sendImageToDecoder(pendingImage);
+        }
+        return;
+      }
+
+      if (data.type !== 'scan-result') {
+        return;
+      }
+
+      pendingImageRef.current = null;
+      clearScanTimeout();
       setLoading(false);
       if (data.success) {
-        parseUPIData(data.code);
+        parseUPIData(data.code, data.ocrText);
       } else {
-        Alert.alert('Scan Failed', 'No QR code found. Please ensure the image is clear and contains a UPI QR code.');
+        Alert.alert('Scan Failed', data.error || 'No QR code found. Please ensure the image is clear and contains a UPI QR code.');
       }
     } catch (e) {
+      pendingImageRef.current = null;
+      clearScanTimeout();
       setLoading(false);
     }
   };
 
-  const parseUPIData = (url: string) => {
-    if (!url.includes('upi://pay')) {
+  const parseUPIData = (url: string, ocrText?: string | null) => {
+    if (!url) {
       Alert.alert('Invalid QR', 'This is not a valid UPI QR code.');
       return;
     }
 
     try {
-      const queryString = url.split('?')[1];
-      const params: any = {};
-      queryString.split('&').forEach(p => {
-        const [k, v] = p.split('=');
-        if (k) params[k] = decodeURIComponent(v || '');
-      });
+      const extracted = extractQRData(url, ocrText);
+      const params = new URLSearchParams(url.split('?')[1] || '');
       
       setForm(prev => ({
         ...prev,
-        upiId: params.pa || prev.upiId,
-        bankName: params.pn || prev.bankName,
-        notes: params.tn || prev.notes,
+        name: extracted.name || prev.name,
+        bankName: extracted.bankName || prev.bankName,
+        upiId: extracted.upiId || prev.upiId,
+        qrValue: extracted.qrValue,
+        notes: params.get('tn') || prev.notes,
       }));
       setShowForm(true);
     } catch (e) {
@@ -149,35 +224,81 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
     <html>
       <head>
         <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
       </head>
       <body>
         <script>
-          window.addEventListener('message', (event) => {
-            const img = new Image();
-            img.onload = () => {
-              const canvas = document.createElement('canvas');
-              const ctx = canvas.getContext('2d');
-              canvas.width = img.width;
-              canvas.height = img.height;
-              ctx.drawImage(img, 0, 0);
-              const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-              
-              if (typeof jsQR === 'undefined') {
-                window.ReactNativeWebView.postMessage(JSON.stringify({ success: false, error: 'Lib not loaded' }));
-                return;
-              }
+          const postResult = (payload) => {
+            window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+          };
 
-              const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                inversionAttempts: "dontInvert",
-              });
-              
-              window.ReactNativeWebView.postMessage(JSON.stringify({ 
-                success: !!code, 
-                code: code ? code.data : null 
-              }));
+          const recognizeText = async (imageDataUri) => {
+            if (typeof Tesseract === 'undefined') {
+              return '';
+            }
+
+            try {
+              const timeout = new Promise((resolve) => setTimeout(() => resolve(''), 12000));
+              const recognition = Tesseract.recognize(imageDataUri, 'eng')
+                .then((result) => result && result.data ? result.data.text || '' : '')
+                .catch(() => '');
+              return await Promise.race([recognition, timeout]);
+            } catch (error) {
+              return '';
+            }
+          };
+
+          window.scanQRCode = (imageDataUri) => {
+            const img = new Image();
+            img.onload = async () => {
+              try {
+                if (typeof jsQR === 'undefined') {
+                  postResult({ type: 'scan-result', success: false, error: 'QR decoder is still loading. Please try again.' });
+                  return;
+                }
+
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                canvas.width = img.naturalWidth || img.width;
+                canvas.height = img.naturalHeight || img.height;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height, {
+                  inversionAttempts: "attemptBoth",
+                });
+                const ocrText = await recognizeText(imageDataUri);
+                
+                postResult({ 
+                  type: 'scan-result',
+                  success: !!code, 
+                  code: code ? code.data : null,
+                  ocrText,
+                });
+              } catch (error) {
+                postResult({ type: 'scan-result', success: false, error: 'Could not analyze this image.' });
+              }
             };
-            img.src = event.data;
-          });
+            img.onerror = () => postResult({ type: 'scan-result', success: false, error: 'Could not load the selected image.' });
+            img.src = imageDataUri;
+          };
+
+          const markReady = () => postResult({ type: 'ready' });
+          if (typeof jsQR === 'undefined') {
+            const readyCheck = setInterval(() => {
+              if (typeof jsQR !== 'undefined') {
+                clearInterval(readyCheck);
+                markReady();
+              }
+            }, 100);
+            setTimeout(() => {
+              if (typeof jsQR === 'undefined') {
+                clearInterval(readyCheck);
+                markReady();
+              }
+            }, 3000);
+          } else {
+            markReady();
+          }
         </script>
       </body>
     </html>
@@ -198,7 +319,15 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
             </Text>
 
             <TextInput
-              label="Bank Name *"
+              label="Name"
+              value={form.name}
+              onChangeText={v => setForm(p => ({ ...p, name: v }))}
+              mode="outlined"
+              style={styles.input}
+            />
+
+            <TextInput
+              label="Bank Name"
               value={form.bankName}
               mode="outlined"
               style={styles.input}
@@ -208,11 +337,20 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
             />
 
             <TextInput
-              label="UPI ID *"
+              label="UPI ID"
               value={form.upiId}
               onChangeText={v => setForm(p => ({ ...p, upiId: v }))}
               mode="outlined"
               style={styles.input}
+              autoCapitalize="none"
+            />
+            <TextInput
+              label="QR Value"
+              value={form.qrValue}
+              onChangeText={v => setForm(p => ({ ...p, qrValue: v }))}
+              mode="outlined"
+              style={styles.input}
+              multiline
               autoCapitalize="none"
             />
             <TextInput
@@ -290,8 +428,8 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
               entries.map(entry => (
                 <Surface key={entry.id} style={styles.listItem} elevation={1}>
                   <List.Item
-                    title={entry.bankName}
-                    description={entry.upiId}
+                    title={entry.name || entry.bankName || entry.upiId || 'QR Entry'}
+                    description={entry.upiId || entry.qrValue}
                     left={props => <List.Icon {...props} icon="bank" />}
                     right={() => (
                       <View style={styles.itemActions}>
@@ -308,11 +446,14 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
       </ScrollView>
 
       {/* Background Decoder */}
-      <View style={{ height: 0, width: 0, opacity: 0, position: 'absolute' }}>
+      <View pointerEvents="none" style={styles.decoderHost}>
         <WebView
           ref={webViewRef}
           source={{ html: htmlContent }}
           onMessage={onWebViewMessage}
+          originWhitelist={['*']}
+          javaScriptEnabled
+          domStorageEnabled
         />
       </View>
 
@@ -343,6 +484,7 @@ const styles = StyleSheet.create({
   emptyText: { marginTop: 12, color: '#79747E' },
   loadingBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   loadingText: { marginLeft: 10, fontWeight: '600', color: '#6750A4' },
+  decoderHost: { height: 1, width: 1, opacity: 0, position: 'absolute', left: -10, top: -10 },
 });
 
 export default SetupQR;

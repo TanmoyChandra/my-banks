@@ -20,15 +20,16 @@ const QRCard: React.FC<{ entry: QREntry }> = ({ entry }) => {
   };
 
   const bankData = BANKS.find(b => b.name === entry.bankName);
+  const title = entry.name || entry.bankName || entry.upiId || 'QR Entry';
   
   // Construct UPI Deep Link
-  const upiLink = `upi://pay?pa=${entry.upiId}&pn=${encodeURIComponent(entry.bankName)}&cu=INR`;
+  const upiLink = entry.qrValue || `upi://pay?pa=${entry.upiId}&pn=${encodeURIComponent(entry.name || entry.bankName)}&cu=INR`;
 
   return (
     <Card style={styles.card} mode="elevated">
       <Card.Title
-        title={entry.bankName}
-        subtitle={entry.upiId}
+        title={title}
+        subtitle={entry.bankName || entry.upiId}
         titleStyle={{ color: 'white', fontWeight: '700' }}
         subtitleStyle={{ color: 'rgba(255,255,255,0.8)' }}
         style={[styles.cardHeader, { backgroundColor: theme.colors.primary }]}
@@ -44,7 +45,7 @@ const QRCard: React.FC<{ entry: QREntry }> = ({ entry }) => {
             <Avatar.Text
               {...props}
               size={40}
-              label={entry.bankName.substring(0, 2).toUpperCase()}
+              label={title.substring(0, 2).toUpperCase()}
               style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
               color="white"
             />
@@ -52,14 +53,28 @@ const QRCard: React.FC<{ entry: QREntry }> = ({ entry }) => {
         )}
       />
       <Card.Content style={styles.cardContent}>
+        {entry.name ? (
+          <List.Item
+            title="Name"
+            description={entry.name}
+            right={() => (
+              <Button mode="text" onPress={() => handleCopy(entry.name)} compact>
+                Copy
+              </Button>
+            )}
+          />
+        ) : null}
+        {entry.bankName ? (
+          <List.Item title="Bank" description={entry.bankName} />
+        ) : null}
         <List.Item
           title="UPI ID"
-          description={entry.upiId}
-          right={() => (
+          description={entry.upiId || 'Not found'}
+          right={() => entry.upiId ? (
             <Button mode="text" onPress={() => handleCopy(entry.upiId)} compact>
               Copy
             </Button>
-          )}
+          ) : null}
         />
         
         {expanded && (
@@ -82,6 +97,16 @@ const QRCard: React.FC<{ entry: QREntry }> = ({ entry }) => {
 
             <Divider style={styles.divider} />
             
+            <List.Item
+              title="QR Value"
+              description={entry.qrValue || 'Not provided'}
+              descriptionNumberOfLines={3}
+              right={() => entry.qrValue ? (
+                <Button mode="text" onPress={() => handleCopy(entry.qrValue)} compact>
+                  Copy
+                </Button>
+              ) : null}
+            />
             <List.Item
               title="Mobile"
               description={entry.mobileNumber || '—'}
