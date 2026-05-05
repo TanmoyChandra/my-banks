@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Clipboard, Image, ScrollView, StyleSheet, View } from 'react-native';
-import { Button, IconButton, SegmentedButtons, Text, useTheme } from 'react-native-paper';
+import { Button, IconButton, Text, useTheme } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
 import { findBankByName } from '../constants/banks';
 import { CardEntry } from '../types';
@@ -95,10 +95,7 @@ const Chip = () => (
 
 const BankCard: React.FC<{ card: CardEntry }> = ({ card }) => {
   const network = networkName(card);
-
-  const handleCopy = () => {
-    Clipboard.setString(card.cardNumber.replace(/\D/g, ''));
-  };
+  const [showCvv, setShowCvv] = useState(false);
 
   return (
     <View style={styles.cardBlock}>
@@ -127,14 +124,29 @@ const BankCard: React.FC<{ card: CardEntry }> = ({ card }) => {
 
           <View style={styles.validBlock}>
             <Text variant="bodySmall" style={styles.validLabel}>CVV</Text>
-            <Text variant="titleMedium" style={styles.validValue}>{card.cvv || '***'}</Text>
+            <Text 
+              variant="titleMedium" 
+              style={styles.validValue}
+              onPress={() => { if (card.cvv) setShowCvv(!showCvv); }}
+            >
+              {card.cvv ? (showCvv ? card.cvv : '***') : '***'}
+            </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.cardActions}>
-        <Button mode="text" icon="content-copy" onPress={handleCopy}>
-          Copy
+        <Button compact mode="text" icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.holderName || '')}>
+          Name
+        </Button>
+        <Button compact mode="text" icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.cardNumber.replace(/\D/g, ''))}>
+          Number
+        </Button>
+        <Button compact mode="text" icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.expiry || '')}>
+          Date
+        </Button>
+        <Button compact mode="text" icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.cvv || '')}>
+          CVV
         </Button>
       </View>
     </View>
@@ -142,9 +154,7 @@ const BankCard: React.FC<{ card: CardEntry }> = ({ card }) => {
 };
 
 const CardsSection: React.FC<CardsSectionProps> = ({ cards, onSetup }) => {
-  const [filter, setFilter] = useState('All');
   const theme = useTheme();
-  const filtered = filter === 'All' ? cards : cards.filter(c => c.type === filter);
 
   if (cards.length === 0) {
     return (
@@ -162,30 +172,20 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onSetup }) => {
     <View style={styles.container}>
       <View style={styles.topBar}>
         <Text variant="labelLarge" style={styles.countLabel}>
-          {filtered.length} {filtered.length === 1 ? 'CARD' : 'CARDS'}
+          {cards.length} {cards.length === 1 ? 'CARD' : 'CARDS'}
         </Text>
         <Button mode="text" icon="plus" onPress={onSetup} textColor={theme.colors.primary}>
           Add
         </Button>
       </View>
 
-      <View style={styles.filterBar}>
-        <SegmentedButtons
-          value={filter}
-          onValueChange={setFilter}
-          buttons={[
-            { value: 'All', label: 'All' },
-            { value: 'Credit', label: 'Credit' },
-            { value: 'Debit', label: 'Debit' },
-          ]}
-        />
-      </View>
+
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {filtered.length === 0 ? (
-          <Text style={styles.emptyText}>No {filter.toLowerCase()} cards found.</Text>
+        {cards.length === 0 ? (
+          <Text style={styles.emptyText}>No cards found.</Text>
         ) : (
-          filtered.map(card => <BankCard key={card.id} card={card} />)
+          cards.map(card => <BankCard key={card.id} card={card} />)
         )}
       </ScrollView>
     </View>
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   countLabel: { color: '#6750A4', fontWeight: '700' },
-  filterBar: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16 },
+
   scrollContent: { paddingHorizontal: 16, paddingBottom: 96 },
   cardBlock: { marginBottom: 22 },
   cardFace: {
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   validBlock: { alignItems: 'flex-start', minWidth: 78 },
   validLabel: { color: '#FFFFFF', marginTop: 14 },
   validValue: { color: '#FFFFFF', fontWeight: '500' },
-  cardActions: { flexDirection: 'row', justifyContent: 'flex-end', paddingTop: 4 },
+  cardActions: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 4, paddingHorizontal: 4 },
   emptyText: { color: '#79747E', marginTop: 40, textAlign: 'center' },
 });
 

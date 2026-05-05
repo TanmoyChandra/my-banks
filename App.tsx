@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import { 
   Provider as PaperProvider, 
-  FAB, 
   Portal, 
   Modal, 
   Appbar,
@@ -107,15 +106,7 @@ export default function App() {
             theme={{ colors: { secondaryContainer: theme.colors.secondaryContainer } }}
           />
 
-          <FAB
-            icon="plus"
-            style={styles.fab}
-            color="white"
-            onPress={() => {
-              const tab = routes[index].key;
-              setActiveScreen(tab === 'qr' ? 'setup-qr' : tab === 'cards' ? 'setup-cards' : 'setup-accounts');
-            }}
-          />
+
 
           <DrawerPanel
             open={drawerOpen}
@@ -138,12 +129,5 @@ const styles = StyleSheet.create({
   scene: {
     flex: 1,
   },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 80, // Above bottom nav
-    backgroundColor: theme.colors.primary,
-    borderRadius: 16,
-  },
+
 });
