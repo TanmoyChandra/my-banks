@@ -42,7 +42,7 @@ export const BANKS: Bank[] = [
   { slug: 'sbin', name: 'State Bank of India', logo: require('../../assets/bank-logos/sbin/logo.png'), symbol: require('../../assets/bank-logos/sbin/symbol.png') },
   { slug: 'scbl', name: 'Standard Chartered Bank', logo: require('../../assets/bank-logos/scbl/logo.png'), symbol: require('../../assets/bank-logos/scbl/symbol.png') },
   { slug: 'sibl', name: 'South Indian Bank', logo: require('../../assets/bank-logos/sibl/logo.png'), symbol: require('../../assets/bank-logos/sibl/symbol.png') },
-  { slug: 'slice', name: 'Slice Small Finance Bank', logo: require('../../assets/icon.png'), symbol: require('../../assets/icon.png') },
+  { slug: 'slice', name: 'Slice SF Bank', logo: require('../../assets/bank-logos/slice/logo.png'), symbol: require('../../assets/bank-logos/slice/symbol.png') },
   { slug: 'tmbl', name: 'Tamilnad Mercantile Bank Limited', logo: require('../../assets/bank-logos/tmbl/logo.png'), symbol: require('../../assets/bank-logos/tmbl/symbol.png') },
   { slug: 'ubin', name: 'Union Bank of India', logo: require('../../assets/bank-logos/ubin/logo.png'), symbol: require('../../assets/bank-logos/ubin/symbol.png') },
   { slug: 'ucba', name: 'UCO Bank', logo: require('../../assets/bank-logos/ucba/logo.png'), symbol: require('../../assets/bank-logos/ucba/symbol.png') },
