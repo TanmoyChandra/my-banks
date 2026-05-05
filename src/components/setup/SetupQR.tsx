@@ -306,10 +306,10 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Appbar.Header elevated style={{ backgroundColor: theme.colors.primary }}>
-        <Appbar.BackAction color="white" onPress={onBack} />
-        <Appbar.Content title="Setup UPI / QR" titleStyle={{ color: 'white' }} />
-      </Appbar.Header>
+      <View style={[styles.sheetHeader, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.sheetTitle, { color: theme.colors.onSurface }]}>Setup QR Code</Text>
+        <IconButton icon="close" size={24} iconColor={theme.colors.onSurface} onPress={onBack} />
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {showForm ? (
@@ -399,14 +399,14 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
             {loading && (
               <View style={styles.loadingBox}>
                 <ActivityIndicator animating={true} color={theme.colors.primary} />
-                <Text style={styles.loadingText}>Analyzing Image...</Text>
+                <Text style={[styles.loadingText, { color: theme.colors.primary }]}>Analyzing Image...</Text>
               </View>
             )}
 
             {entries.length === 0 ? (
               <View style={styles.empty}>
                 <Avatar.Icon size={64} icon="qrcode" style={{ backgroundColor: theme.colors.surfaceVariant }} color={theme.colors.primary} />
-                <Text variant="bodyMedium" style={styles.emptyText}>No UPI entries added yet.</Text>
+                <Text variant="bodyMedium" style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>No UPI entries added yet.</Text>
               </View>
             ) : (
               entries.map(entry => (
@@ -452,6 +452,8 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 56, paddingBottom: 16 },
+  sheetTitle: { fontSize: 24, fontWeight: '900' },
   scrollContent: { padding: 16 },
   mainActions: { gap: 12, marginBottom: 20 },
   scanBtn: { paddingVertical: 8, borderRadius: 12 },
@@ -465,9 +467,9 @@ const styles = StyleSheet.create({
   listItem: { borderRadius: 12, marginBottom: 12, overflow: 'hidden' },
   itemActions: { flexDirection: 'row' },
   empty: { alignItems: 'center', paddingTop: 60 },
-  emptyText: { marginTop: 12, color: '#79747E' },
+  emptyText: { marginTop: 12 },
   loadingBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
-  loadingText: { marginLeft: 10, fontWeight: '600', color: '#6750A4' },
+  loadingText: { marginLeft: 10, fontWeight: '600' },
   decoderHost: { height: 1, width: 1, opacity: 0, position: 'absolute', left: -10, top: -10 },
 });
 

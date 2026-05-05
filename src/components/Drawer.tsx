@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Drawer, Modal, Portal, Text, Avatar, useTheme, Divider } from 'react-native-paper';
+import { View, StyleSheet, TouchableWithoutFeedback, Animated, Dimensions } from 'react-native';
+import { Portal, Text, Avatar, useTheme, IconButton, Surface } from 'react-native-paper';
 import { DrawerScreen } from '../types';
+
+const { width } = Dimensions.get('window');
 
 interface DrawerProps {
   open: boolean;
@@ -11,107 +13,138 @@ interface DrawerProps {
 
 const DrawerPanel: React.FC<DrawerProps> = ({ open, onClose, onNavigate }) => {
   const theme = useTheme();
+  const slideAnim = React.useRef(new Animated.Value(-width)).current;
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const [visible, setVisible] = React.useState(open);
+
+  React.useEffect(() => {
+    if (open) {
+      setVisible(true);
+      Animated.parallel([
+        Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true })
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(slideAnim, { toValue: -width, duration: 300, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true })
+      ]).start(() => setVisible(false));
+    }
+  }, [open]);
+
+  if (!visible) return null;
 
   return (
     <Portal>
-      <Modal
-        visible={open}
-        onDismiss={onClose}
-        contentContainerStyle={styles.modalContainer}
-      >
-        <View style={[styles.drawer, { backgroundColor: theme.colors.surface }]}>
-          {/* Header */}
-          <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
-            <Avatar.Icon size={56} icon="bank" style={styles.avatar} color={theme.colors.primary} />
-            <Text variant="titleLarge" style={styles.headerTitle}>My Banks</Text>
-            <Text variant="bodySmall" style={styles.headerSubtitle}>Personal Finance Manager</Text>
+      <View style={StyleSheet.absoluteFill}>
+        <TouchableWithoutFeedback onPress={onClose}>
+          <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)', opacity: fadeAnim }]} />
+        </TouchableWithoutFeedback>
+        
+        <Animated.View style={[styles.drawer, { backgroundColor: theme.colors.background, transform: [{ translateX: slideAnim }] }]}>
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Avatar.Icon size={44} icon="bank" style={{ backgroundColor: theme.colors.primary }} color={theme.colors.onPrimary} />
+              <View>
+                <Text style={styles.headerSubtitle}>Configuration</Text>
+                <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>My Banks</Text>
+              </View>
+            </View>
+            <IconButton icon="close" size={24} iconColor={theme.colors.onSurface} onPress={onClose} />
           </View>
 
           <View style={styles.content}>
-            <Text variant="labelMedium" style={[styles.sectionLabel, { color: theme.colors.primary }]}>
-              SETUP & CONFIGURATION
-            </Text>
+            <Surface style={[styles.menuItem, { backgroundColor: theme.colors.surface }]} elevation={0} onTouchEnd={() => onNavigate('setup-qr')}>
+              <View style={[styles.iconBox, { backgroundColor: theme.colors.primary }]}>
+                <IconButton icon="qrcode-scan" size={20} iconColor={theme.colors.onPrimary} style={{ margin: 0 }} />
+              </View>
+              <Text style={[styles.menuText, { color: theme.colors.onSurface }]}>Setup QR Code</Text>
+            </Surface>
+            
+            <Surface style={[styles.menuItem, { backgroundColor: theme.colors.surface }]} elevation={0} onTouchEnd={() => onNavigate('setup-accounts')}>
+              <View style={[styles.iconBox, { backgroundColor: theme.colors.primary }]}>
+                <IconButton icon="bank" size={20} iconColor={theme.colors.onPrimary} style={{ margin: 0 }} />
+              </View>
+              <Text style={[styles.menuText, { color: theme.colors.onSurface }]}>Setup Bank Account</Text>
+            </Surface>
 
-            <Drawer.Item
-              label="Setup QR / UPI"
-              icon="qrcode-scan"
-              onPress={() => onNavigate('setup-qr')}
-              style={styles.drawerItem}
-            />
-            <Drawer.Item
-              label="Setup Debit/Credit Cards"
-              icon="card-bulleted"
-              onPress={() => onNavigate('setup-cards')}
-              style={styles.drawerItem}
-            />
-            <Drawer.Item
-              label="Setup Bank Accounts"
-              icon="bank-transfer"
-              onPress={() => onNavigate('setup-accounts')}
-              style={styles.drawerItem}
-            />
+            <Surface style={[styles.menuItem, { backgroundColor: theme.colors.surface }]} elevation={0} onTouchEnd={() => onNavigate('setup-cards')}>
+              <View style={[styles.iconBox, { backgroundColor: theme.colors.primary }]}>
+                <IconButton icon="credit-card" size={20} iconColor={theme.colors.onPrimary} style={{ margin: 0 }} />
+              </View>
+              <Text style={[styles.menuText, { color: theme.colors.onSurface }]}>Setup Debit/Credit Card</Text>
+            </Surface>
           </View>
 
-          <Divider />
-          
-          <View style={styles.footer}>
-            <Text variant="bodySmall" style={styles.footerText}>Data stored locally on device</Text>
-            <Text variant="bodySmall" style={styles.footerText}>v1.0.0 — My Banks</Text>
+          <View style={[styles.footer, { backgroundColor: theme.colors.surfaceVariant }]}>
+            <Text style={[styles.footerText, { color: theme.colors.onSurfaceVariant }]}>All entries are persisted locally in this prototype, matching the AsyncStorage-first architecture of the mobile app.</Text>
           </View>
-        </View>
-      </Modal>
+        </Animated.View>
+      </View>
     </Portal>
   );
 };
 
 const styles = StyleSheet.create({
-  modalContainer: {
-    margin: 0,
-    justifyContent: 'flex-start',
-    height: '100%',
-  },
+
   drawer: {
     width: '80%',
     height: '100%',
-    elevation: 16,
+    borderTopRightRadius: 40,
+    borderBottomRightRadius: 40,
+    paddingTop: 64,
+    paddingHorizontal: 24,
+    elevation: 24,
   },
   header: {
-    paddingTop: 60,
-    paddingBottom: 24,
-    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 40,
   },
-  avatar: {
-    backgroundColor: 'white',
-    marginBottom: 12,
-  },
-  headerTitle: {
-    color: 'white',
-    fontWeight: '700',
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   headerSubtitle: {
-    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+    color: '#71717a',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '900',
   },
   content: {
     flex: 1,
-    paddingTop: 16,
+    gap: 12,
   },
-  sectionLabel: {
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-    fontWeight: '700',
-    letterSpacing: 1,
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 24,
+    gap: 16,
   },
-  drawerItem: {
-    borderRadius: 0,
-    marginVertical: 2,
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuText: {
+    fontSize: 16,
+    fontWeight: '900',
   },
   footer: {
-    padding: 20,
-    alignItems: 'center',
+    padding: 16,
+    borderRadius: 24,
+    marginBottom: 40,
   },
   footerText: {
-    color: '#79747E',
-    textAlign: 'center',
+    fontSize: 14,
+    lineHeight: 24,
   },
 });
 

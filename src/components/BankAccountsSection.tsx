@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View, Clipboard } from 'react-native';
-import { List, Text, IconButton, Button, Avatar, useTheme, Divider, SegmentedButtons } from 'react-native-paper';
+import { ScrollView, StyleSheet, View, Clipboard, TouchableOpacity, LayoutAnimation, UIManager, Platform } from 'react-native';
+import { Text, IconButton, Button, useTheme } from 'react-native-paper';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import { BankAccount } from '../types';
-import EmptyState from './EmptyState';
 
 interface BankAccountsSectionProps {
   accounts: BankAccount[];
@@ -23,101 +26,69 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
     return '•'.repeat(num.length - 4) + num.slice(-4);
   };
 
+  const toggleExpand = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(!expanded);
+  };
+
   return (
-    <List.Accordion
-      title={account.bankName}
-      description={`${account.accountHolder} • ${revealed ? account.accountNumber : maskAccount(account.accountNumber)}`}
-      left={props => (
-        <Avatar.Text
-          {...props}
-          size={44}
-          label={account.bankName.substring(0, 2).toUpperCase()}
-          style={{ backgroundColor: theme.colors.primaryContainer }}
-          color={theme.colors.primary}
-        />
-      )}
-      expanded={expanded}
-      onPress={() => setExpanded(!expanded)}
-      style={styles.accordion}
-    >
-      <View style={styles.details}>
-        <List.Item
-          title="Account Number"
-          description={revealed ? account.accountNumber : maskAccount(account.accountNumber)}
-          right={() => (
-            <View style={styles.itemActions}>
-              <IconButton icon={revealed ? "eye-off" : "eye"} size={20} onPress={() => setRevealed(!revealed)} />
-              <Button mode="text" onPress={() => handleCopy(account.accountNumber)} compact>Copy</Button>
+    <View style={[styles.accountCard, { backgroundColor: expanded ? (theme.dark ? '#18181b' : '#f4fbf0') : theme.colors.surface }]}>
+      <TouchableOpacity activeOpacity={0.7} onPress={toggleExpand} style={styles.accountSummary}>
+        <View style={styles.summaryLeft}>
+          <Text style={[styles.bankName, { color: theme.colors.onSurface }]}>{account.bankName}</Text>
+          <Text style={styles.holderName}>{account.accountHolder}</Text>
+        </View>
+        <View style={styles.summaryRight}>
+          <Text style={styles.accountLabel}>Account</Text>
+          <Text style={[styles.accountMasked, { color: theme.colors.onSurface }]}>{maskAccount(account.accountNumber)}</Text>
+        </View>
+      </TouchableOpacity>
+
+      {expanded && (
+        <View style={[styles.accountDetails, { borderTopColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+          <View style={styles.infoGrid}>
+            <View style={styles.infoCol}>
+              <Text style={styles.infoLabel}>IFSC</Text>
+              <Text style={[styles.infoValue, { color: theme.colors.onSurface }]}>{account.ifsc.toUpperCase()}</Text>
             </View>
-          )}
-        />
-        <Divider />
-        <List.Item
-          title="IFSC Code"
-          description={account.ifsc.toUpperCase()}
-          right={() => (
-            <Button mode="text" onPress={() => handleCopy(account.ifsc)} compact>Copy</Button>
-          )}
-        />
-        {account.branchName ? (
-          <>
-            <Divider />
-            <List.Item title="Branch" description={account.branchName} />
-          </>
-        ) : null}
-        
-        <View style={styles.infoRow}>
-          <View style={[styles.infoPill, { backgroundColor: theme.colors.surfaceVariant }]}>
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>TYPE</Text>
-            <Text variant="bodyMedium">{account.accountType}</Text>
+            <View style={styles.infoCol}>
+              <Text style={styles.infoLabel}>Account</Text>
+              <Text style={[styles.infoValue, { color: theme.colors.onSurface }]}>{account.accountNumber}</Text>
+            </View>
           </View>
-          <View style={[styles.infoPill, { backgroundColor: theme.colors.surfaceVariant }]}>
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant }}>HOLDER</Text>
-            <Text variant="bodyMedium" numberOfLines={1}>{account.accountHolder}</Text>
+          <View style={styles.actionRow}>
+            <Button mode="text" textColor={theme.colors.onSurface} onPress={() => handleCopy(account.ifsc)} compact style={styles.actionBtn}>Copy IFSC</Button>
+            <Button mode="text" textColor={theme.colors.onSurface} onPress={() => handleCopy(account.accountNumber)} compact style={styles.actionBtn}>Copy Account</Button>
           </View>
         </View>
-      </View>
-    </List.Accordion>
+      )}
+    </View>
   );
 };
 
 const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts, onSetup }) => {
-  const [filter, setFilter] = useState('All');
   const theme = useTheme();
-
-  const filtered = filter === 'All' ? accounts : accounts.filter(a => a.accountType === filter);
-
-  if (accounts.length === 0) {
-    return (
-      <EmptyState
-        icon={<IconButton icon="bank" size={48} iconColor={theme.colors.primary} />}
-        title="No Bank Accounts"
-        description="Save your bank account details including account number and IFSC for quick reference and copying."
-        actionLabel="Add Bank Account"
-        onAction={onSetup}
-      />
-    );
-  }
 
   return (
     <View style={styles.container}>
-      <View style={styles.filterBar}>
-        <SegmentedButtons
-          value={filter}
-          onValueChange={setFilter}
-          buttons={[
-            { value: 'All', label: 'All' },
-            { value: 'Savings', label: 'Savings' },
-            { value: 'Current', label: 'Current' },
-          ]}
-        />
+      <View style={styles.sectionIntro}>
+        <View style={styles.introHeader}>
+          <View style={styles.introIconBox}>
+            <IconButton icon="bank" size={24} iconColor="#000000" />
+          </View>
+          <Button mode="contained" buttonColor={theme.dark ? '#FFFFFF' : '#000000'} textColor={theme.dark ? '#000000' : '#FFFFFF'} icon="plus" onPress={onSetup} style={styles.addButton} labelStyle={styles.addButtonLabel}>
+            Add
+          </Button>
+        </View>
+        <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Bank accounts</Text>
+        <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Keep IFSC and account details easy to find while masking sensitive numbers.</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {filtered.length === 0 ? (
-          <Text style={styles.emptyText}>No {filter.toLowerCase()} accounts found.</Text>
+        {accounts.length === 0 ? (
+          <Text style={styles.emptyText}>No accounts found.</Text>
         ) : (
-          filtered.map(acc => <AccountItem key={acc.id} account={acc} />)
+          accounts.map(acc => <AccountItem key={acc.id} account={acc} />)
         )}
       </ScrollView>
     </View>
@@ -128,40 +99,89 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  filterBar: {
-    padding: 16,
-  },
+  sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
+  introHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#BEF264', alignItems: 'center', justifyContent: 'center' },
+  addButton: { borderRadius: 24 },
+  addButtonLabel: { fontWeight: '900', fontSize: 14 },
+  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 20, letterSpacing: -0.5 },
+  introText: { fontSize: 14, lineHeight: 24, color: '#52525b', marginTop: 8 },
   scrollContent: {
-    paddingBottom: 80,
+    paddingBottom: 96,
   },
-  accordion: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginVertical: 4,
-    borderRadius: 12,
-    elevation: 1,
+  accountCard: {
+    marginHorizontal: 24,
+    marginBottom: 16,
+    borderRadius: 32,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.07,
+    shadowRadius: 34,
+    elevation: 4,
   },
-  details: {
-    backgroundColor: '#FAF9FB',
-    marginHorizontal: 16,
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-    paddingBottom: 12,
-  },
-  itemActions: {
+  accountSummary: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  infoRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    gap: 12,
-  },
-  infoPill: {
+  summaryLeft: {
     flex: 1,
-    padding: 8,
-    borderRadius: 8,
+    paddingRight: 16,
+  },
+  bankName: {
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  holderName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#71717a',
+    marginTop: 4,
+  },
+  summaryRight: {
+    alignItems: 'flex-end',
+  },
+  accountLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#71717a',
+  },
+  accountMasked: {
+    fontSize: 16,
+    fontWeight: '900',
+    marginTop: 2,
+  },
+  accountDetails: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+  },
+  infoGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  infoCol: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#71717a',
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  actionBtn: {
+    margin: 0,
   },
   emptyText: {
     textAlign: 'center',

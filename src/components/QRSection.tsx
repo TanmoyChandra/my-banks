@@ -12,7 +12,7 @@ import {
 import { Button, IconButton, Text, useTheme } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
 import { QREntry } from '../types';
-import EmptyState from './EmptyState';
+
 import { findBankByName } from '../constants/banks';
 
 interface QRSectionProps {
@@ -23,8 +23,8 @@ interface QRSectionProps {
 const PAGE_GAP = 16;
 const PAGE_SIDE_PADDING = 24;
 
-const QRPayCard: React.FC<{ entry: QREntry; width: number }> = ({ entry, width }) => {
-  const bankData = findBankByName(entry.bankName);
+const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
+  const theme = useTheme();
   const title = entry.name || entry.bankName || entry.upiId || 'QR Entry';
   const upiLink = entry.qrValue || `upi://pay?pa=${entry.upiId}&pn=${encodeURIComponent(entry.name || entry.bankName)}&cu=INR`;
   const qrSize = Math.min(width - 92, 270);
@@ -35,14 +35,14 @@ const QRPayCard: React.FC<{ entry: QREntry; width: number }> = ({ entry, width }
 
   return (
     <View style={[styles.page, { width: width + PAGE_GAP }]}>
-      <View style={[styles.payCard, { width }]}>
+      <View style={[styles.payCard, { width, backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
         <View style={styles.nameRow}>
-          <Text variant="titleLarge" numberOfLines={1} style={styles.nameText}>
+          <Text variant="titleLarge" numberOfLines={1} style={[styles.nameText, { color: theme.colors.onSurface }]}>
             {title}
           </Text>
         </View>
 
-        <View style={styles.qrFrame}>
+        <View style={[styles.qrFrame, { backgroundColor: '#FFFFFF' }]}>
           <QRCode
             value={upiLink}
             size={qrSize}
@@ -51,35 +51,35 @@ const QRPayCard: React.FC<{ entry: QREntry; width: number }> = ({ entry, width }
           />
         </View>
 
-        <Text variant="bodySmall" style={styles.scanText}>
+        <Text variant="bodySmall" style={[styles.scanText, { color: theme.colors.onSurfaceVariant }]}>
           Scan to pay with any UPI app
         </Text>
 
         <View style={styles.bankRow}>
-          <View style={styles.bankLogoBox}>
-            {bankData ? (
-              <Image source={bankData.symbol} style={styles.bankLogo} resizeMode="contain" />
+          <View style={[styles.bankLogoBox, { backgroundColor: theme.dark ? '#f4f4f5' : '#ffffff' }]}>
+            {findBankByName(entry.bankName) ? (
+              <Image source={findBankByName(entry.bankName)!.symbol} style={styles.bankLogo} resizeMode="contain" />
             ) : (
-              <Text variant="labelMedium" style={styles.bankInitials}>
+              <Text variant="labelMedium" style={[styles.bankInitials, { color: '#000' }]}>
                 {(entry.bankName || title).slice(0, 2).toUpperCase()}
               </Text>
             )}
           </View>
-          <Text variant="bodyLarge" numberOfLines={1} style={styles.bankName}>
+          <Text variant="bodyLarge" numberOfLines={1} style={[styles.bankName, { color: theme.colors.onSurface }]}>
             {entry.bankName || 'Bank not detected'}
           </Text>
-          <IconButton icon="chevron-right" size={20} iconColor="#6B6F76" style={styles.rowIcon} />
+          <IconButton icon="chevron-right" size={20} iconColor={theme.colors.onSurfaceVariant} style={styles.rowIcon} />
         </View>
 
         <View style={styles.upiRow}>
-          <Text variant="bodyLarge" numberOfLines={1} style={styles.upiText}>
+          <Text variant="bodyLarge" numberOfLines={1} style={[styles.upiText, { color: theme.colors.onSurface }]}>
             UPI ID: {entry.upiId || 'Not found'}
           </Text>
           {entry.upiId ? (
             <IconButton
               icon="content-copy"
               size={20}
-              iconColor="#6B6F76"
+              iconColor={theme.colors.onSurfaceVariant}
               onPress={handleCopyUPI}
               style={styles.copyButton}
             />
@@ -102,29 +102,19 @@ const QRSection: React.FC<QRSectionProps> = ({ entries, onSetup }) => {
     setActiveIndex(Math.max(0, Math.min(entries.length - 1, index)));
   };
 
-  if (entries.length === 0) {
-    return (
-      <EmptyState
-        icon={<IconButton icon="qrcode-scan" size={48} iconColor={theme.colors.primary} />}
-        title="No UPI Details Yet"
-        description="Add your bank's UPI ID or scan a QR code to automatically generate and save payment details."
-        actionLabel="Add UPI Entry"
-        onAction={onSetup}
-      />
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
-        <View>
-          <Text variant="labelLarge" style={styles.countLabel}>
-            {activeIndex + 1} of {entries.length}
-          </Text>
+      <View style={styles.sectionIntro}>
+        <View style={styles.introHeader}>
+          <View style={styles.introIconBox}>
+            <IconButton icon="qrcode" size={24} iconColor="#000000" />
+          </View>
+          <Button mode="contained" buttonColor={theme.dark ? '#FFFFFF' : '#000000'} textColor={theme.dark ? '#000000' : '#FFFFFF'} icon="plus" onPress={onSetup} style={styles.addButton} labelStyle={styles.addButtonLabel}>
+            Add
+          </Button>
         </View>
-        <Button mode="text" icon="plus" onPress={onSetup} textColor={theme.colors.primary}>
-          Add
-        </Button>
+        <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Saved UPI identities</Text>
+        <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Scan, import, copy, or share payment addresses without searching through screenshots.</Text>
       </View>
 
       <FlatList
@@ -145,7 +135,7 @@ const QRSection: React.FC<QRSectionProps> = ({ entries, onSetup }) => {
             key={entry.id}
             style={[
               styles.dot,
-              index === activeIndex ? styles.activeDot : styles.inactiveDot,
+              index === activeIndex ? [styles.activeDot, { backgroundColor: theme.colors.onSurface }] : styles.inactiveDot,
             ]}
           />
         ))}
@@ -157,19 +147,14 @@ const QRSection: React.FC<QRSectionProps> = ({ entries, onSetup }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 16,
   },
-  topBar: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingBottom: 12,
-  },
-  countLabel: {
-    color: '#6750A4',
-    fontWeight: '700',
-  },
+  sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
+  introHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#BEF264', alignItems: 'center', justifyContent: 'center' },
+  addButton: { borderRadius: 24 },
+  addButtonLabel: { fontWeight: '900', fontSize: 14 },
+  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 20, letterSpacing: -0.5 },
+  introText: { fontSize: 14, lineHeight: 24, color: '#52525b', marginTop: 8 },
   carouselContent: {
     paddingLeft: PAGE_SIDE_PADDING,
     paddingRight: PAGE_SIDE_PADDING - PAGE_GAP,
@@ -248,7 +233,8 @@ const styles = StyleSheet.create({
   bankName: {
     color: '#25232A',
     flexShrink: 1,
-    fontWeight: '700',
+    fontWeight: '900',
+    fontSize: 18,
   },
   rowIcon: {
     margin: 0,
@@ -263,7 +249,8 @@ const styles = StyleSheet.create({
   upiText: {
     color: '#25232A',
     flexShrink: 1,
-    fontWeight: '700',
+    fontWeight: '900',
+    fontSize: 18,
   },
   copyButton: {
     margin: 0,
@@ -282,11 +269,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   activeDot: {
-    backgroundColor: '#6750A4',
+    backgroundColor: '#09090b',
     width: 22,
   },
   inactiveDot: {
-    backgroundColor: '#D0C7DD',
+    backgroundColor: '#d4d4d8',
     width: 8,
   },
 });

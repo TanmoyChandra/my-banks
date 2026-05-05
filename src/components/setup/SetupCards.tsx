@@ -93,10 +93,10 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Appbar.Header elevated style={{ backgroundColor: theme.colors.primary }}>
-        <Appbar.BackAction color="white" onPress={onBack} />
-        <Appbar.Content title="Setup Cards" titleStyle={{ color: 'white' }} />
-      </Appbar.Header>
+      <View style={[styles.sheetHeader, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.sheetTitle, { color: theme.colors.onSurface }]}>Setup Debit/Credit Card</Text>
+        <IconButton icon="close" size={24} iconColor={theme.colors.onSurface} onPress={onBack} />
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {showForm ? (
@@ -106,7 +106,7 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
             </Text>
 
             <View style={styles.inputGroup}>
-              <Text variant="labelSmall" style={styles.label}>CARD TYPE</Text>
+              <Text variant="labelSmall" style={[styles.label, { color: theme.colors.primary }]}>CARD TYPE</Text>
               <SegmentedButtons
                 value={form.type}
                 onValueChange={v => setForm(p => ({ ...p, type: v as 'Credit' | 'Debit' }))}
@@ -196,7 +196,7 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
             {cards.length === 0 ? (
               <View style={styles.empty}>
                 <Avatar.Icon size={64} icon="card-bulleted" style={{ backgroundColor: theme.colors.surfaceVariant }} color={theme.colors.primary} />
-                <Text variant="bodyMedium" style={styles.emptyText}>No cards added yet.</Text>
+                <Text variant="bodyMedium" style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>No cards added yet.</Text>
               </View>
             ) : (
               cards.map(card => (
@@ -232,6 +232,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 56, paddingBottom: 16 },
+  sheetTitle: { fontSize: 24, fontWeight: '900' },
   scrollContent: {
     padding: 16,
   },
@@ -253,7 +255,6 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: 4,
     fontWeight: '700',
-    color: '#6750A4',
   },
   row: {
     flexDirection: 'row',
@@ -278,14 +279,8 @@ const styles = StyleSheet.create({
   itemActions: {
     flexDirection: 'row',
   },
-  empty: {
-    alignItems: 'center',
-    paddingTop: 60,
-  },
-  emptyText: {
-    marginTop: 12,
-    color: '#79747E',
-  },
+  empty: { alignItems: 'center', paddingTop: 60 },
+  emptyText: { marginTop: 12 },
 });
 
 export default SetupCards;

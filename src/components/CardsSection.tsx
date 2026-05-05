@@ -4,7 +4,6 @@ import { Button, IconButton, Text, useTheme } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
 import { findBankByName } from '../constants/banks';
 import { CardEntry } from '../types';
-import EmptyState from './EmptyState';
 
 interface CardsSectionProps {
   cards: CardEntry[];
@@ -94,6 +93,7 @@ const Chip = () => (
 );
 
 const BankCard: React.FC<{ card: CardEntry }> = ({ card }) => {
+  const theme = useTheme();
   const network = networkName(card);
   const [showCvv, setShowCvv] = useState(false);
 
@@ -136,16 +136,16 @@ const BankCard: React.FC<{ card: CardEntry }> = ({ card }) => {
       </View>
 
       <View style={styles.cardActions}>
-        <Button compact mode="text" icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.holderName || '')}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.holderName || '')}>
           Name
         </Button>
-        <Button compact mode="text" icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.cardNumber.replace(/\D/g, ''))}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.cardNumber.replace(/\D/g, ''))}>
           Number
         </Button>
-        <Button compact mode="text" icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.expiry || '')}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.expiry || '')}>
           Date
         </Button>
-        <Button compact mode="text" icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.cvv || '')}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.cvv || '')}>
           CVV
         </Button>
       </View>
@@ -156,31 +156,20 @@ const BankCard: React.FC<{ card: CardEntry }> = ({ card }) => {
 const CardsSection: React.FC<CardsSectionProps> = ({ cards, onSetup }) => {
   const theme = useTheme();
 
-  if (cards.length === 0) {
-    return (
-      <EmptyState
-        icon={<IconButton icon="card-bulleted" size={48} iconColor={theme.colors.primary} />}
-        title="No Cards Saved"
-        description="Save your credit and debit card details for quick access. Card numbers are masked by default for security."
-        actionLabel="Add a Card"
-        onAction={onSetup}
-      />
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <View style={styles.topBar}>
-        <Text variant="labelLarge" style={styles.countLabel}>
-          {cards.length} {cards.length === 1 ? 'CARD' : 'CARDS'}
-        </Text>
-        <Button mode="text" icon="plus" onPress={onSetup} textColor={theme.colors.primary}>
-          Add
-        </Button>
+      <View style={styles.sectionIntro}>
+        <View style={styles.introHeader}>
+          <View style={styles.introIconBox}>
+            <IconButton icon="card-bulleted" size={24} iconColor="#000000" />
+          </View>
+          <Button mode="contained" buttonColor={theme.dark ? '#FFFFFF' : '#000000'} textColor={theme.dark ? '#000000' : '#FFFFFF'} icon="plus" onPress={onSetup} style={styles.addButton} labelStyle={styles.addButtonLabel}>
+            Add
+          </Button>
+        </View>
+        <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Payment cards</Text>
+        <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>CVV stays masked until tapped. Each field has its own quick copy action.</Text>
       </View>
-
-
-
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {cards.length === 0 ? (
           <Text style={styles.emptyText}>No cards found.</Text>
@@ -194,13 +183,13 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onSetup }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 16 },
-  topBar: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-  },
-  countLabel: { color: '#6750A4', fontWeight: '700' },
+  sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
+  introHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#BEF264', alignItems: 'center', justifyContent: 'center' },
+  addButton: { borderRadius: 24 },
+  addButtonLabel: { fontWeight: '900', fontSize: 14 },
+  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 20, letterSpacing: -0.5 },
+  introText: { fontSize: 14, lineHeight: 24, color: '#52525b', marginTop: 8 },
 
   scrollContent: { paddingHorizontal: 16, paddingBottom: 96 },
   cardBlock: { marginBottom: 22 },
@@ -231,8 +220,8 @@ const styles = StyleSheet.create({
   },
   bankLogo: { height: 24, width: 24 },
   bankInitials: { color: '#040404', fontWeight: '800' },
-  networkLabel: { color: '#F6F6F6', flex: 1, fontWeight: '500', marginLeft: 8 },
-  rupayText: { color: '#FFFFFF', fontSize: 22, fontWeight: '800' },
+  networkLabel: { color: '#F6F6F6', flex: 1, fontWeight: '900', marginLeft: 8 },
+  rupayText: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
   chip: {
     backgroundColor: '#E0B545',
     borderRadius: 8,
@@ -269,15 +258,15 @@ const styles = StyleSheet.create({
   },
   numberBlock: { marginTop: 13 },
   fieldLabel: { color: '#D9D9D9', marginBottom: 4 },
-  cardHolderName: { color: '#FFFFFF', fontWeight: '400', letterSpacing: 1.4, marginBottom: 8 },
-  cardNumber: { color: '#FFFFFF', fontWeight: '400', letterSpacing: 3 },
+  cardHolderName: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 1, marginBottom: 8 },
+  cardNumber: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 4, fontSize: 24 },
   bottomRow: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between' },
   holderBlock: { flex: 1, marginRight: 16 },
-  holderName: { color: '#FFFFFF', fontWeight: '400', letterSpacing: 2 },
+  holderName: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 2 },
   cardType: { color: '#D8D8D8', marginTop: 4 },
   validBlock: { alignItems: 'flex-start', minWidth: 78 },
-  validLabel: { color: '#FFFFFF', marginTop: 14 },
-  validValue: { color: '#FFFFFF', fontWeight: '500' },
+  validLabel: { color: '#FFFFFF', marginTop: 14, fontWeight: '700', fontSize: 12 },
+  validValue: { color: '#FFFFFF', fontWeight: '900' },
   cardActions: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 4, paddingHorizontal: 4 },
   emptyText: { color: '#79747E', marginTop: 40, textAlign: 'center' },
 });
