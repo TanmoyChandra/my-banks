@@ -169,13 +169,15 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards }) => {
         <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Payment cards</Text>
         <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>CVV stays masked until tapped. Each field has its own quick copy action.</Text>
       </View>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {cards.length === 0 ? (
-          <Text style={styles.emptyText}>No cards found.</Text>
-        ) : (
-          cards.map((card, index) => <BankCard key={card.id} card={card} index={index} />)
-        )}
-      </ScrollView>
+      {cards.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Add new</Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {cards.map((card, index) => <BankCard key={card.id} card={card} index={index} />) }
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -267,7 +269,17 @@ const styles = StyleSheet.create({
   validLabel: { color: '#FFFFFF', marginTop: 14, fontWeight: '700', fontSize: 12 },
   validValue: { color: '#FFFFFF', fontWeight: '900' },
   cardActions: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 4, paddingHorizontal: 4 },
-  emptyText: { color: '#79747E', marginTop: 40, textAlign: 'center' },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 100,
+  },
+  emptyText: {
+    fontSize: 24,
+    fontWeight: '900',
+    opacity: 0.3,
+  },
 });
 
 export default CardsSection;

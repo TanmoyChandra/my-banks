@@ -117,13 +117,15 @@ const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) =
         <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Keep IFSC and account details easy to find while masking sensitive numbers.</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {accounts.length === 0 ? (
-          <Text style={styles.emptyText}>No accounts found.</Text>
-        ) : (
-          accounts.map(acc => <AccountItem key={acc.id} account={acc} />)
-        )}
-      </ScrollView>
+      {accounts.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Add new</Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {accounts.map(acc => <AccountItem key={acc.id} account={acc} />)}
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -205,10 +207,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 100,
+  },
   emptyText: {
-    textAlign: 'center',
-    marginTop: 40,
-    color: '#79747E',
+    fontSize: 24,
+    fontWeight: '900',
+    opacity: 0.3,
   },
 });
 

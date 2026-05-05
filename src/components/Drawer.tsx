@@ -72,6 +72,7 @@ const DrawerPanel: React.FC<DrawerProps> = ({ open, onClose, onNavigate }) => {
 
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: theme.colors.onSurfaceVariant, textAlign: 'center', fontWeight: '700', opacity: 0.6 }]}>Made with ❤️ by Tanmoy Chandra</Text>
+          <Text style={[styles.footerText, { color: theme.colors.onSurfaceVariant, textAlign: 'center', fontSize: 12, opacity: 0.4, marginTop: 4 }]}>v1.0.0</Text>
         </View>
       </View>
     </Modal>

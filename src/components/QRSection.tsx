@@ -146,29 +146,37 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
         <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Scan, import, copy, or share payment addresses without searching through screenshots.</Text>
       </View>
 
-      <FlatList
-        data={entries}
-        horizontal
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <QRPayCard entry={item} width={cardWidth} />}
-        showsHorizontalScrollIndicator={false}
-        snapToInterval={snapWidth}
-        decelerationRate="fast"
-        contentContainerStyle={styles.carouselContent}
-        onMomentumScrollEnd={handleMomentumEnd}
-      />
-
-      <View style={styles.dots}>
-        {entries.map((entry, index) => (
-          <View
-            key={entry.id}
-            style={[
-              styles.dot,
-              index === activeIndex ? [styles.activeDot, { backgroundColor: theme.colors.onSurface }] : styles.inactiveDot,
-            ]}
+      {entries.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Add new</Text>
+        </View>
+      ) : (
+        <>
+          <FlatList
+            data={entries}
+            horizontal
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <QRPayCard entry={item} width={cardWidth} />}
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={snapWidth}
+            decelerationRate="fast"
+            contentContainerStyle={styles.carouselContent}
+            onMomentumScrollEnd={handleMomentumEnd}
           />
-        ))}
-      </View>
+
+          <View style={styles.dots}>
+            {entries.map((entry, index) => (
+              <View
+                key={entry.id}
+                style={[
+                  styles.dot,
+                  index === activeIndex ? [styles.activeDot, { backgroundColor: theme.colors.onSurface }] : styles.inactiveDot,
+                ]}
+              />
+            ))}
+          </View>
+        </>
+      )}
     </View>
   );
 };
@@ -307,6 +315,17 @@ const styles = StyleSheet.create({
   shareButtonLabel: {
     fontWeight: '900',
     fontSize: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 100,
+  },
+  emptyText: {
+    fontSize: 24,
+    fontWeight: '900',
+    opacity: 0.3,
   },
 });
 
