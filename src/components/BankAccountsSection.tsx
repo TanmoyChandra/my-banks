@@ -19,10 +19,10 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
   const bank = findBankByName(account.bankName);
   const isDark = theme.dark;
 
-  const cardBg = isDark ? '#1c1c1c' : '#BEF264';
-  const cardBorder = isDark ? '#2d2d2d' : '#000000';
-  const mainTextColor = isDark ? '#FFFFFF' : '#000000';
-  const subTextColor = isDark ? '#a1a1aa' : '#3f6212';
+  const cardBg = isDark ? '#1c1c1c' : '#F7FEE7';
+  const cardBorder = isDark ? '#2d2d2d' : '#E5E7EB';
+  const mainTextColor = isDark ? '#FFFFFF' : '#1A2E05';
+  const subTextColor = isDark ? '#a1a1aa' : '#4D7C0F';
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext({

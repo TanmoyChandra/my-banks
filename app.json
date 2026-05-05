@@ -22,13 +22,22 @@
         "backgroundColor": "#FFFFFF"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.mybanks.app"
+      "package": "com.mybanks.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-camera"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "73bc4e1f-5250-46fa-8c1b-20431bbbf658"
+      }
+    }
   }
 }

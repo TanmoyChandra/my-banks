@@ -60,7 +60,7 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
 
   const isDark = theme.dark;
   const cardBg = isDark ? '#1c1c1c' : '#F7FEE7'; // Very light lime-green
-  const cardBorder = isDark ? '#2d2d2d' : '#ECFCCB';
+  const cardBorder = isDark ? '#2d2d2d' : '#E5E7EB';
   const mainTextColor = isDark ? '#FFFFFF' : '#1A2E05'; // Dark olive
   const subTextColor = isDark ? '#a1a1aa' : '#4D7C0F'; // Medium lime-olive
 
