@@ -8,7 +8,6 @@ import { CardEntry } from '../types';
 
 interface CardsSectionProps {
   cards: CardEntry[];
-  onSetup: () => void;
 }
 
 const formatCardNumber = (num: string) => {
@@ -36,27 +35,29 @@ const productName = (card: CardEntry) => {
 };
 
 const WaveTexture = () => (
-  <Svg pointerEvents="none" style={StyleSheet.absoluteFill} viewBox="0 0 360 228" preserveAspectRatio="none">
-    {Array.from({ length: 18 }).map((_, index) => {
-      const y = 18 + index * 11;
-      const bend = index % 2 === 0 ? 26 : -18;
-      return (
-        <Path
-          key={index}
-          d={`M-20 ${y} C 62 ${y + bend}, 118 ${y - bend}, 190 ${y} S 308 ${y + bend}, 386 ${y - 4}`}
-          stroke="rgba(255,255,255,0.055)"
-          strokeWidth="2"
-          fill="none"
-        />
-      );
-    })}
-    <Path
-      d="M-30 212 C 68 138, 144 136, 212 170 S 324 212, 390 130"
-      stroke="rgba(255,255,255,0.06)"
-      strokeWidth="18"
-      fill="none"
-    />
-  </Svg>
+  <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Svg width="100%" height="100%" viewBox="0 0 400 240" preserveAspectRatio="none">
+      {Array.from({ length: 30 }).map((_, index) => {
+        const y = -40 + index * 10;
+        const bend = index % 2 === 0 ? 30 : -20;
+        return (
+          <Path
+            key={index}
+            d={`M-100 ${y} C 100 ${y + bend}, 200 ${y - bend}, 300 ${y} S 500 ${y + bend}, 600 ${y}`}
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth="1.5"
+            fill="none"
+          />
+        );
+      })}
+      <Path
+        d="M-100 240 C 100 120, 200 120, 300 180 S 500 240, 600 100"
+        stroke="rgba(255,255,255,0.06)"
+        strokeWidth="30"
+        fill="none"
+      />
+    </Svg>
+  </View>
 );
 
 const NetworkMark = ({ card, fallbackLabel }: { card: CardEntry; fallbackLabel: string }) => {
@@ -93,14 +94,19 @@ const Chip = () => (
   </View>
 );
 
-const BankCard: React.FC<{ card: CardEntry }> = ({ card }) => {
+const BankCard: React.FC<{ card: CardEntry; index: number }> = ({ card, index }) => {
   const theme = useTheme();
   const network = networkName(card);
   const [showCvv, setShowCvv] = useState(false);
 
+  const cardColors = theme.dark 
+    ? ['#1c1917', '#450a0a', '#064e3b', '#1e1b4b', '#18181b'] // stone, red, emerald, indigo, zinc
+    : ['#040404'];
+  const backgroundColor = card.color || cardColors[index % cardColors.length];
+
   return (
     <View style={styles.cardBlock}>
-      <View style={styles.cardFace}>
+      <View style={[styles.cardFace, { backgroundColor }]}>
         <WaveTexture />
 
         <View style={styles.topRow}>
@@ -154,20 +160,12 @@ const BankCard: React.FC<{ card: CardEntry }> = ({ card }) => {
   );
 };
 
-const CardsSection: React.FC<CardsSectionProps> = ({ cards, onSetup }) => {
+const CardsSection: React.FC<CardsSectionProps> = ({ cards }) => {
   const theme = useTheme();
 
   return (
     <View style={styles.container}>
       <View style={styles.sectionIntro}>
-        <View style={styles.introHeader}>
-          <View style={styles.introIconBox}>
-            <IconButton icon="card-bulleted" size={24} iconColor="#000000" />
-          </View>
-          <Button mode="contained" buttonColor={theme.dark ? '#FFFFFF' : '#000000'} textColor={theme.dark ? '#000000' : '#FFFFFF'} icon="plus" onPress={onSetup} style={styles.addButton} labelStyle={styles.addButtonLabel}>
-            Add
-          </Button>
-        </View>
         <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Payment cards</Text>
         <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>CVV stays masked until tapped. Each field has its own quick copy action.</Text>
       </View>
@@ -175,7 +173,7 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onSetup }) => {
         {cards.length === 0 ? (
           <Text style={styles.emptyText}>No cards found.</Text>
         ) : (
-          cards.map(card => <BankCard key={card.id} card={card} />)
+          cards.map((card, index) => <BankCard key={card.id} card={card} index={index} />)
         )}
       </ScrollView>
     </View>
@@ -183,13 +181,13 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onSetup }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 16 },
+  container: { flex: 1 },
   sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
   introHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#BEF264', alignItems: 'center', justifyContent: 'center' },
   addButton: { borderRadius: 24 },
   addButtonLabel: { fontWeight: '900', fontSize: 14 },
-  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 20, letterSpacing: -0.5 },
+  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 0, letterSpacing: -0.5 },
   introText: { fontSize: 14, lineHeight: 24, color: '#52525b', marginTop: 8 },
 
   scrollContent: { paddingHorizontal: 16, paddingBottom: 96 },

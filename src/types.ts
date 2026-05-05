@@ -18,6 +18,7 @@ export interface CardEntry {
   expiry: string;
   cvv: string;
   nickname: string;
+  color?: string;
 }
 
 export interface BankAccount {

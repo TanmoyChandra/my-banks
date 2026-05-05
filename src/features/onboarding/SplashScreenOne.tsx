@@ -1,55 +1,68 @@
 import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
-import { Text, Button, useTheme } from 'react-native-paper';
+import { Text, Button } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface SplashScreenOneProps {
   onNext: () => void;
 }
 
 export default function SplashScreenOne({ onNext }: SplashScreenOneProps) {
-  const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
     Animated.stagger(200, [
       Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
       ]),
     ]).start();
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.header}>
+        <Text style={styles.logoText}>My Banks</Text>
+      </View>
+
       <View style={styles.content}>
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          <View style={[styles.illustration, { backgroundColor: theme.colors.primary }]} />
+        <Animated.View style={[styles.illustrationContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          {/* Abstract geometric illustration recreating the design */}
+          <View style={styles.circleBg}>
+            <View style={styles.blackArch} />
+            <View style={styles.peachCircle} />
+            <View style={styles.peachBase} />
+            <View style={styles.greenCard} />
+            <View style={styles.blackCard1} />
+            <View style={styles.blackCard2} />
+          </View>
         </Animated.View>
 
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-            Your finances,{'\n'}one tap away
+          <Text style={styles.title}>
+            Store every{'\n'}bank detail{'\n'}safely
           </Text>
         </Animated.View>
 
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          <Text style={[styles.subtitle, { color: theme.dark ? '#a1a1aa' : '#71717a' }]}>
-            Store UPI IDs, QR codes, debit/credit cards, and bank details — all locally on your device.
+          <Text style={styles.subtitle}>
+            Keep UPI IDs, QR codes, cards, and bank{'\n'}accounts organized on your device.
           </Text>
         </Animated.View>
       </View>
 
-      <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
+      <Animated.View style={[styles.footer, { opacity: fadeAnim, paddingBottom: Math.max(insets.bottom, 24) }]}>
         <Button
           mode="contained"
-          buttonColor={theme.colors.onSurface}
-          textColor={theme.colors.background}
+          buttonColor="#BEF264"
+          textColor="#000000"
           onPress={onNext}
           style={styles.btn}
           labelStyle={styles.btnLabel}
         >
-          Next
+          Continue
         </Button>
       </Animated.View>
     </View>
@@ -57,12 +70,21 @@ export default function SplashScreenOne({ onNext }: SplashScreenOneProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { flex: 1, justifyContent: 'center', padding: 24 },
-  illustration: { width: 120, height: 120, borderRadius: 32, marginBottom: 40 },
-  title: { fontSize: 40, fontWeight: '900', letterSpacing: -1, marginBottom: 16 },
-  subtitle: { fontSize: 16, lineHeight: 24, fontWeight: '600' },
-  footer: { padding: 24, paddingBottom: 48 },
+  container: { flex: 1, backgroundColor: '#000000' },
+  header: { paddingHorizontal: 24, paddingTop: 16 },
+  logoText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
+  content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+  illustrationContainer: { alignItems: 'center', marginBottom: 48 },
+  circleBg: { width: 260, height: 260, borderRadius: 130, backgroundColor: '#E3E6DC', overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end', position: 'relative' },
+  blackArch: { width: 200, height: 200, borderRadius: 100, backgroundColor: '#000000', position: 'absolute', top: 40 },
+  peachCircle: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#F2B8A2', position: 'absolute', bottom: 70 },
+  peachBase: { width: 160, height: 100, backgroundColor: '#FADED4', position: 'absolute', bottom: -20, borderTopLeftRadius: 40, borderTopRightRadius: 40 },
+  greenCard: { width: 60, height: 36, backgroundColor: '#BEF264', borderRadius: 6, position: 'absolute', left: 40, bottom: 120, transform: [{ rotate: '-15deg' }] },
+  blackCard1: { width: 90, height: 56, backgroundColor: '#000000', borderRadius: 12, position: 'absolute', bottom: 30, left: 60 },
+  blackCard2: { width: 70, height: 44, backgroundColor: '#000000', borderRadius: 8, position: 'absolute', bottom: 40, right: 30, transform: [{ rotate: '15deg' }], borderWidth: 2, borderColor: '#FFFFFF' },
+  title: { fontSize: 48, fontWeight: '900', letterSpacing: -2, marginBottom: 16, color: '#FFFFFF', lineHeight: 48 },
+  subtitle: { fontSize: 16, lineHeight: 24, fontWeight: '500', color: '#A1A1AA' },
+  footer: { paddingHorizontal: 24 },
   btn: { borderRadius: 32, paddingVertical: 8 },
-  btnLabel: { fontSize: 16, fontWeight: '900' },
+  btnLabel: { fontSize: 18, fontWeight: '900' },
 });

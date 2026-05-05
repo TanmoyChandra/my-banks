@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View, TouchableOpacity, LayoutAnimation, UIManager, Platform } from 'react-native';
-import { Text, IconButton, Button, useTheme } from 'react-native-paper';
+import { ScrollView, StyleSheet, View, TouchableOpacity, Share, Image, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { Text, Button, useTheme, IconButton } from 'react-native-paper';
 import * as Clipboard from 'expo-clipboard';
 import { BankAccount } from '../types';
+import { findBankByName } from '../constants/banks';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -10,77 +11,108 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 interface BankAccountsSectionProps {
   accounts: BankAccount[];
-  onSetup: () => void;
 }
 
 const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
   const [expanded, setExpanded] = useState(false);
-  const [revealed, setRevealed] = useState(false);
   const theme = useTheme();
+  const bank = findBankByName(account.bankName);
+  const isDark = theme.dark;
 
-  const handleCopy = async (text: string) => {
-    await Clipboard.setStringAsync(text);
-  };
-
-  const maskAccount = (num: string) => {
-    if (num.length <= 4) return num;
-    return '•'.repeat(num.length - 4) + num.slice(-4);
-  };
+  const cardBg = isDark ? '#1c1c1c' : '#BEF264';
+  const cardBorder = isDark ? '#2d2d2d' : '#000000';
+  const mainTextColor = isDark ? '#FFFFFF' : '#000000';
+  const subTextColor = isDark ? '#a1a1aa' : '#3f6212';
 
   const toggleExpand = () => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    LayoutAnimation.configureNext({
+      duration: 500,
+      create: { type: 'easeInEaseOut', property: 'opacity' },
+      update: { type: 'easeInEaseOut' },
+      delete: { type: 'easeInEaseOut', property: 'opacity' },
+    });
     setExpanded(!expanded);
   };
 
-  return (
-    <View style={[styles.accountCard, { backgroundColor: expanded ? (theme.dark ? '#18181b' : '#f4fbf0') : theme.colors.surface }]}>
-      <TouchableOpacity activeOpacity={0.7} onPress={toggleExpand} style={styles.accountSummary}>
-        <View style={styles.summaryLeft}>
-          <Text style={[styles.bankName, { color: theme.colors.onSurface }]}>{account.bankName}</Text>
-          <Text style={styles.holderName}>{account.accountHolder}</Text>
-        </View>
-        <View style={styles.summaryRight}>
-          <Text style={styles.accountLabel}>Account</Text>
-          <Text style={[styles.accountMasked, { color: theme.colors.onSurface }]}>{maskAccount(account.accountNumber)}</Text>
-        </View>
-      </TouchableOpacity>
+  const handleCopy = async (text: string) => {
+    if (!text) return;
+    await Clipboard.setStringAsync(text);
+  };
 
-      {expanded && (
-        <View style={[styles.accountDetails, { borderTopColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
-          <View style={styles.infoGrid}>
-            <View style={styles.infoCol}>
-              <Text style={styles.infoLabel}>IFSC</Text>
-              <Text style={[styles.infoValue, { color: theme.colors.onSurface }]}>{account.ifsc.toUpperCase()}</Text>
-            </View>
-            <View style={styles.infoCol}>
-              <Text style={styles.infoLabel}>Account</Text>
-              <Text style={[styles.infoValue, { color: theme.colors.onSurface }]}>{account.accountNumber}</Text>
-            </View>
+  const handleShare = async () => {
+    const message = `Bank Account Details\nBank: ${account.bankName}\nHolder: ${account.accountHolder}\nA/C: ${account.accountNumber}\nIFSC: ${account.ifsc}\nType: ${account.accountType}\nBranch: ${account.branchName}`;
+    try {
+      await Share.share({ message });
+    } catch (error) {}
+  };
+
+  const InfoRow = ({ label, value }: { label: string; value: string }) => (
+    <TouchableOpacity 
+      activeOpacity={0.6} 
+      onPress={() => handleCopy(value)}
+      style={styles.infoRow}
+    >
+      <Text style={[styles.infoLabel, { color: subTextColor }]}>{label}</Text>
+      <Text style={[styles.infoValue, { color: mainTextColor }]}>{value || 'Not provided'}</Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.cardWrapper}>
+      <TouchableOpacity 
+        activeOpacity={0.9}
+        onPress={toggleExpand}
+        style={[styles.accountCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
+      >
+        <View style={[styles.headerRow, { marginBottom: expanded ? 16 : 0 }]}>
+          <View style={[styles.bankLogoBox, { backgroundColor: '#ffffff' }]}>
+            {bank ? (
+              <Image source={bank.symbol} style={styles.bankLogo} resizeMode="contain" />
+            ) : (
+              <Text style={styles.bankInitials}>
+                {account.bankName.slice(0, 2).toUpperCase()}
+              </Text>
+            )}
           </View>
-          <View style={styles.actionRow}>
-            <Button mode="text" textColor={theme.colors.onSurface} onPress={() => handleCopy(account.ifsc)} compact style={styles.actionBtn}>Copy IFSC</Button>
-            <Button mode="text" textColor={theme.colors.onSurface} onPress={() => handleCopy(account.accountNumber)} compact style={styles.actionBtn}>Copy Account</Button>
+          <View style={styles.headerText}>
+            <Text variant="titleMedium" numberOfLines={1} style={[styles.bankTitle, { color: mainTextColor }]}>
+              {account.bankName}
+            </Text>
+            <Text style={[styles.accountTypeLabel, { color: subTextColor }]}>
+              {expanded ? `${account.accountType} Account` : account.accountNumber.slice(-4).padStart(account.accountNumber.length, '*')}
+            </Text>
           </View>
+          {expanded && (
+            <IconButton 
+              icon="share-variant" 
+              size={20} 
+              iconColor={mainTextColor}
+              onPress={handleShare}
+              style={styles.headerShare}
+            />
+          )}
         </View>
-      )}
+
+        {expanded && (
+          <View style={styles.expandedContent}>
+            <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]} />
+            <InfoRow label="ACCOUNT HOLDER" value={account.accountHolder} />
+            <InfoRow label="ACCOUNT NUMBER" value={account.accountNumber} />
+            <InfoRow label="IFSC CODE" value={account.ifsc.toUpperCase()} />
+            <InfoRow label="BRANCH" value={account.branchName} />
+          </View>
+        )}
+      </TouchableOpacity>
     </View>
   );
 };
 
-const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts, onSetup }) => {
+const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) => {
   const theme = useTheme();
 
   return (
     <View style={styles.container}>
       <View style={styles.sectionIntro}>
-        <View style={styles.introHeader}>
-          <View style={styles.introIconBox}>
-            <IconButton icon="bank" size={24} iconColor="#000000" />
-          </View>
-          <Button mode="contained" buttonColor={theme.dark ? '#FFFFFF' : '#000000'} textColor={theme.dark ? '#000000' : '#FFFFFF'} icon="plus" onPress={onSetup} style={styles.addButton} labelStyle={styles.addButtonLabel}>
-            Add
-          </Button>
-        </View>
         <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Bank accounts</Text>
         <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Keep IFSC and account details easy to find while masking sensitive numbers.</Text>
       </View>
@@ -97,92 +129,81 @@ const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts, onS
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
-  introHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#BEF264', alignItems: 'center', justifyContent: 'center' },
-  addButton: { borderRadius: 24 },
-  addButtonLabel: { fontWeight: '900', fontSize: 14 },
-  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 20, letterSpacing: -0.5 },
+  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 0, letterSpacing: -0.5 },
   introText: { fontSize: 14, lineHeight: 24, color: '#52525b', marginTop: 8 },
-  scrollContent: {
-    paddingBottom: 96,
+  scrollContent: { paddingBottom: 96 },
+  cardWrapper: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
   },
   accountCard: {
-    marginHorizontal: 24,
-    marginBottom: 16,
-    borderRadius: 32,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.07,
-    shadowRadius: 34,
-    elevation: 4,
+    borderRadius: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderWidth: 1,
   },
-  accountSummary: {
+  headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  summaryLeft: {
-    flex: 1,
-    paddingRight: 16,
+  bankLogoBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#ECE6F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  bankName: {
+  bankLogo: {
+    width: 34,
+    height: 18,
+  },
+  bankInitials: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#000',
+  },
+  headerText: {
+    flex: 1,
+  },
+  bankTitle: {
     fontSize: 18,
     fontWeight: '900',
   },
-  holderName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#71717a',
-    marginTop: 4,
-  },
-  summaryRight: {
-    alignItems: 'flex-end',
-  },
-  accountLabel: {
+  accountTypeLabel: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#71717a',
-  },
-  accountMasked: {
-    fontSize: 16,
-    fontWeight: '900',
+    fontWeight: '600',
     marginTop: 2,
   },
-  accountDetails: {
-    marginTop: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
+  headerShare: {
+    margin: 0,
+    marginRight: -8,
   },
-  infoGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+  expandedContent: {
+    marginTop: 0,
   },
-  infoCol: {
-    flex: 1,
+  divider: {
+    height: 1,
+    width: '100%',
+    marginBottom: 12,
+  },
+  infoRow: {
+    marginBottom: 14,
   },
   infoLabel: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: '700',
-    color: '#71717a',
+    letterSpacing: 0.5,
     marginBottom: 4,
   },
   infoValue: {
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 8,
-  },
-  actionBtn: {
-    margin: 0,
+    fontSize: 15,
+    fontWeight: '800',
   },
   emptyText: {
     textAlign: 'center',

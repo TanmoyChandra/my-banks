@@ -14,6 +14,20 @@ import {
 } from 'react-native-paper';
 import { CardEntry } from '../../types';
 import BankPicker from '../BankPicker';
+import { TouchableOpacity } from 'react-native';
+
+const PREDEFINED_COLORS = [
+  '#1c1917', // Stone
+  '#450a0a', // Red
+  '#064e3b', // Green
+  '#1e1b4b', // Indigo
+  '#18181b', // Zinc
+  '#3f2b1c', // Brown
+  '#4c1d95', // Violet
+  '#312e81', // Blue
+  '#134e4a', // Teal
+  '#020617', // Obsidian
+];
 
 interface SetupCardsProps {
   cards: CardEntry[];
@@ -31,6 +45,7 @@ const emptyForm = (): Omit<CardEntry, 'id'> => ({
   expiry: '',
   cvv: '',
   nickname: '',
+  color: PREDEFINED_COLORS[0],
 });
 
 const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelete, onBack }) => {
@@ -106,7 +121,6 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
             </Text>
 
             <View style={styles.inputGroup}>
-              <Text variant="labelSmall" style={[styles.label, { color: theme.colors.primary }]}>CARD TYPE</Text>
               <SegmentedButtons
                 value={form.type}
                 onValueChange={v => setForm(p => ({ ...p, type: v as 'Credit' | 'Debit' }))}
@@ -172,6 +186,26 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
               mode="outlined"
               style={styles.input}
             />
+
+            <View style={styles.inputGroup}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.colorRow}>
+                {PREDEFINED_COLORS.map(c => (
+                  <TouchableOpacity 
+                    key={c}
+                    onPress={() => setForm(p => ({ ...p, color: c }))}
+                    style={[
+                      styles.colorCircle, 
+                      { backgroundColor: c },
+                      form.color === c && { borderColor: theme.colors.primary, borderWidth: 3 }
+                    ]}
+                  >
+                    {form.color === c && (
+                      <IconButton icon="check" iconColor="#FFFFFF" size={16} style={{ margin: 0 }} />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
 
             <View style={styles.buttonRow}>
               <Button mode="outlined" onPress={handleCancel} style={styles.flexBtn}>
@@ -281,6 +315,19 @@ const styles = StyleSheet.create({
   },
   empty: { alignItems: 'center', paddingTop: 60 },
   emptyText: { marginTop: 12 },
+  colorRow: {
+    paddingVertical: 8,
+    gap: 12,
+  },
+  colorCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#000000',
+  },
 });
 
 export default SetupCards;

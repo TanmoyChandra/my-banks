@@ -1,20 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, TextInput, KeyboardAvoidingView, Platform, Animated } from 'react-native';
-import { Button, Text, useTheme } from 'react-native-paper';
+import { Button, Text } from 'react-native-paper';
 import { useUiStore } from '../../store/useUiStore';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function UserEntryScreen() {
-  const theme = useTheme();
   const [name, setName] = useState('');
   const completeOnboarding = useUiStore((s) => s.completeOnboarding);
+  const insets = useSafeAreaInsets();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
     ]).start();
   }, []);
 
@@ -26,31 +28,37 @@ export default function UserEntryScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={[styles.container, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 24) }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      <View style={styles.header}>
+        <View style={styles.iconContainer}>
+          <Icon name="bank" size={24} color="#000000" />
+        </View>
+      </View>
+
       <View style={styles.content}>
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          <Text style={[styles.title, { color: theme.colors.onSurface }]}>
-            Welcome to{'\n'}My Banks
+          <Text style={styles.title}>
+            Welcome to My{'\n'}Banks
+          </Text>
+        </Animated.View>
+
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+          <Text style={styles.subtitle}>
+            Enter your name to personalize the app. No{'\n'}password, OTP, or account setup needed.
           </Text>
         </Animated.View>
 
         <Animated.View style={[styles.inputContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-          <Text style={[styles.label, { color: theme.dark ? '#a1a1aa' : '#71717a' }]}>Your name</Text>
+          <Text style={styles.label}>Your name</Text>
           <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.colors.surface,
-                color: theme.colors.onSurface,
-                borderColor: theme.dark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-              },
-            ]}
+            style={styles.input}
             value={name}
             onChangeText={setName}
             placeholder="Alex Morgan"
-            placeholderTextColor={theme.dark ? '#71717a' : '#a1a1aa'}
+            placeholderTextColor="#71717A"
+            selectionColor="#BEF264"
             autoFocus
           />
         </Animated.View>
@@ -59,8 +67,8 @@ export default function UserEntryScreen() {
       <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
         <Button
           mode="contained"
-          buttonColor={theme.colors.primary}
-          textColor="#000"
+          buttonColor="#BEF264"
+          textColor="#000000"
           onPress={handleSubmit}
           disabled={!name.trim()}
           style={styles.btn}
@@ -74,21 +82,25 @@ export default function UserEntryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { flex: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 36, fontWeight: '900', letterSpacing: -1, marginBottom: 40 },
+  container: { flex: 1, backgroundColor: '#000000' },
+  header: { paddingHorizontal: 24, paddingTop: 40 },
+  iconContainer: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#BEF264', alignItems: 'center', justifyContent: 'center' },
+  content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24, marginTop: -40 },
+  title: { fontSize: 40, fontWeight: '900', letterSpacing: -1.5, marginBottom: 16, color: '#FFFFFF', lineHeight: 44 },
+  subtitle: { fontSize: 16, lineHeight: 24, fontWeight: '500', color: '#A1A1AA', marginBottom: 40 },
   inputContainer: { width: '100%' },
-  label: { fontSize: 14, fontWeight: '700', marginBottom: 12 },
+  label: { fontSize: 14, fontWeight: '800', marginBottom: 12, color: '#FFFFFF' },
   input: {
     width: '100%',
-    borderRadius: 24,
+    borderRadius: 20,
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 18,
     fontSize: 18,
     fontWeight: '700',
-    borderWidth: 1,
+    backgroundColor: '#18181B',
+    color: '#FFFFFF',
   },
-  footer: { padding: 24, paddingBottom: 48 },
+  footer: { paddingHorizontal: 24 },
   btn: { borderRadius: 32, paddingVertical: 8 },
-  btnLabel: { fontSize: 16, fontWeight: '900' },
+  btnLabel: { fontSize: 18, fontWeight: '900' },
 });

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Image,
@@ -6,10 +6,13 @@ import {
   NativeSyntheticEvent,
   Share,
   StyleSheet,
+  TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import * as Sharing from 'expo-sharing';
+import { captureRef } from 'react-native-view-shot';
 import { Button, IconButton, Text, useTheme } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
 import { QREntry } from '../types';
@@ -18,7 +21,6 @@ import { findBankByName } from '../constants/banks';
 
 interface QRSectionProps {
   entries: QREntry[];
-  onSetup: () => void;
 }
 
 const PAGE_GAP = 16;
@@ -29,26 +31,44 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
   const title = entry.name || entry.bankName || entry.upiId || 'QR Entry';
   const upiLink = entry.qrValue || `upi://pay?pa=${entry.upiId}&pn=${encodeURIComponent(entry.name || entry.bankName)}&cu=INR`;
   const qrSize = Math.min(width - 92, 180);
+  const viewRef = useRef<View>(null);
 
   const handleCopyUPI = async () => {
     if (entry.upiId) await Clipboard.setStringAsync(entry.upiId);
   };
 
   const handleShare = async () => {
-    const upiId = entry.upiId || '';
-    const name = entry.name || entry.bankName || 'UPI Payment';
     try {
-      await Share.share({
-        message: `Pay ${name} via UPI\nUPI ID: ${upiId}\n${upiLink}`,
+      const uri = await captureRef(viewRef, {
+        format: 'png',
+        quality: 1,
       });
-    } catch {}
+
+      if (!(await Sharing.isAvailableAsync())) {
+        return;
+      }
+
+      await Sharing.shareAsync(uri, {
+        dialogTitle: `Share ${title} QR Code`,
+        mimeType: 'image/png',
+        UTI: 'public.png',
+      });
+    } catch (err) {
+      console.log('Error capturing/sharing view:', err);
+    }
   };
+
+  const isDark = theme.dark;
+  const cardBg = isDark ? '#1c1c1c' : '#F7FEE7'; // Very light lime-green
+  const cardBorder = isDark ? '#2d2d2d' : '#ECFCCB';
+  const mainTextColor = isDark ? '#FFFFFF' : '#1A2E05'; // Dark olive
+  const subTextColor = isDark ? '#a1a1aa' : '#4D7C0F'; // Medium lime-olive
 
   return (
     <View style={[styles.page, { width: width + PAGE_GAP }]}>
-      <View style={[styles.payCard, { width, backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
+      <View ref={viewRef} collapsable={false} style={[styles.payCard, { width, backgroundColor: cardBg, borderColor: cardBorder }]}>
         <View style={styles.nameRow}>
-          <Text variant="titleLarge" numberOfLines={1} style={[styles.nameText, { color: theme.colors.onSurface }]}>
+          <Text variant="titleLarge" numberOfLines={1} style={[styles.nameText, { color: mainTextColor }]}>
             {title}
           </Text>
         </View>
@@ -62,12 +82,12 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
           />
         </View>
 
-        <Text variant="bodySmall" style={[styles.scanText, { color: theme.colors.onSurfaceVariant }]}>
+        <Text variant="bodySmall" style={[styles.scanText, { color: subTextColor }]}>
           Scan to pay with any UPI app
         </Text>
 
         <View style={styles.bankRow}>
-          <View style={[styles.bankLogoBox, { backgroundColor: theme.dark ? '#f4f4f5' : '#ffffff' }]}>
+          <View style={[styles.bankLogoBox, { backgroundColor: '#ffffff' }]}>
             {findBankByName(entry.bankName) ? (
               <Image source={findBankByName(entry.bankName)!.symbol} style={styles.bankLogo} resizeMode="contain" />
             ) : (
@@ -76,45 +96,42 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
               </Text>
             )}
           </View>
-          <Text variant="bodyLarge" numberOfLines={1} style={[styles.bankName, { color: theme.colors.onSurface }]}>
+          <Text style={[styles.bankName, { color: mainTextColor }]}>
             {entry.bankName || 'Bank not detected'}
           </Text>
-          <IconButton icon="chevron-right" size={20} iconColor={theme.colors.onSurfaceVariant} style={styles.rowIcon} />
         </View>
 
-        <View style={styles.upiRow}>
-          <Text variant="bodyLarge" numberOfLines={1} style={[styles.upiText, { color: theme.colors.onSurface }]}>
-            UPI ID: {entry.upiId || 'Not found'}
-          </Text>
-          {entry.upiId ? (
-            <>
-              <IconButton
-                icon="content-copy"
-                size={20}
-                iconColor={theme.colors.onSurfaceVariant}
-                onPress={handleCopyUPI}
-                style={styles.copyButton}
-              />
-              <IconButton
-                icon="share-variant"
-                size={20}
-                iconColor={theme.colors.onSurfaceVariant}
-                onPress={handleShare}
-                style={styles.copyButton}
-              />
-            </>
-          ) : null}
-        </View>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={handleCopyUPI}
+          style={styles.upiRow}
+          disabled={!entry.upiId}
+        >
+          <Text style={[styles.upiLabel, { color: subTextColor }]}>UPI ID:</Text>
+          <Text style={[styles.upiValue, { color: mainTextColor }]}>{entry.upiId || 'Not found'}</Text>
+        </TouchableOpacity>
       </View>
+      
+      <Button
+        mode="contained"
+        buttonColor="#BEF264"
+        textColor="#000000"
+        icon="share-variant"
+        onPress={handleShare}
+        style={[styles.shareButton, { width }]}
+        labelStyle={styles.shareButtonLabel}
+      >
+        Share QR code
+      </Button>
     </View>
   );
 };
 
-const QRSection: React.FC<QRSectionProps> = ({ entries, onSetup }) => {
+const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const { width: screenWidth } = useWindowDimensions();
   const theme = useTheme();
-  const cardWidth = Math.min(screenWidth - PAGE_SIDE_PADDING * 2, 620);
+  const cardWidth = Math.min(screenWidth - PAGE_SIDE_PADDING * 2.5, 450);
   const snapWidth = cardWidth + PAGE_GAP;
 
   const handleMomentumEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -125,14 +142,6 @@ const QRSection: React.FC<QRSectionProps> = ({ entries, onSetup }) => {
   return (
     <View style={styles.container}>
       <View style={styles.sectionIntro}>
-        <View style={styles.introHeader}>
-          <View style={styles.introIconBox}>
-            <IconButton icon="qrcode" size={24} iconColor="#000000" />
-          </View>
-          <Button mode="contained" buttonColor={theme.dark ? '#FFFFFF' : '#000000'} textColor={theme.dark ? '#000000' : '#FFFFFF'} icon="plus" onPress={onSetup} style={styles.addButton} labelStyle={styles.addButtonLabel}>
-            Add
-          </Button>
-        </View>
         <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Saved UPI identities</Text>
         <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Scan, import, copy, or share payment addresses without searching through screenshots.</Text>
       </View>
@@ -173,7 +182,7 @@ const styles = StyleSheet.create({
   introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#BEF264', alignItems: 'center', justifyContent: 'center' },
   addButton: { borderRadius: 24 },
   addButtonLabel: { fontWeight: '900', fontSize: 14 },
-  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 20, letterSpacing: -0.5 },
+  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 0, letterSpacing: -0.5 },
   introText: { fontSize: 14, lineHeight: 24, color: '#52525b', marginTop: 8 },
   carouselContent: {
     paddingLeft: PAGE_SIDE_PADDING,
@@ -191,17 +200,12 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingHorizontal: 20,
     paddingTop: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
   },
   nameRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 20,
     maxWidth: '100%',
   },
   nameText: {
@@ -223,28 +227,28 @@ const styles = StyleSheet.create({
     color: '#6B6F76',
     marginTop: 8,
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 10,
   },
   bankRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginTop: 12,
+    marginTop: 20,
     maxWidth: '88%',
   },
   bankLogoBox: {
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderColor: '#ECE6F0',
-    borderRadius: 8,
+    borderRadius: 5,
     borderWidth: 1,
-    height: 38,
+    height: 25,
     justifyContent: 'center',
-    marginRight: 14,
-    width: 58,
+    marginRight: 6,
+    width: 44,
   },
   bankLogo: {
-    height: 29,
-    width: 46,
+    height: 22,
+    width: 45,
   },
   bankInitials: {
     color: '#202124',
@@ -253,24 +257,24 @@ const styles = StyleSheet.create({
   bankName: {
     color: '#25232A',
     flexShrink: 1,
-    fontWeight: '900',
-    fontSize: 18,
-  },
-  rowIcon: {
-    margin: 0,
+    fontWeight: '600',
+    fontSize: 15,
   },
   upiRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 10,
-    maxWidth: '92%',
+    marginTop: 23,
+    width: '100%',
   },
-  upiText: {
-    color: '#25232A',
-    flexShrink: 1,
-    fontWeight: '900',
-    fontSize: 18,
+  upiLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  upiValue: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   copyButton: {
     margin: 0,
@@ -295,6 +299,14 @@ const styles = StyleSheet.create({
   inactiveDot: {
     backgroundColor: '#d4d4d8',
     width: 8,
+  },
+  shareButton: {
+    marginTop: 16,
+    borderRadius: 24,
+  },
+  shareButtonLabel: {
+    fontWeight: '900',
+    fontSize: 16,
   },
 });
 

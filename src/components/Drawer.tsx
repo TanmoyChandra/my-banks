@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Image } from 'react-native';
 import { Text, Avatar, useTheme, IconButton, Surface } from 'react-native-paper';
 import Modal from 'react-native-modal';
 import { DrawerScreen } from '../types';
 
 const { width } = Dimensions.get('window');
+
+const APP_LOGO = require('../../MyBanks.png');
 
 interface DrawerProps {
   open: boolean;
@@ -36,7 +38,7 @@ const DrawerPanel: React.FC<DrawerProps> = ({ open, onClose, onNavigate }) => {
       <View style={[styles.drawer, { backgroundColor: theme.colors.background }]}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Avatar.Icon size={44} icon="bank" style={{ backgroundColor: theme.colors.primary }} color={theme.colors.onPrimary} />
+            <Image source={APP_LOGO} style={styles.logo} resizeMode="contain" />
             <View>
               <Text style={styles.headerSubtitle}>Configuration</Text>
               <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>My Banks</Text>
@@ -68,8 +70,8 @@ const DrawerPanel: React.FC<DrawerProps> = ({ open, onClose, onNavigate }) => {
           </Surface>
         </View>
 
-        <View style={[styles.footer, { backgroundColor: theme.colors.surfaceVariant }]}>
-          <Text style={[styles.footerText, { color: theme.colors.onSurfaceVariant }]}>All data is stored locally on your device. No cloud, no backend.</Text>
+        <View style={styles.footer}>
+          <Text style={[styles.footerText, { color: theme.colors.onSurfaceVariant, textAlign: 'center', fontWeight: '700', opacity: 0.6 }]}>Made with ❤️ by Tanmoy Chandra</Text>
         </View>
       </View>
     </Modal>
@@ -100,6 +102,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
   },
   headerSubtitle: {
     fontSize: 14,
@@ -133,7 +140,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 16,
-    borderRadius: 24,
     marginBottom: 40,
   },
   footerText: {

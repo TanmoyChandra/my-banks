@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Platform, LayoutAnimation, Animated } from 'react-native';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { View, StyleSheet, TouchableOpacity, Platform, LayoutAnimation, Animated, Image } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Text, IconButton, useTheme } from 'react-native-paper';
 import { useUiStore } from '../store/useUiStore';
@@ -18,7 +18,9 @@ import OnboardingFlow from '../features/onboarding/OnboardingFlow';
 import { DrawerScreen } from '../types';
 
 const Stack = createNativeStackNavigator();
-const TopTab = createMaterialTopTabNavigator();
+const BottomTab = createBottomTabNavigator();
+
+const APP_LOGO = require('../../MyBanks.png');
 
 // ─── Header ────────────────────────────────────────────────────
 function AppHeader({ title, onMenuPress }: { title: string; onMenuPress: () => void }) {
@@ -26,19 +28,31 @@ function AppHeader({ title, onMenuPress }: { title: string; onMenuPress: () => v
   const isDark = useUiStore(s => s.isDark);
   const toggleTheme = useUiStore(s => s.toggleTheme);
 
+  const handleToggleTheme = () => {
+    LayoutAnimation.configureNext({
+      duration: 800,
+      create: { type: 'easeInEaseOut', property: 'opacity' },
+      update: { type: 'easeInEaseOut' },
+      delete: { type: 'easeInEaseOut', property: 'opacity' },
+    });
+    toggleTheme();
+  };
+
   return (
     <View style={[hStyles.header, { backgroundColor: theme.colors.background }]}>
       <IconButton icon="menu" size={24} iconColor={theme.colors.onSurface}
         style={[hStyles.headerBtn, { backgroundColor: theme.colors.surface }]}
         onPress={onMenuPress} />
       <View style={hStyles.titleBox}>
-        <Text style={[hStyles.sub, { color: isDark ? '#a1a1aa' : '#71717a' }]}>My Banks</Text>
-        <Text style={[hStyles.title, { color: theme.colors.onSurface }]}>{title}</Text>
+        <Text style={[hStyles.title, { color: theme.colors.onSurface, fontSize: 24, fontWeight: '900' }]}>MyBanks</Text>
       </View>
-      <IconButton icon={isDark ? 'white-balance-sun' : 'moon-waning-crescent'} size={24}
-        iconColor={theme.colors.onSurface}
-        style={[hStyles.headerBtn, { backgroundColor: theme.colors.surface }]}
-        onPress={toggleTheme} />
+      <IconButton 
+        icon={isDark ? 'weather-sunny' : 'moon-waning-crescent'} 
+        size={22}
+        iconColor={isDark ? '#000000' : '#FFFFFF'}
+        style={[hStyles.headerBtn, { backgroundColor: isDark ? '#FFFFFF' : '#1c1c1c' }]}
+        onPress={handleToggleTheme} 
+      />
     </View>
   );
 }
@@ -47,6 +61,7 @@ const hStyles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: Platform.OS === 'android' ? 40 : 56, paddingBottom: 16 },
   headerBtn: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
   titleBox: { alignItems: 'center' },
+  logo: { height: 20, width: 80, marginBottom: 2 },
   sub: { fontSize: 12, fontWeight: '600' },
   title: { fontSize: 20, fontWeight: '900' },
 });
@@ -58,7 +73,7 @@ const TAB_META: Record<string, { label: string; focused: string; unfocused: stri
   Accounts: { label: 'Accounts', focused: 'bank', unfocused: 'bank-outline' },
 };
 
-function FloatingTabBar({ state, navigation, position }: any) {
+function FloatingTabBar({ state, navigation }: any) {
   const theme = useTheme();
   const isDark = useUiStore(s => s.isDark);
 
@@ -68,17 +83,19 @@ function FloatingTabBar({ state, navigation, position }: any) {
         const isActive = state.index === i;
         const meta = TAB_META[route.name] || { label: route.name, focused: 'circle', unfocused: 'circle-outline' };
 
-        // Animate the pill background opacity based on swipe position
-        const opacity = position.interpolate({
-          inputRange: state.routes.map((_: any, idx: number) => idx),
-          outputRange: state.routes.map((_: any, idx: number) => (idx === i ? 1 : 0)),
-        });
-
         return (
           <TouchableOpacity key={route.key} activeOpacity={0.8}
-            onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); navigation.navigate(route.name); }}
+            onPress={() => { 
+              LayoutAnimation.configureNext({
+                duration: 600,
+                create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+                update: { type: LayoutAnimation.Types.easeInEaseOut },
+                delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+              }); 
+              navigation.navigate(route.name); 
+            }}
             style={tStyles.tab}>
-            <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.primary, borderRadius: 24, opacity }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.primary, borderRadius: 24, opacity: isActive ? 1 : 0 }]} />
             <IconButton icon={isActive ? meta.focused : meta.unfocused} size={24}
               iconColor={isActive ? '#000' : isDark ? '#a1a1aa' : '#71717a'}
               style={{ margin: 0, width: 24, height: 24 }} />
@@ -101,6 +118,7 @@ const tStyles = StyleSheet.create({
 // ─── Main Screen (Tabs + Drawer) ──────────────────────────────
 function MainScreen({ navigation }: any) {
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const theme = useTheme();
 
   const handleDrawerNavigate = (screen: DrawerScreen) => {
     setDrawerOpen(false);
@@ -112,25 +130,25 @@ function MainScreen({ navigation }: any) {
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <TopTab.Navigator
-        tabBarPosition="bottom"
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <BottomTab.Navigator
         tabBar={props => <FloatingTabBar {...props} />}
+        sceneContainerStyle={{ backgroundColor: theme.colors.background }}
         screenOptions={{
-          swipeEnabled: true,
-          animationEnabled: true,
+          headerShown: false,
+          animation: 'fade',
         }}
       >
-        <TopTab.Screen name="QR">
-          {() => <QRTab onMenuPress={() => setDrawerOpen(true)} onSetup={() => navigation.navigate('SetupQR')} />}
-        </TopTab.Screen>
-        <TopTab.Screen name="Cards">
-          {() => <CardsTab onMenuPress={() => setDrawerOpen(true)} onSetup={() => navigation.navigate('SetupCards')} />}
-        </TopTab.Screen>
-        <TopTab.Screen name="Accounts">
-          {() => <AccountsTab onMenuPress={() => setDrawerOpen(true)} onSetup={() => navigation.navigate('SetupAccounts')} />}
-        </TopTab.Screen>
-      </TopTab.Navigator>
+        <BottomTab.Screen name="QR">
+          {() => <QRTab onMenuPress={() => setDrawerOpen(true)} />}
+        </BottomTab.Screen>
+        <BottomTab.Screen name="Cards">
+          {() => <CardsTab onMenuPress={() => setDrawerOpen(true)} />}
+        </BottomTab.Screen>
+        <BottomTab.Screen name="Accounts">
+          {() => <AccountsTab onMenuPress={() => setDrawerOpen(true)} />}
+        </BottomTab.Screen>
+      </BottomTab.Navigator>
 
       <DrawerPanel
         open={drawerOpen}
@@ -142,35 +160,35 @@ function MainScreen({ navigation }: any) {
 }
 
 // ─── Tab Screen Wrappers ───────────────────────────────────────
-function QRTab({ onMenuPress, onSetup }: { onMenuPress: () => void; onSetup: () => void }) {
+function QRTab({ onMenuPress }: { onMenuPress: () => void }) {
   const entries = useWalletStore(s => s.upis);
   const theme = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader title="UPI / QR" onMenuPress={onMenuPress} />
-      <QRSection entries={entries} onSetup={onSetup} />
+      <QRSection entries={entries} />
     </View>
   );
 }
 
-function CardsTab({ onMenuPress, onSetup }: { onMenuPress: () => void; onSetup: () => void }) {
+function CardsTab({ onMenuPress }: { onMenuPress: () => void }) {
   const cards = useWalletStore(s => s.cards);
   const theme = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader title="Cards" onMenuPress={onMenuPress} />
-      <CardsSection cards={cards} onSetup={onSetup} />
+      <CardsSection cards={cards} />
     </View>
   );
 }
 
-function AccountsTab({ onMenuPress, onSetup }: { onMenuPress: () => void; onSetup: () => void }) {
+function AccountsTab({ onMenuPress }: { onMenuPress: () => void }) {
   const accounts = useWalletStore(s => s.accounts);
   const theme = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <AppHeader title="Accounts" onMenuPress={onMenuPress} />
-      <BankAccountsSection accounts={accounts} onSetup={onSetup} />
+      <BankAccountsSection accounts={accounts} />
     </View>
   );
 }
@@ -202,10 +220,11 @@ function SetupAccountsScreen({ navigation }: any) {
 
 // ─── Root Navigator ────────────────────────────────────────────
 export default function RootNavigator() {
+  const theme = useTheme();
   const hasCompletedOnboarding = useUiStore(s => s.hasCompletedOnboarding);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: theme.colors.background } }}>
       {!hasCompletedOnboarding ? (
         <Stack.Screen name="Onboarding" component={OnboardingFlow} />
       ) : (

@@ -18,6 +18,7 @@ import { WebView } from 'react-native-webview';
 import { QREntry } from '../../types';
 import BankPicker from '../BankPicker';
 import { extractQRData } from '../../utils/qrExtraction';
+import { findBankByName } from '../../constants/banks';
 
 interface SetupQRProps {
   entries: QREntry[];
@@ -414,7 +415,13 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
                   <List.Item
                     title={entry.name || entry.bankName || entry.upiId || 'QR Entry'}
                     description={entry.upiId || entry.qrValue}
-                    left={props => <List.Icon {...props} icon="bank" />}
+                    left={props => {
+                      const bank = findBankByName(entry.bankName);
+                      if (bank) {
+                        return <Avatar.Image {...props} source={bank.symbol} size={40} style={[props.style, { backgroundColor: 'transparent' }]} />;
+                      }
+                      return <List.Icon {...props} icon="qrcode" />;
+                    }}
                     right={() => (
                       <View style={styles.itemActions}>
                         <IconButton icon="pencil" size={20} onPress={() => handleEdit(entry)} />

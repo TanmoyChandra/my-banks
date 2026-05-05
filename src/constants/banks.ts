@@ -55,8 +55,16 @@ export const findBankByName = (bankName?: string | null) => {
   if (!bankName) return undefined;
   const normalized = bankName.toLowerCase().replace(/\blimited\b/g, '').trim();
 
+  // 1. Try exact match first
+  const exact = BANKS.find(bank => {
+    const normalizedBank = bank.name.toLowerCase().replace(/\blimited\b/g, '').trim();
+    return normalizedBank === normalized;
+  });
+  if (exact) return exact;
+
+  // 2. Try fuzzy match (inclusion)
   return BANKS.find(bank => {
     const normalizedBank = bank.name.toLowerCase().replace(/\blimited\b/g, '').trim();
-    return normalizedBank === normalized || normalizedBank.includes(normalized) || normalized.includes(normalizedBank);
+    return normalizedBank.includes(normalized) || normalized.includes(normalizedBank);
   });
 };
