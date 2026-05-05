@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Clipboard,
   FlatList,
   Image,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Share,
   StyleSheet,
   useWindowDimensions,
   View,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Button, IconButton, Text, useTheme } from 'react-native-paper';
 import QRCode from 'react-native-qrcode-svg';
 import { QREntry } from '../types';
@@ -27,10 +28,20 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
   const theme = useTheme();
   const title = entry.name || entry.bankName || entry.upiId || 'QR Entry';
   const upiLink = entry.qrValue || `upi://pay?pa=${entry.upiId}&pn=${encodeURIComponent(entry.name || entry.bankName)}&cu=INR`;
-  const qrSize = Math.min(width - 92, 270);
+  const qrSize = Math.min(width - 92, 180);
 
-  const handleCopyUPI = () => {
-    if (entry.upiId) Clipboard.setString(entry.upiId);
+  const handleCopyUPI = async () => {
+    if (entry.upiId) await Clipboard.setStringAsync(entry.upiId);
+  };
+
+  const handleShare = async () => {
+    const upiId = entry.upiId || '';
+    const name = entry.name || entry.bankName || 'UPI Payment';
+    try {
+      await Share.share({
+        message: `Pay ${name} via UPI\nUPI ID: ${upiId}\n${upiLink}`,
+      });
+    } catch {}
   };
 
   return (
@@ -76,13 +87,22 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
             UPI ID: {entry.upiId || 'Not found'}
           </Text>
           {entry.upiId ? (
-            <IconButton
-              icon="content-copy"
-              size={20}
-              iconColor={theme.colors.onSurfaceVariant}
-              onPress={handleCopyUPI}
-              style={styles.copyButton}
-            />
+            <>
+              <IconButton
+                icon="content-copy"
+                size={20}
+                iconColor={theme.colors.onSurfaceVariant}
+                onPress={handleCopyUPI}
+                style={styles.copyButton}
+              />
+              <IconButton
+                icon="share-variant"
+                size={20}
+                iconColor={theme.colors.onSurfaceVariant}
+                onPress={handleShare}
+                style={styles.copyButton}
+              />
+            </>
           ) : null}
         </View>
       </View>
@@ -165,13 +185,12 @@ const styles = StyleSheet.create({
   },
   payCard: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E7E0EC',
-    borderRadius: 22,
+    borderRadius: 32,
     borderWidth: 1,
-    minHeight: 500,
-    paddingHorizontal: 22,
-    paddingVertical: 28,
+    marginRight: PAGE_GAP,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
@@ -182,7 +201,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 18,
+    marginBottom: 10,
     maxWidth: '100%',
   },
   nameText: {
@@ -194,21 +213,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderColor: '#ECE6F0',
-    borderRadius: 18,
+    borderRadius: 14,
     borderWidth: 1,
     justifyContent: 'center',
     overflow: 'hidden',
-    padding: 12,
+    padding: 8,
   },
   scanText: {
     color: '#6B6F76',
-    marginTop: 12,
+    marginTop: 8,
     textAlign: 'center',
+    fontSize: 12,
   },
   bankRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    marginTop: 22,
+    marginTop: 12,
     maxWidth: '88%',
   },
   bankLogoBox: {
@@ -243,7 +263,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 18,
+    marginTop: 10,
     maxWidth: '92%',
   },
   upiText: {

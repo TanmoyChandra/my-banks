@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, TouchableWithoutFeedback, Animated, Dimensions } from 'react-native';
-import { Portal, Text, Avatar, useTheme, IconButton, Surface } from 'react-native-paper';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import { Text, Avatar, useTheme, IconButton, Surface } from 'react-native-paper';
+import Modal from 'react-native-modal';
 import { DrawerScreen } from '../types';
 
 const { width } = Dimensions.get('window');
@@ -13,80 +14,73 @@ interface DrawerProps {
 
 const DrawerPanel: React.FC<DrawerProps> = ({ open, onClose, onNavigate }) => {
   const theme = useTheme();
-  const slideAnim = React.useRef(new Animated.Value(-width)).current;
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const [visible, setVisible] = React.useState(open);
-
-  React.useEffect(() => {
-    if (open) {
-      setVisible(true);
-      Animated.parallel([
-        Animated.timing(slideAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
-        Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true })
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(slideAnim, { toValue: -width, duration: 300, useNativeDriver: true }),
-        Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true })
-      ]).start(() => setVisible(false));
-    }
-  }, [open]);
-
-  if (!visible) return null;
 
   return (
-    <Portal>
-      <View style={StyleSheet.absoluteFill}>
-        <TouchableWithoutFeedback onPress={onClose}>
-          <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.5)', opacity: fadeAnim }]} />
-        </TouchableWithoutFeedback>
-        
-        <Animated.View style={[styles.drawer, { backgroundColor: theme.colors.background, transform: [{ translateX: slideAnim }] }]}>
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Avatar.Icon size={44} icon="bank" style={{ backgroundColor: theme.colors.primary }} color={theme.colors.onPrimary} />
-              <View>
-                <Text style={styles.headerSubtitle}>Configuration</Text>
-                <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>My Banks</Text>
-              </View>
+    <Modal
+      isVisible={open}
+      onBackdropPress={onClose}
+      onBackButtonPress={onClose}
+      onSwipeComplete={onClose}
+      swipeDirection="left"
+      animationIn="slideInLeft"
+      animationOut="slideOutLeft"
+      animationInTiming={300}
+      animationOutTiming={300}
+      backdropTransitionInTiming={300}
+      backdropTransitionOutTiming={300}
+      backdropOpacity={0.5}
+      useNativeDriver
+      hideModalContentWhileAnimating
+      style={styles.modal}
+    >
+      <View style={[styles.drawer, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <Avatar.Icon size={44} icon="bank" style={{ backgroundColor: theme.colors.primary }} color={theme.colors.onPrimary} />
+            <View>
+              <Text style={styles.headerSubtitle}>Configuration</Text>
+              <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>My Banks</Text>
             </View>
-            <IconButton icon="close" size={24} iconColor={theme.colors.onSurface} onPress={onClose} />
           </View>
+          <IconButton icon="close" size={24} iconColor={theme.colors.onSurface} onPress={onClose} />
+        </View>
 
-          <View style={styles.content}>
-            <Surface style={[styles.menuItem, { backgroundColor: theme.colors.surface }]} elevation={0} onTouchEnd={() => onNavigate('setup-qr')}>
-              <View style={[styles.iconBox, { backgroundColor: theme.colors.primary }]}>
-                <IconButton icon="qrcode-scan" size={20} iconColor={theme.colors.onPrimary} style={{ margin: 0 }} />
-              </View>
-              <Text style={[styles.menuText, { color: theme.colors.onSurface }]}>Setup QR Code</Text>
-            </Surface>
-            
-            <Surface style={[styles.menuItem, { backgroundColor: theme.colors.surface }]} elevation={0} onTouchEnd={() => onNavigate('setup-accounts')}>
-              <View style={[styles.iconBox, { backgroundColor: theme.colors.primary }]}>
-                <IconButton icon="bank" size={20} iconColor={theme.colors.onPrimary} style={{ margin: 0 }} />
-              </View>
-              <Text style={[styles.menuText, { color: theme.colors.onSurface }]}>Setup Bank Account</Text>
-            </Surface>
+        <View style={styles.content}>
+          <Surface style={[styles.menuItem, { backgroundColor: theme.colors.surface }]} elevation={0} onTouchEnd={() => onNavigate('setup-qr')}>
+            <View style={[styles.iconBox, { backgroundColor: theme.colors.primary }]}>
+              <IconButton icon="qrcode-scan" size={20} iconColor={theme.colors.onPrimary} style={{ margin: 0 }} />
+            </View>
+            <Text style={[styles.menuText, { color: theme.colors.onSurface }]}>Setup QR Code</Text>
+          </Surface>
+          
+          <Surface style={[styles.menuItem, { backgroundColor: theme.colors.surface }]} elevation={0} onTouchEnd={() => onNavigate('setup-accounts')}>
+            <View style={[styles.iconBox, { backgroundColor: theme.colors.primary }]}>
+              <IconButton icon="bank" size={20} iconColor={theme.colors.onPrimary} style={{ margin: 0 }} />
+            </View>
+            <Text style={[styles.menuText, { color: theme.colors.onSurface }]}>Setup Bank Account</Text>
+          </Surface>
 
-            <Surface style={[styles.menuItem, { backgroundColor: theme.colors.surface }]} elevation={0} onTouchEnd={() => onNavigate('setup-cards')}>
-              <View style={[styles.iconBox, { backgroundColor: theme.colors.primary }]}>
-                <IconButton icon="credit-card" size={20} iconColor={theme.colors.onPrimary} style={{ margin: 0 }} />
-              </View>
-              <Text style={[styles.menuText, { color: theme.colors.onSurface }]}>Setup Debit/Credit Card</Text>
-            </Surface>
-          </View>
+          <Surface style={[styles.menuItem, { backgroundColor: theme.colors.surface }]} elevation={0} onTouchEnd={() => onNavigate('setup-cards')}>
+            <View style={[styles.iconBox, { backgroundColor: theme.colors.primary }]}>
+              <IconButton icon="credit-card" size={20} iconColor={theme.colors.onPrimary} style={{ margin: 0 }} />
+            </View>
+            <Text style={[styles.menuText, { color: theme.colors.onSurface }]}>Setup Debit/Credit Card</Text>
+          </Surface>
+        </View>
 
-          <View style={[styles.footer, { backgroundColor: theme.colors.surfaceVariant }]}>
-            <Text style={[styles.footerText, { color: theme.colors.onSurfaceVariant }]}>All entries are persisted locally in this prototype, matching the AsyncStorage-first architecture of the mobile app.</Text>
-          </View>
-        </Animated.View>
+        <View style={[styles.footer, { backgroundColor: theme.colors.surfaceVariant }]}>
+          <Text style={[styles.footerText, { color: theme.colors.onSurfaceVariant }]}>All data is stored locally on your device. No cloud, no backend.</Text>
+        </View>
       </View>
-    </Portal>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-
+  modal: {
+    margin: 0,
+    justifyContent: 'flex-start',
+  },
   drawer: {
     width: '80%',
     height: '100%',

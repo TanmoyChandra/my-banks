@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Clipboard, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { Button, IconButton, Text, useTheme } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
 import { findBankByName } from '../constants/banks';
@@ -136,16 +137,16 @@ const BankCard: React.FC<{ card: CardEntry }> = ({ card }) => {
       </View>
 
       <View style={styles.cardActions}>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.holderName || '')}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setStringAsync(card.holderName || '')}>
           Name
         </Button>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.cardNumber.replace(/\D/g, ''))}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setStringAsync(card.cardNumber.replace(/\D/g, ''))}>
           Number
         </Button>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.expiry || '')}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setStringAsync(card.expiry || '')}>
           Date
         </Button>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setString(card.cvv || '')}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setStringAsync(card.cvv || '')}>
           CVV
         </Button>
       </View>

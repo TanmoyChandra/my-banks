@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View, Clipboard, TouchableOpacity, LayoutAnimation, UIManager, Platform } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, LayoutAnimation, UIManager, Platform } from 'react-native';
 import { Text, IconButton, Button, useTheme } from 'react-native-paper';
+import * as Clipboard from 'expo-clipboard';
+import { BankAccount } from '../types';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
-import { BankAccount } from '../types';
 
 interface BankAccountsSectionProps {
   accounts: BankAccount[];
@@ -17,8 +18,8 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
   const [revealed, setRevealed] = useState(false);
   const theme = useTheme();
 
-  const handleCopy = (text: string) => {
-    Clipboard.setString(text);
+  const handleCopy = async (text: string) => {
+    await Clipboard.setStringAsync(text);
   };
 
   const maskAccount = (num: string) => {
