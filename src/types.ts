@@ -16,6 +16,7 @@ export interface CardEntry {
   holderName: string;
   cardNumber: string;
   expiry: string;
+  cvv: string;
   nickname: string;
 }
 

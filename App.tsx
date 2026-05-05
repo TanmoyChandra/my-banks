@@ -11,6 +11,7 @@ import {
   MD3LightTheme
 } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TabType, DrawerScreen } from './src/types';
 import { useStore } from './src/store';
@@ -80,6 +81,7 @@ export default function App() {
     return (
       <SafeAreaProvider>
         <PaperProvider theme={theme}>
+          <StatusBar style="light" backgroundColor={theme.colors.primary} />
           {screens[activeScreen as keyof typeof screens]}
         </PaperProvider>
       </SafeAreaProvider>
@@ -89,6 +91,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>
+        <StatusBar style="dark" backgroundColor={theme.colors.background} />
         <View style={styles.container}>
           <Appbar.Header elevated style={{ backgroundColor: theme.colors.primary }}>
             <Appbar.Action icon="menu" color="white" onPress={() => setDrawerOpen(true)} />

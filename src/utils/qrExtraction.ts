@@ -1,4 +1,4 @@
-import { BANKS } from '../constants/banks';
+import { BANKS, findBankByName } from '../constants/banks';
 
 export interface QRExtractionResult {
   name: string | null;
@@ -16,20 +16,20 @@ const UPI_HANDLE_BANKS: Record<string, string> = {
   sbi: 'State Bank of India',
   okhdfcbank: 'HDFC Bank',
   hdfcbank: 'HDFC Bank',
-  okicici: 'ICICI Bank',
-  icici: 'ICICI Bank',
+  okicici: 'ICICI Bank Limited',
+  icici: 'ICICI Bank Limited',
   okaxis: 'Axis Bank',
   axisbank: 'Axis Bank',
   okaxisbank: 'Axis Bank',
-  kotak: 'Kotak Mahindra Bank',
-  okkotak: 'Kotak Mahindra Bank',
+  kotak: 'Kotak Mahindra Bank Limited',
+  okkotak: 'Kotak Mahindra Bank Limited',
   pnb: 'Punjab National Bank',
   barodampay: 'Bank of Baroda',
   unionbank: 'Union Bank of India',
   canarabank: 'Canara Bank',
   indus: 'IndusInd Bank',
   yesbank: 'Yes Bank',
-  idfcfirst: 'IDFC FIRST Bank',
+  idfcfirst: 'IDFC First Bank Limited',
   centralbank: 'Central Bank of India',
   indianbank: 'Indian Bank',
   boi: 'Bank of India',
@@ -57,11 +57,7 @@ const extractUPIId = (qrValue: string, ocrText?: string | null) => {
 };
 
 const normalizeBank = (text: string) => {
-  const lower = text.toLowerCase();
-  return BANKS.find(bank => {
-    const bankName = bank.name.toLowerCase();
-    return lower.includes(bankName) || bankName.includes(lower);
-  })?.name || cleanText(text);
+  return findBankByName(text)?.name || cleanText(text);
 };
 
 const extractBankFromHandle = (upiId?: string | null) => {

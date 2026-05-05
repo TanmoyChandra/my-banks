@@ -361,22 +361,6 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
               style={styles.input}
               keyboardType="phone-pad"
             />
-            <TextInput
-              label="Bank Address"
-              value={form.address}
-              onChangeText={v => setForm(p => ({ ...p, address: v }))}
-              mode="outlined"
-              style={styles.input}
-              multiline
-            />
-            <TextInput
-              label="Notes"
-              value={form.notes}
-              onChangeText={v => setForm(p => ({ ...p, notes: v }))}
-              mode="outlined"
-              style={styles.input}
-              multiline
-            />
 
             <View style={styles.buttonRow}>
               <Button mode="outlined" onPress={handleCancel} style={styles.flexBtn}>

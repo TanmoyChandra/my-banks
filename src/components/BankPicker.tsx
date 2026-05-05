@@ -42,7 +42,7 @@ const BankPicker: React.FC<BankPickerProps> = ({ visible, onDismiss, onSelect })
                 <Avatar.Image
                   {...props}
                   size={32}
-                  source={{ uri: item.logo }}
+                  source={item.symbol}
                   style={{ backgroundColor: 'white' }}
                 />
               )}

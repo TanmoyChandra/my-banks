@@ -29,6 +29,7 @@ const emptyForm = (): Omit<CardEntry, 'id'> => ({
   holderName: '',
   cardNumber: '',
   expiry: '',
+  cvv: '',
   nickname: '',
 });
 
@@ -77,6 +78,10 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
     let clean = val.replace(/\D/g, '').slice(0, 4);
     if (clean.length >= 3) clean = clean.slice(0, 2) + '/' + clean.slice(2);
     setForm(p => ({ ...p, expiry: clean }));
+  };
+
+  const handleCvvChange = (val: string) => {
+    setForm(p => ({ ...p, cvv: val.replace(/\D/g, '').slice(0, 4) }));
   };
 
   const confirmDelete = (id: string) => {
@@ -150,13 +155,23 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
                 maxLength={5}
               />
               <TextInput
-                label="Nickname"
-                value={form.nickname}
-                onChangeText={v => setForm(p => ({ ...p, nickname: v }))}
+                label="CVV"
+                value={form.cvv}
+                onChangeText={handleCvvChange}
                 mode="outlined"
                 style={[styles.input, { flex: 1, marginLeft: 12 }]}
+                keyboardType="numeric"
+                maxLength={4}
               />
             </View>
+
+            <TextInput
+              label="Nickname"
+              value={form.nickname}
+              onChangeText={v => setForm(p => ({ ...p, nickname: v }))}
+              mode="outlined"
+              style={styles.input}
+            />
 
             <View style={styles.buttonRow}>
               <Button mode="outlined" onPress={handleCancel} style={styles.flexBtn}>
