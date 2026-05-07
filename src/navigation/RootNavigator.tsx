@@ -15,48 +15,34 @@ import CardTransactions from '../components/CardTransactions';
 import SetupQR from '../components/setup/SetupQR';
 import SetupCards from '../components/setup/SetupCards';
 import SetupAccounts from '../components/setup/SetupAccounts';
-import DrawerPanel from '../components/Drawer';
+import SettingsScreen from '../components/SettingsScreen';
 import OnboardingFlow from '../features/onboarding/OnboardingFlow';
-import { DrawerScreen } from '../types';
 
 const Stack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
 
 // ─── Header ────────────────────────────────────────────────────
-function AppHeader({ onMenuPress }: { onMenuPress: () => void }) {
+function AppHeader() {
   const theme = useTheme();
   const isDark = useUiStore(s => s.isDark);
   const toggleTheme = useUiStore(s => s.toggleTheme);
 
   const handleToggleTheme = () => {
     LayoutAnimation.configureNext({
-      duration: 800,
-      create: { type: 'easeInEaseOut', property: 'opacity' },
+      duration: 600,
       update: { type: 'easeInEaseOut' },
-      delete: { type: 'easeInEaseOut', property: 'opacity' },
     });
     toggleTheme();
   };
 
   return (
     <View style={[hStyles.header, { backgroundColor: theme.colors.background }]}>
-      <IconButton
-        icon="menu"
-        size={24}
-        iconColor={theme.colors.onSurface}
-        style={[hStyles.headerBtn, { backgroundColor: theme.colors.surfaceVariant }]}
-        onPress={onMenuPress}
-      />
-      <View style={hStyles.titleBox}>
-        <Text style={[hStyles.title, { color: theme.colors.onSurface, fontFamily: 'PlusJakartaSans-ExtraBold' }]}>
-          MyBanks
-        </Text>
-      </View>
+      <Text style={[hStyles.title, { color: theme.colors.onSurface }]}>MyBanks</Text>
       <IconButton
         icon={isDark ? 'weather-sunny' : 'moon-waning-crescent'}
-        size={22}
+        size={20}
         iconColor={isDark ? '#000000' : '#FFFFFF'}
-        style={[hStyles.headerBtn, { backgroundColor: isDark ? '#AAEF00' : '#1c1c1c' }]}
+        style={[hStyles.themeBtn, { backgroundColor: isDark ? '#AAEF00' : '#1c1c1c' }]}
         onPress={handleToggleTheme}
       />
     </View>
@@ -68,19 +54,22 @@ const hStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'android' ? 40 : 56,
-    paddingBottom: 16,
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'android' ? 44 : 56,
+    paddingBottom: 12,
   },
-  headerBtn: {
+  title: {
+    fontSize: 22,
+    fontWeight: '900',
+    fontFamily: 'PlusJakartaSans-ExtraBold',
+  },
+  themeBtn: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
   },
-  titleBox: { alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: '900' },
 });
 
 // ─── Tab bar: icons only (no labels) ──────────────────────────
@@ -88,6 +77,7 @@ const TAB_META: Record<string, { focused: string; unfocused: string }> = {
   QR:       { focused: 'qrcode-scan',      unfocused: 'qrcode' },
   Cards:    { focused: 'card-bulleted',    unfocused: 'card-bulleted-outline' },
   Accounts: { focused: 'bank',             unfocused: 'bank-outline' },
+  Settings: { focused: 'cog',             unfocused: 'cog-outline' },
 };
 
 function FloatingTabBar({ state, navigation }: any) {
@@ -143,10 +133,10 @@ const tStyles = StyleSheet.create({
   bar: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 28 : 16,
-    left: 40,
-    right: 40,
+    left: 16,
+    right: 16,
     flexDirection: 'row',
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 8,
     borderRadius: 40,
     shadowColor: '#000',
@@ -165,19 +155,9 @@ const tStyles = StyleSheet.create({
   },
 });
 
-// ─── Main Screen (Tabs + Drawer) ──────────────────────────────
+// ─── Main Screen (4 Tabs, no drawer) ──────────────────────────────
 function MainScreen({ navigation }: any) {
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
   const theme = useTheme();
-
-  const handleDrawerNavigate = (screen: DrawerScreen) => {
-    setDrawerOpen(false);
-    setTimeout(() => {
-      if (screen === 'setup-qr') navigation.navigate('SetupQR');
-      else if (screen === 'setup-cards') navigation.navigate('SetupCards');
-      else if (screen === 'setup-accounts') navigation.navigate('SetupAccounts');
-    }, 300);
-  };
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -187,43 +167,40 @@ function MainScreen({ navigation }: any) {
         screenOptions={{ headerShown: false, animation: 'fade' }}
       >
         <BottomTab.Screen name="QR">
-          {() => <QRTab onMenuPress={() => setDrawerOpen(true)} />}
+          {() => <QRTab />}
         </BottomTab.Screen>
         <BottomTab.Screen name="Cards">
-          {() => <CardsTab onMenuPress={() => setDrawerOpen(true)} navigation={navigation} />}
+          {() => <CardsTab navigation={navigation} />}
         </BottomTab.Screen>
         <BottomTab.Screen name="Accounts">
-          {() => <AccountsTab onMenuPress={() => setDrawerOpen(true)} />}
+          {() => <AccountsTab />}
+        </BottomTab.Screen>
+        <BottomTab.Screen name="Settings">
+          {() => <SettingsTab navigation={navigation} />}
         </BottomTab.Screen>
       </BottomTab.Navigator>
-
-      <DrawerPanel
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onNavigate={handleDrawerNavigate}
-      />
     </View>
   );
 }
 
 // ─── Tab Screen Wrappers ───────────────────────────────────────
-function QRTab({ onMenuPress }: { onMenuPress: () => void }) {
+function QRTab() {
   const entries = useWalletStore(s => s.upis);
   const theme = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader onMenuPress={onMenuPress} />
+      <AppHeader />
       <QRSection entries={entries} />
     </View>
   );
 }
 
-function CardsTab({ onMenuPress, navigation }: { onMenuPress: () => void; navigation: any }) {
+function CardsTab({ navigation }: { navigation: any }) {
   const cards = useWalletStore(s => s.cards);
   const theme = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader onMenuPress={onMenuPress} />
+      <AppHeader />
       <CardsSection
         cards={cards}
         onCardPress={(card: CardEntry) => navigation.navigate('CardTransactions', { cardId: card.id })}
@@ -232,13 +209,28 @@ function CardsTab({ onMenuPress, navigation }: { onMenuPress: () => void; naviga
   );
 }
 
-function AccountsTab({ onMenuPress }: { onMenuPress: () => void }) {
+function AccountsTab() {
   const accounts = useWalletStore(s => s.accounts);
   const theme = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader onMenuPress={onMenuPress} />
+      <AppHeader />
       <BankAccountsSection accounts={accounts} />
+    </View>
+  );
+}
+
+function SettingsTab({ navigation }: { navigation: any }) {
+  const theme = useTheme();
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <SettingsScreen
+        onNavigate={(screen) => {
+          if (screen === 'setup-qr') navigation.navigate('SetupQR');
+          else if (screen === 'setup-cards') navigation.navigate('SetupCards');
+          else if (screen === 'setup-accounts') navigation.navigate('SetupAccounts');
+        }}
+      />
     </View>
   );
 }

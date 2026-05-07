@@ -1,0 +1,249 @@
+import React from 'react';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+} from 'react-native';
+import { Text, useTheme } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useUiStore } from '../store/useUiStore';
+
+interface SettingsScreenProps {
+  onNavigate: (screen: 'setup-qr' | 'setup-cards' | 'setup-accounts') => void;
+}
+
+interface SetupCardProps {
+  icon: string;
+  title: string;
+  subtitle: string;
+  accentColor: string;
+  onPress: () => void;
+  isDark: boolean;
+  bgColor: string;
+  borderColor: string;
+  textColor: string;
+  subColor: string;
+}
+
+function SetupCard({
+  icon, title, subtitle, accentColor, onPress,
+  isDark, bgColor, borderColor, textColor, subColor,
+}: SetupCardProps) {
+  return (
+    <TouchableOpacity
+      activeOpacity={0.82}
+      onPress={onPress}
+      style={[styles.card, { backgroundColor: bgColor, borderColor }]}
+    >
+      <View style={[styles.cardIconBox, { backgroundColor: accentColor }]}>
+        <Text style={styles.cardIconText}>{icon}</Text>
+      </View>
+      <View style={styles.cardText}>
+        <Text style={[styles.cardTitle, { color: textColor }]}>{title}</Text>
+        <Text style={[styles.cardSubtitle, { color: subColor }]}>{subtitle}</Text>
+      </View>
+      <Text style={[styles.cardChevron, { color: subColor }]}>›</Text>
+    </TouchableOpacity>
+  );
+}
+
+export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
+  const theme = useTheme();
+  const isDark = theme.dark;
+  const insets = useSafeAreaInsets();
+  const userName = useUiStore(s => s.userName);
+
+  const bgColor = isDark ? '#09090b' : '#FFFFFF';
+  const surfaceColor = isDark ? '#18181b' : '#F5F5F5';
+  const textColor = isDark ? '#FFFFFF' : '#000000';
+  const subColor = isDark ? '#a1a1aa' : '#6B7280';
+  const borderColor = isDark ? '#27272a' : '#EBEBEB';
+
+  return (
+    <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: insets.top }]}>
+      {/* Page header */}
+      <View style={styles.header}>
+        <Text style={[styles.pageTitle, { color: textColor }]}>Settings</Text>
+        {userName ? (
+          <Text style={[styles.pageSubtitle, { color: subColor }]}>
+            Hi, {userName} 👋
+          </Text>
+        ) : null}
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={[styles.sectionLabel, { color: subColor }]}>DATA SETUP</Text>
+
+        <SetupCard
+          icon="📷"
+          title="UPI / QR Codes"
+          subtitle="Add and manage your UPI IDs and QR codes"
+          accentColor="#AAEF00"
+          onPress={() => onNavigate('setup-qr')}
+          isDark={isDark}
+          bgColor={surfaceColor}
+          borderColor={borderColor}
+          textColor={textColor}
+          subColor={subColor}
+        />
+
+        <SetupCard
+          icon="🏦"
+          title="Bank Accounts"
+          subtitle="Store IFSC, account number and branch details"
+          accentColor="#000000"
+          onPress={() => onNavigate('setup-accounts')}
+          isDark={isDark}
+          bgColor={surfaceColor}
+          borderColor={borderColor}
+          textColor={textColor}
+          subColor={subColor}
+        />
+
+        <SetupCard
+          icon="💳"
+          title="Debit / Credit Cards"
+          subtitle="Save card numbers, expiry dates and CVV"
+          accentColor="#1e1b4b"
+          onPress={() => onNavigate('setup-cards')}
+          isDark={isDark}
+          bgColor={surfaceColor}
+          borderColor={borderColor}
+          textColor={textColor}
+          subColor={subColor}
+        />
+
+        {/* App info */}
+        <View style={[styles.infoBox, { backgroundColor: surfaceColor, borderColor }]}>
+          <Text style={[styles.infoTitle, { color: textColor }]}>MyBanks</Text>
+          <Text style={[styles.infoText, { color: subColor }]}>
+            All data is stored locally on your device.{'\n'}No accounts, no cloud, no tracking.
+          </Text>
+          <Text style={[styles.infoVersion, { color: subColor }]}>v1.0.0</Text>
+        </View>
+
+        <Text style={[styles.footerText, { color: subColor }]}>
+          Made with ❤️ by Tanmoy Chandra
+        </Text>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: { flex: 1 },
+
+  header: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 24,
+  },
+  pageTitle: {
+    fontSize: 34,
+    fontWeight: '900',
+    fontFamily: 'PlusJakartaSans-ExtraBold',
+    letterSpacing: -1,
+  },
+  pageSubtitle: {
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans-Medium',
+    marginTop: 4,
+  },
+
+  content: {
+    paddingHorizontal: 20,
+  },
+
+  sectionLabel: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans-Bold',
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    gap: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  cardIconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardIconText: {
+    fontSize: 24,
+  },
+  cardText: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    fontFamily: 'PlusJakartaSans-ExtraBold',
+    marginBottom: 3,
+  },
+  cardSubtitle: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans-Medium',
+    lineHeight: 18,
+  },
+  cardChevron: {
+    fontSize: 24,
+    fontWeight: '300',
+    marginRight: 4,
+  },
+
+  infoBox: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 20,
+    marginTop: 8,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    fontFamily: 'PlusJakartaSans-ExtraBold',
+    marginBottom: 8,
+  },
+  infoText: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans-Medium',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  infoVersion: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans-Medium',
+    opacity: 0.5,
+  },
+
+  footerText: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans-Medium',
+    textAlign: 'center',
+    opacity: 0.5,
+    marginBottom: 8,
+  },
+});
