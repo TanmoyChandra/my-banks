@@ -39,6 +39,7 @@ export interface CardTransaction {
   amount: number;
   description: string;
   date: string; // ISO date string
+  payee?: string; // who this was paid for/by
 }
 
 export type TabType = 'qr' | 'cards' | 'accounts';

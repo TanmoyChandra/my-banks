@@ -25,6 +25,7 @@ interface WalletState {
 
   // Transaction CRUD (per card)
   addTransaction: (tx: Omit<CardTransaction, 'id'>) => void;
+  updateTransaction: (id: string, tx: Omit<CardTransaction, 'id'>) => void;
   deleteTransaction: (id: string) => void;
   getTransactionsForCard: (cardId: string) => CardTransaction[];
 }
@@ -68,6 +69,10 @@ export const useWalletStore = create<WalletState>()(
       // Transaction CRUD
       addTransaction: (tx) =>
         set((s) => ({ transactions: [{ ...tx, id: generateId() }, ...s.transactions] })),
+      updateTransaction: (id, tx) =>
+        set((s) => ({
+          transactions: s.transactions.map((t) => (t.id === id ? { ...tx, id } : t)),
+        })),
       deleteTransaction: (id) =>
         set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) })),
       getTransactionsForCard: (cardId) =>

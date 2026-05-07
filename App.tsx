@@ -1,4 +1,6 @@
+import 'react-native-gesture-handler';
 import React from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet, View } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -35,16 +37,18 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <PaperProvider theme={theme}>
-        <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={theme.colors.background} />
-        <NavigationContainer theme={navTheme}>
-          <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            <RootNavigator />
-          </View>
-        </NavigationContainer>
-      </PaperProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <PaperProvider theme={theme}>
+          <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={theme.colors.background} />
+          <NavigationContainer theme={navTheme}>
+            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+              <RootNavigator />
+            </View>
+          </NavigationContainer>
+        </PaperProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 

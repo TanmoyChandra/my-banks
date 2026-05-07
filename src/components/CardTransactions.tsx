@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { Text, IconButton, useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Swipeable } from 'react-native-gesture-handler';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { CardEntry, CardTransaction } from '../types';
 import { useWalletStore } from '../store/useWalletStore';
 
@@ -28,23 +30,45 @@ const formatDate = (iso: string) => {
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
-// ─── Add Transaction Modal ─────────────────────────────────────
-function AddTransactionModal({
+// ─── Transaction Modal ─────────────────────────────────────
+function TransactionModal({
   visible,
   cardId,
+  initialData,
   onClose,
 }: {
   visible: boolean;
   cardId: string;
+  initialData?: CardTransaction | null;
   onClose: () => void;
 }) {
   const theme = useTheme();
   const isDark = theme.dark;
   const addTransaction = useWalletStore((s) => s.addTransaction);
+  const updateTransaction = useWalletStore((s) => s.updateTransaction);
 
   const [txType, setTxType] = useState<'debit' | 'credit'>('debit');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  const [payee, setPayee] = useState('me');
+  const [date, setDate] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
+
+  useEffect(() => {
+    if (visible && initialData) {
+      setTxType(initialData.type);
+      setAmount(initialData.amount.toString());
+      setDescription(initialData.description);
+      setPayee(initialData.payee || 'me');
+      setDate(new Date(initialData.date));
+    } else if (visible && !initialData) {
+      setTxType('debit');
+      setAmount('');
+      setDescription('');
+      setPayee('me');
+      setDate(new Date());
+    }
+  }, [visible, initialData]);
 
   const bgColor = isDark ? '#18181b' : '#FFFFFF';
   const inputBg = isDark ? '#27272a' : '#F5F5F5';
@@ -52,7 +76,7 @@ function AddTransactionModal({
   const subColor = isDark ? '#a1a1aa' : '#6B7280';
   const borderColor = isDark ? '#27272a' : '#E5E7EB';
 
-  const handleAdd = () => {
+  const handleSave = () => {
     const val = parseFloat(amount.replace(/,/g, ''));
     if (!val || val <= 0) {
       Alert.alert('Invalid Amount', 'Please enter a valid amount greater than 0.');
@@ -62,105 +86,168 @@ function AddTransactionModal({
       Alert.alert('Missing Description', 'Please add a short description.');
       return;
     }
-    addTransaction({
+
+    const txData = {
       cardId,
       type: txType,
       amount: val,
       description: description.trim(),
-      date: new Date().toISOString(),
-    });
-    setAmount('');
-    setDescription('');
-    setTxType('debit');
+      date: date.toISOString(),
+      payee: payee.trim() || 'me',
+    };
+
+    if (initialData) {
+      updateTransaction(initialData.id, txData);
+    } else {
+      addTransaction(txData);
+    }
     onClose();
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowPicker(false);
+    if (selectedDate) setDate(selectedDate);
   };
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView
+      <TouchableOpacity
         style={styles.modalOverlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        activeOpacity={1}
+        onPress={onClose}
       >
-        <View style={[styles.modalSheet, { backgroundColor: bgColor, borderColor }]}>
-          {/* Handle */}
-          <View style={[styles.handle, { backgroundColor: subColor }]} />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+            <View style={[styles.modalSheet, { backgroundColor: bgColor, borderColor }]}>
+              {/* Handle */}
+              <View style={[styles.handle, { backgroundColor: subColor }]} />
 
-          <Text style={[styles.modalTitle, { color: textColor }]}>Add Transaction</Text>
-
-          {/* Type toggle */}
-          <View style={[styles.toggleRow, { backgroundColor: inputBg }]}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={[styles.toggleBtn, txType === 'debit' && styles.toggleActive]}
-              onPress={() => setTxType('debit')}
-            >
-              <Text
-                style={[
-                  styles.toggleLabel,
-                  { color: txType === 'debit' ? '#000000' : subColor },
-                ]}
-              >
-                ↑ Spent / Owed
+              <Text style={[styles.modalTitle, { color: textColor }]}>
+                {initialData ? 'Edit Transaction' : 'Add Transaction'}
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={[styles.toggleBtn, txType === 'credit' && styles.toggleActiveGreen]}
-              onPress={() => setTxType('credit')}
-            >
-              <Text
-                style={[
-                  styles.toggleLabel,
-                  { color: txType === 'credit' ? '#000000' : subColor },
-                ]}
+
+              {/* Type toggle (Hide if Edit Mode) */}
+              {!initialData && (
+                <View style={[styles.toggleRow, { backgroundColor: inputBg }]}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={[styles.toggleBtn, txType === 'debit' && styles.toggleActive]}
+                    onPress={() => setTxType('debit')}
+                  >
+                    <Text
+                      style={[
+                        styles.toggleLabel,
+                        { color: txType === 'debit' ? '#000000' : subColor },
+                      ]}
+                    >
+                      ↑ Spent
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={[styles.toggleBtn, txType === 'credit' && styles.toggleActiveGreen]}
+                    onPress={() => setTxType('credit')}
+                  >
+                    <Text
+                      style={[
+                        styles.toggleLabel,
+                        { color: txType === 'credit' ? '#000000' : subColor },
+                      ]}
+                    >
+                      ↓ Payment Made
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <ScrollView 
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                style={{ maxHeight: 400 }}
               >
-                ↓ Payment Made
-              </Text>
-            </TouchableOpacity>
-          </View>
+                {/* Amount */}
+                <Text style={[styles.fieldLabel, { color: subColor }]}>Amount (₹)</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
+                  value={amount}
+                  onChangeText={setAmount}
+                  placeholder="0.00"
+                  placeholderTextColor={subColor}
+                  keyboardType="decimal-pad"
+                  selectionColor="#AAEF00"
+                />
 
-          {/* Amount */}
-          <Text style={[styles.fieldLabel, { color: subColor }]}>Amount (₹)</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
-            value={amount}
-            onChangeText={setAmount}
-            placeholder="0.00"
-            placeholderTextColor={subColor}
-            keyboardType="decimal-pad"
-            selectionColor="#AAEF00"
-          />
+                {/* Description */}
+                <Text style={[styles.fieldLabel, { color: subColor }]}>Description</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
+                  value={description}
+                  onChangeText={setDescription}
+                  placeholder="e.g. Amazon purchase"
+                  placeholderTextColor={subColor}
+                  selectionColor="#AAEF00"
+                />
 
-          {/* Description */}
-          <Text style={[styles.fieldLabel, { color: subColor }]}>Description</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="e.g. Amazon purchase"
-            placeholderTextColor={subColor}
-            selectionColor="#AAEF00"
-          />
+                {/* Payee (Hide if Payment Made) */}
+                {txType === 'debit' && (
+                  <>
+                    <Text style={[styles.fieldLabel, { color: subColor }]}>For whom (Payee)</Text>
+                    <TextInput
+                      style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
+                      value={payee}
+                      onChangeText={setPayee}
+                      placeholder="e.g. me"
+                      placeholderTextColor={subColor}
+                      selectionColor="#AAEF00"
+                    />
+                  </>
+                )}
 
-          {/* Actions */}
-          <View style={styles.modalActions}>
-            <TouchableOpacity
-              style={[styles.modalCancelBtn, { borderColor }]}
-              onPress={onClose}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.modalCancelLabel, { color: textColor }]}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalAddBtn, { backgroundColor: '#AAEF00' }]}
-              onPress={handleAdd}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.modalAddLabel}>Add</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
+                {/* Date */}
+                <Text style={[styles.fieldLabel, { color: subColor }]}>Date</Text>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={[styles.input, { backgroundColor: inputBg, justifyContent: 'center' }]}
+                  onPress={() => setShowPicker(true)}
+                >
+                  <Text style={{ color: textColor, fontSize: 16, fontFamily: 'PlusJakartaSans-SemiBold' }}>
+                    {formatDate(date.toISOString())}
+                  </Text>
+                </TouchableOpacity>
+
+                {showPicker && (
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display="default"
+                    onChange={handleDateChange}
+                  />
+                )}
+              </ScrollView>
+
+              {/* Actions */}
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.modalCancelBtn, { borderColor }]}
+                  onPress={onClose}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.modalCancelLabel, { color: textColor }]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalAddBtn, { backgroundColor: '#AAEF00' }]}
+                  onPress={handleSave}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.modalAddLabel}>{initialData ? 'Save' : 'Add'}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </TouchableOpacity>
     </Modal>
   );
 }
@@ -168,55 +255,97 @@ function AddTransactionModal({
 // ─── Transaction Row ───────────────────────────────────────────
 function TransactionRow({
   tx,
+  onEdit,
   onDelete,
 }: {
   tx: CardTransaction;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
   const theme = useTheme();
+  const swipeableRef = useRef<Swipeable>(null);
+
   const isDark = theme.dark;
   const textColor = isDark ? '#FFFFFF' : '#000000';
   const subColor = isDark ? '#a1a1aa' : '#6B7280';
   const rowBg = isDark ? '#18181b' : '#F5F5F5';
+  const chipBg = isDark ? '#27272a' : '#E5E7EB';
   const isDebit = tx.type === 'debit';
 
+  const handleEditTap = () => {
+    swipeableRef.current?.close();
+    onEdit();
+  };
+
+  const renderLeftActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: '#3b82f6', justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 10 }}
+      onPress={handleEditTap}
+      activeOpacity={0.8}
+    >
+      <Text style={{ color: '#FFF', fontWeight: 'bold', fontFamily: 'PlusJakartaSans-Bold' }}>Edit</Text>
+    </TouchableOpacity>
+  );
+
+  const renderRightActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: '#EF4444', justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 10 }}
+      onPress={onDelete}
+      activeOpacity={0.8}
+    >
+      <Text style={{ color: '#FFF', fontWeight: 'bold', fontFamily: 'PlusJakartaSans-Bold' }}>Delete</Text>
+    </TouchableOpacity>
+  );
+
   return (
-    <View style={[styles.txRow, { backgroundColor: rowBg }]}>
-      {/* Icon */}
-      <View
-        style={[
-          styles.txIcon,
-          { backgroundColor: isDebit ? '#FEE2E2' : '#DCFCE7' },
-        ]}
-      >
-        <Text style={[styles.txIconText, { color: isDebit ? '#EF4444' : '#22C55E' }]}>
-          {isDebit ? '↑' : '↓'}
-        </Text>
-      </View>
-
-      {/* Info */}
-      <View style={styles.txInfo}>
-        <Text style={[styles.txDesc, { color: textColor }]} numberOfLines={1}>
-          {tx.description}
-        </Text>
-        <Text style={[styles.txDate, { color: subColor }]}>{formatDate(tx.date)}</Text>
-      </View>
-
-      {/* Amount */}
-      <View style={styles.txRight}>
-        <Text
+    <Swipeable
+      ref={swipeableRef}
+      renderLeftActions={renderLeftActions}
+      renderRightActions={renderRightActions}
+      overshootLeft={false}
+      overshootRight={false}
+    >
+      <View style={[styles.txRow, { backgroundColor: rowBg }]}>
+        {/* Icon */}
+        <View
           style={[
-            styles.txAmount,
-            { color: isDebit ? '#EF4444' : '#22C55E' },
+            styles.txIcon,
+            { backgroundColor: isDebit ? '#FEE2E2' : '#DCFCE7' },
           ]}
         >
-          {isDebit ? '+' : '-'}₹{fmt(tx.amount)}
-        </Text>
-        <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Text style={[styles.txDelete, { color: subColor }]}>✕</Text>
-        </TouchableOpacity>
+          <Text style={[styles.txIconText, { color: isDebit ? '#EF4444' : '#22C55E' }]}>
+            {isDebit ? '↑' : '↓'}
+          </Text>
+        </View>
+
+        {/* Info */}
+        <View style={styles.txInfo}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={[styles.txDesc, { color: textColor, flexShrink: 1 }]} numberOfLines={1}>
+              {tx.description}
+            </Text>
+            {isDebit && tx.payee ? (
+              <View style={[styles.payeeChip, { backgroundColor: chipBg }]}>
+                <Text style={[styles.payeeText, { color: textColor }]}>{tx.payee}</Text>
+              </View>
+            ) : null}
+          </View>
+          <Text style={[styles.txDate, { color: subColor }]}>{formatDate(tx.date)}</Text>
+        </View>
+
+        {/* Amount */}
+        <View style={styles.txRight}>
+          <Text
+            style={[
+              styles.txAmount,
+              { color: isDebit ? '#EF4444' : '#22C55E' },
+            ]}
+          >
+            ₹{fmt(tx.amount)}
+          </Text>
+        </View>
       </View>
-    </View>
+    </Swipeable>
   );
 }
 
@@ -226,6 +355,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
   const isDark = theme.dark;
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
+  const [editingTx, setEditingTx] = useState<CardTransaction | null>(null);
 
   const transactions = useWalletStore((s) => s.transactions);
   const deleteTransaction = useWalletStore((s) => s.deleteTransaction);
@@ -325,7 +455,15 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
           </View>
         ) : (
           cardTxs.map((tx) => (
-            <TransactionRow key={tx.id} tx={tx} onDelete={() => handleDelete(tx.id)} />
+            <TransactionRow 
+              key={tx.id} 
+              tx={tx} 
+              onEdit={() => {
+                setEditingTx(tx);
+                setModalVisible(true);
+              }}
+              onDelete={() => handleDelete(tx.id)} 
+            />
           ))
         )}
       </ScrollView>
@@ -334,16 +472,23 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
       <TouchableOpacity
         style={[styles.fab, { bottom: insets.bottom + 24 }]}
         activeOpacity={0.85}
-        onPress={() => setModalVisible(true)}
+        onPress={() => {
+          setEditingTx(null);
+          setModalVisible(true);
+        }}
       >
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
 
-      {/* ── Add Modal ── */}
-      <AddTransactionModal
+      {/* ── Add/Edit Modal ── */}
+      <TransactionModal
         visible={modalVisible}
         cardId={card.id}
-        onClose={() => setModalVisible(false)}
+        initialData={editingTx}
+        onClose={() => {
+          setModalVisible(false);
+          setTimeout(() => setEditingTx(null), 300);
+        }}
       />
     </View>
   );
@@ -478,19 +623,51 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     fontFamily: 'PlusJakartaSans-Bold',
+    marginBottom: 4,
+  },
+  txDetailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  payeeChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  payeeText: {
+    fontSize: 10,
+    fontFamily: 'PlusJakartaSans-Bold',
   },
   txDate: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans-Medium',
-    marginTop: 2,
   },
-  txRight: { alignItems: 'flex-end', gap: 4 },
+  txRight: { alignItems: 'flex-end', justifyContent: 'center' },
   txAmount: {
     fontSize: 15,
     fontWeight: '800',
     fontFamily: 'PlusJakartaSans-ExtraBold',
   },
-  txDelete: { fontSize: 13, fontWeight: '700', paddingHorizontal: 4 },
+  txActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 12,
+  },
+  txEdit: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'PlusJakartaSans-Bold',
+    color: '#3b82f6',
+  },
+  txDelete: { 
+    fontSize: 12, 
+    fontWeight: '700',
+    fontFamily: 'PlusJakartaSans-Bold', 
+    color: '#EF4444', 
+  },
 
   // Empty
   empty: {
