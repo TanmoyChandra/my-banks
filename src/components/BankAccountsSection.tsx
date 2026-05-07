@@ -19,10 +19,10 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
   const bank = findBankByName(account.bankName);
   const isDark = theme.dark;
 
-  const cardBg = isDark ? '#1c1c1c' : '#F7FEE7';
+  const cardBg = isDark ? '#1c1c1c' : '#F5F5F5'; // neutral per Figma
   const cardBorder = isDark ? '#2d2d2d' : '#E5E7EB';
-  const mainTextColor = isDark ? '#FFFFFF' : '#1A2E05';
-  const subTextColor = isDark ? '#a1a1aa' : '#4D7C0F';
+  const mainTextColor = isDark ? '#FFFFFF' : '#000000'; // pure black per Figma
+  const subTextColor = isDark ? '#a1a1aa' : '#6B7280'; // neutral gray per Figma
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext({
@@ -133,8 +133,8 @@ const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) =
 const styles = StyleSheet.create({
   container: { flex: 1 },
   sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
-  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 0, letterSpacing: -0.5 },
-  introText: { fontSize: 14, lineHeight: 24, color: '#52525b', marginTop: 8 },
+  introTitle: { fontSize: 28, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', color: '#000000', marginTop: 0, letterSpacing: -0.5 },
+  introText: { fontSize: 14, lineHeight: 24, fontFamily: 'PlusJakartaSans-Medium', color: '#52525b', marginTop: 8 },
   scrollContent: { paddingBottom: 96 },
   cardWrapper: {
     paddingHorizontal: 24,
@@ -176,10 +176,12 @@ const styles = StyleSheet.create({
   bankTitle: {
     fontSize: 18,
     fontWeight: '900',
+    fontFamily: 'PlusJakartaSans-ExtraBold',
   },
   accountTypeLabel: {
     fontSize: 12,
     fontWeight: '600',
+    fontFamily: 'PlusJakartaSans-SemiBold',
     marginTop: 2,
   },
   headerShare: {

@@ -59,10 +59,10 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
   };
 
   const isDark = theme.dark;
-  const cardBg = isDark ? '#1c1c1c' : '#F7FEE7'; // Very light lime-green
+  const cardBg = isDark ? '#1c1c1c' : '#F5F5F5'; // neutral per Figma
   const cardBorder = isDark ? '#2d2d2d' : '#E5E7EB';
-  const mainTextColor = isDark ? '#FFFFFF' : '#1A2E05'; // Dark olive
-  const subTextColor = isDark ? '#a1a1aa' : '#4D7C0F'; // Medium lime-olive
+  const mainTextColor = isDark ? '#FFFFFF' : '#000000'; // pure black per Figma
+  const subTextColor = isDark ? '#a1a1aa' : '#6B7280'; // neutral gray per Figma
 
   return (
     <View style={[styles.page, { width: width + PAGE_GAP }]}>
@@ -114,7 +114,7 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
       
       <Button
         mode="contained"
-        buttonColor="#BEF264"
+        buttonColor="#AAEF00"
         textColor="#000000"
         icon="share-variant"
         onPress={handleShare}
@@ -187,11 +187,11 @@ const styles = StyleSheet.create({
   },
   sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
   introHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#BEF264', alignItems: 'center', justifyContent: 'center' },
+  introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#AAEF00', alignItems: 'center', justifyContent: 'center' },
   addButton: { borderRadius: 24 },
   addButtonLabel: { fontWeight: '900', fontSize: 14 },
-  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 0, letterSpacing: -0.5 },
-  introText: { fontSize: 14, lineHeight: 24, color: '#52525b', marginTop: 8 },
+  introTitle: { fontSize: 28, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', color: '#000000', marginTop: 0, letterSpacing: -0.5 },
+  introText: { fontSize: 14, lineHeight: 24, fontFamily: 'PlusJakartaSans-Medium', color: '#52525b', marginTop: 8 },
   carouselContent: {
     paddingLeft: PAGE_SIDE_PADDING,
     paddingRight: PAGE_SIDE_PADDING - PAGE_GAP,

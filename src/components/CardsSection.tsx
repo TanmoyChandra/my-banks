@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button, IconButton, Text, useTheme } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
@@ -8,6 +8,7 @@ import { CardEntry } from '../types';
 
 interface CardsSectionProps {
   cards: CardEntry[];
+  onCardPress?: (card: CardEntry) => void;
 }
 
 const formatCardNumber = (num: string) => {
@@ -26,12 +27,7 @@ const networkName = (card: CardEntry) => {
   const clean = card.cardNumber.replace(/\D/g, '');
   if (/^5[1-5]/.test(clean)) return 'Master Card';
   if (/^6(?:0|5|52|53)/.test(clean)) return 'RuPay';
-  return 'Master Card';
-};
-
-const productName = (card: CardEntry) => {
-  if (card.nickname.trim()) return card.nickname;
-  return card.type === 'Credit' ? 'Credit Card' : 'Debit Card';
+  return 'Visa';
 };
 
 const WaveTexture = () => (
@@ -70,13 +66,13 @@ const NetworkMark = ({ card, fallbackLabel }: { card: CardEntry; fallbackLabel: 
 
   return (
     <View style={styles.networkRow}>
-        {bankData ? (
-          <Image source={bankData.symbol} style={styles.bankLogo} resizeMode="contain" />
-        ) : (
-          <Text variant="labelMedium" style={styles.bankInitials}>
-            {label.slice(0, 2).toUpperCase()}
-          </Text>
-        )}
+      {bankData ? (
+        <Image source={bankData.symbol} style={styles.bankLogo} resizeMode="contain" />
+      ) : (
+        <Text variant="labelMedium" style={styles.bankInitials}>
+          {label.slice(0, 2).toUpperCase()}
+        </Text>
+      )}
       <Text variant="titleMedium" numberOfLines={1} adjustsFontSizeToFit style={styles.networkLabel}>{label}</Text>
     </View>
   );
@@ -94,18 +90,23 @@ const Chip = () => (
   </View>
 );
 
-const BankCard: React.FC<{ card: CardEntry; index: number }> = ({ card, index }) => {
+
+const CARD_COLORS = ['#040404', '#1c1917', '#450a0a', '#064e3b', '#1e1b4b', '#18181b'];
+
+const BankCard: React.FC<{ card: CardEntry; index: number; onPress: () => void }> = ({ card, index, onPress }) => {
   const theme = useTheme();
   const network = networkName(card);
   const [showCvv, setShowCvv] = useState(false);
 
-  const cardColors = theme.dark 
-    ? ['#1c1917', '#450a0a', '#064e3b', '#1e1b4b', '#18181b'] // stone, red, emerald, indigo, zinc
-    : ['#040404'];
-  const backgroundColor = card.color || cardColors[index % cardColors.length];
+  const backgroundColor = card.color || CARD_COLORS[index % CARD_COLORS.length];
 
   return (
-    <View style={styles.cardBlock}>
+    <TouchableOpacity
+      activeOpacity={0.92}
+      onPress={onPress}
+      style={styles.cardBlock}
+    >
+      {/* Main card face */}
       <View style={[styles.cardFace, { backgroundColor }]}>
         <WaveTexture />
 
@@ -131,51 +132,74 @@ const BankCard: React.FC<{ card: CardEntry; index: number }> = ({ card, index })
 
           <View style={styles.validBlock}>
             <Text variant="bodySmall" style={styles.validLabel}>CVV</Text>
-            <Text 
-              variant="titleMedium" 
+            <Text
+              variant="titleMedium"
               style={styles.validValue}
-              onPress={() => { if (card.cvv) setShowCvv(!showCvv); }}
+              onPress={(e) => { e.stopPropagation?.(); if (card.cvv) setShowCvv(!showCvv); }}
             >
               {card.cvv ? (showCvv ? card.cvv : '***') : '***'}
             </Text>
           </View>
+
+          {/* Tap hint */}
+          <View style={styles.tapHint}>
+            <Text style={styles.tapHintText}>Tap for transactions →</Text>
+          </View>
         </View>
       </View>
 
+      {/* Quick copy actions below card */}
       <View style={styles.cardActions}>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setStringAsync(card.holderName || '')}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'PlusJakartaSans-Medium' }}
+          onPress={(e) => { Clipboard.setStringAsync(card.holderName || ''); }}>
           Name
         </Button>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setStringAsync(card.cardNumber.replace(/\D/g, ''))}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'PlusJakartaSans-Medium' }}
+          onPress={() => Clipboard.setStringAsync(card.cardNumber.replace(/\D/g, ''))}>
           Number
         </Button>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setStringAsync(card.expiry || '')}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'PlusJakartaSans-Medium' }}
+          onPress={() => Clipboard.setStringAsync(card.expiry || '')}>
           Date
         </Button>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12 }} onPress={() => Clipboard.setStringAsync(card.cvv || '')}>
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'PlusJakartaSans-Medium' }}
+          onPress={() => Clipboard.setStringAsync(card.cvv || '')}>
           CVV
         </Button>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
-const CardsSection: React.FC<CardsSectionProps> = ({ cards }) => {
+const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => {} }) => {
   const theme = useTheme();
 
   return (
     <View style={styles.container}>
       <View style={styles.sectionIntro}>
         <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Payment cards</Text>
-        <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>CVV stays masked until tapped. Each field has its own quick copy action.</Text>
+        <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
+          Tap a card to view & manage transactions. CVV stays masked until tapped.
+        </Text>
       </View>
       {cards.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Add new</Text>
+          <Text style={styles.emptyIcon}>💳</Text>
+          <Text style={[styles.emptyText, { color: theme.colors.onSurface }]}>No cards yet</Text>
+          <Text style={[styles.emptySubText, { color: theme.colors.onSurfaceVariant }]}>
+            Open the menu to add your first card
+          </Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {cards.map((card, index) => <BankCard key={card.id} card={card} index={index} />) }
+          {cards.map((card, index) => (
+            <BankCard
+              key={card.id}
+              card={card}
+              index={index}
+              onPress={() => onCardPress(card)}
+            />
+          ))}
         </ScrollView>
       )}
     </View>
@@ -184,16 +208,33 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
-  introHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#BEF264', alignItems: 'center', justifyContent: 'center' },
+  sectionIntro: { paddingHorizontal: 24, paddingBottom: 20, paddingTop: 8 },
+  introTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    fontFamily: 'PlusJakartaSans-ExtraBold',
+    color: '#000000',
+    marginTop: 0,
+    letterSpacing: -0.5,
+  },
+  introText: {
+    fontSize: 14,
+    lineHeight: 24,
+    fontFamily: 'PlusJakartaSans-Medium',
+    color: '#52525b',
+    marginTop: 8,
+  },
+  introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#AAEF00', alignItems: 'center', justifyContent: 'center' },
   addButton: { borderRadius: 24 },
   addButtonLabel: { fontWeight: '900', fontSize: 14 },
-  introTitle: { fontSize: 28, fontWeight: '900', color: '#09090b', marginTop: 0, letterSpacing: -0.5 },
-  introText: { fontSize: 14, lineHeight: 24, color: '#52525b', marginTop: 8 },
 
   scrollContent: { paddingHorizontal: 16, paddingBottom: 96 },
-  cardBlock: { marginBottom: 22 },
+
+  // 3D card
+  cardBlock: {
+    marginBottom: 28,
+    position: 'relative',
+  },
   cardFace: {
     aspectRatio: 1.72,
     backgroundColor: '#040404',
@@ -202,27 +243,26 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 22,
     paddingVertical: 20,
+    // iOS shadow (adds to 3D feel)
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 14,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.45,
+    shadowRadius: 20,
+    elevation: 14,
+    // Subtle highlight border on top edge to simulate light hitting the card
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.12)',
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(255,255,255,0.06)',
   },
+
   topRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   networkRow: { alignItems: 'center', flex: 1, flexDirection: 'row', marginRight: 12 },
-  bankLogoBox: {
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center',
-    overflow: 'hidden',
-    width: 32,
-  },
   bankLogo: { height: 24, width: 24 },
   bankInitials: { color: '#040404', fontWeight: '800' },
-  networkLabel: { color: '#F6F6F6', flex: 1, fontWeight: '900', marginLeft: 8 },
-  rupayText: { color: '#FFFFFF', fontSize: 22, fontWeight: '900' },
+  networkLabel: { color: '#F6F6F6', flex: 1, fontWeight: '900', marginLeft: 8, fontFamily: 'PlusJakartaSans-ExtraBold' },
+  rupayText: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold' },
+
   chip: {
     backgroundColor: '#E0B545',
     borderRadius: 8,
@@ -257,30 +297,56 @@ const styles = StyleSheet.create({
     top: 7,
     width: 18,
   },
+
   numberBlock: { marginTop: 13 },
-  fieldLabel: { color: '#D9D9D9', marginBottom: 4 },
-  cardHolderName: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 1, marginBottom: 8 },
-  cardNumber: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 4, fontSize: 24 },
+  cardHolderName: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 1, marginBottom: 8, fontFamily: 'PlusJakartaSans-ExtraBold' },
+  cardNumber: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 4, fontSize: 24, fontFamily: 'PlusJakartaSans-ExtraBold' },
+
   bottomRow: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between' },
   holderBlock: { flex: 1, marginRight: 16 },
-  holderName: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 2 },
-  cardType: { color: '#D8D8D8', marginTop: 4 },
   validBlock: { alignItems: 'flex-start', minWidth: 78 },
-  validLabel: { color: '#FFFFFF', marginTop: 14, fontWeight: '700', fontSize: 12 },
-  validValue: { color: '#FFFFFF', fontWeight: '900' },
-  cardActions: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 4, paddingHorizontal: 4 },
+  validLabel: { color: '#FFFFFF', marginTop: 14, fontWeight: '700', fontSize: 12, opacity: 0.7 },
+  validValue: { color: '#FFFFFF', fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold' },
+
+  tapHint: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+  },
+  tapHintText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 10,
+    fontFamily: 'PlusJakartaSans-Medium',
+  },
+
+  cardActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 4,
+    paddingHorizontal: 4,
+    marginTop: 4,
+  },
+
+  // Empty state
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingBottom: 100,
   },
+  emptyIcon: { fontSize: 52, marginBottom: 16 },
   emptyText: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '900',
-    opacity: 0.3,
+    fontFamily: 'PlusJakartaSans-ExtraBold',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans-Medium',
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
 });
 
 export default CardsSection;
-

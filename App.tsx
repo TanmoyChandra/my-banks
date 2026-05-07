@@ -4,6 +4,7 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
 import { lightTheme, darkTheme } from './src/theme';
 import { useUiStore } from './src/store/useUiStore';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -12,6 +13,15 @@ export default function App() {
   const isDark = useUiStore((s) => s.isDark);
   const theme = isDark ? darkTheme : lightTheme;
 
+  const [fontsLoaded] = useFonts({
+    PlusJakartaSans: require('./assets/fonts/PlusJakartaSans-Regular.ttf'),
+    'PlusJakartaSans-Medium': require('./assets/fonts/PlusJakartaSans-Medium.ttf'),
+    'PlusJakartaSans-SemiBold': require('./assets/fonts/PlusJakartaSans-SemiBold.ttf'),
+    'PlusJakartaSans-Bold': require('./assets/fonts/PlusJakartaSans-Bold.ttf'),
+    'PlusJakartaSans-ExtraBold': require('./assets/fonts/PlusJakartaSans-ExtraBold.ttf'),
+    'PlusJakartaSans-Black': require('./assets/fonts/PlusJakartaSans-ExtraBold.ttf'),
+  });
+
   const navTheme = {
     ...(isDark ? DarkTheme : DefaultTheme),
     colors: {
@@ -19,6 +29,10 @@ export default function App() {
       background: theme.colors.background,
     },
   };
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <SafeAreaProvider>

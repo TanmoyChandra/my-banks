@@ -31,5 +31,15 @@ export interface BankAccount {
   branchName: string;
 }
 
+export interface CardTransaction {
+  id: string;
+  cardId: string;
+  /** 'debit' = money spent/owed (increases due). 'credit' = payment made (decreases due). */
+  type: 'debit' | 'credit';
+  amount: number;
+  description: string;
+  date: string; // ISO date string
+}
+
 export type TabType = 'qr' | 'cards' | 'accounts';
 export type DrawerScreen = 'setup-qr' | 'setup-cards' | 'setup-accounts' | null;

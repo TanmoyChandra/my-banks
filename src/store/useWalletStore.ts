@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { QREntry, CardEntry, BankAccount } from '../types';
+import { QREntry, CardEntry, BankAccount, CardTransaction } from '../types';
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -9,6 +9,7 @@ interface WalletState {
   upis: QREntry[];
   cards: CardEntry[];
   accounts: BankAccount[];
+  transactions: CardTransaction[];
 
   addUpi: (entry: Omit<QREntry, 'id'>) => void;
   updateUpi: (id: string, entry: Omit<QREntry, 'id'>) => void;
@@ -21,14 +22,20 @@ interface WalletState {
   addAccount: (account: Omit<BankAccount, 'id'>) => void;
   updateAccount: (id: string, account: Omit<BankAccount, 'id'>) => void;
   deleteAccount: (id: string) => void;
+
+  // Transaction CRUD (per card)
+  addTransaction: (tx: Omit<CardTransaction, 'id'>) => void;
+  deleteTransaction: (id: string) => void;
+  getTransactionsForCard: (cardId: string) => CardTransaction[];
 }
 
 export const useWalletStore = create<WalletState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       upis: [],
       cards: [],
       accounts: [],
+      transactions: [],
 
       // UPI CRUD
       addUpi: (entry) =>
@@ -44,7 +51,11 @@ export const useWalletStore = create<WalletState>()(
       updateCard: (id, card) =>
         set((s) => ({ cards: s.cards.map((c) => (c.id === id ? { ...card, id } : c)) })),
       deleteCard: (id) =>
-        set((s) => ({ cards: s.cards.filter((c) => c.id !== id) })),
+        set((s) => ({
+          cards: s.cards.filter((c) => c.id !== id),
+          // also purge all transactions for the deleted card
+          transactions: s.transactions.filter((t) => t.cardId !== id),
+        })),
 
       // Account CRUD
       addAccount: (account) =>
@@ -53,6 +64,14 @@ export const useWalletStore = create<WalletState>()(
         set((s) => ({ accounts: s.accounts.map((a) => (a.id === id ? { ...account, id } : a)) })),
       deleteAccount: (id) =>
         set((s) => ({ accounts: s.accounts.filter((a) => a.id !== id) })),
+
+      // Transaction CRUD
+      addTransaction: (tx) =>
+        set((s) => ({ transactions: [{ ...tx, id: generateId() }, ...s.transactions] })),
+      deleteTransaction: (id) =>
+        set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) })),
+      getTransactionsForCard: (cardId) =>
+        get().transactions.filter((t) => t.cardId === cardId),
     }),
     {
       name: 'mybanks-wallet',

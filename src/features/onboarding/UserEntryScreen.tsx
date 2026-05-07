@@ -58,7 +58,7 @@ export default function UserEntryScreen() {
             onChangeText={setName}
             placeholder="Alex Morgan"
             placeholderTextColor="#71717A"
-            selectionColor="#BEF264"
+            selectionColor="#AAEF00"
             autoFocus
           />
         </Animated.View>
@@ -67,7 +67,7 @@ export default function UserEntryScreen() {
       <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
         <Button
           mode="contained"
-          buttonColor="#BEF264"
+          buttonColor="#AAEF00"
           textColor="#000000"
           onPress={handleSubmit}
           disabled={!name.trim()}
@@ -84,12 +84,12 @@ export default function UserEntryScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000000' },
   header: { paddingHorizontal: 24, paddingTop: 40 },
-  iconContainer: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#BEF264', alignItems: 'center', justifyContent: 'center' },
+  iconContainer: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#AAEF00', alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24, marginTop: -40 },
-  title: { fontSize: 40, fontWeight: '900', letterSpacing: -1.5, marginBottom: 16, color: '#FFFFFF', lineHeight: 44 },
-  subtitle: { fontSize: 16, lineHeight: 24, fontWeight: '500', color: '#A1A1AA', marginBottom: 40 },
+  title: { fontSize: 40, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', letterSpacing: -1.5, marginBottom: 16, color: '#FFFFFF', lineHeight: 44 },
+  subtitle: { fontSize: 16, lineHeight: 26, fontWeight: '500', fontFamily: 'PlusJakartaSans-Medium', color: '#A1A1AA', marginBottom: 40 },
   inputContainer: { width: '100%' },
-  label: { fontSize: 14, fontWeight: '800', marginBottom: 12, color: '#FFFFFF' },
+  label: { fontSize: 14, fontWeight: '800', fontFamily: 'PlusJakartaSans-ExtraBold', marginBottom: 12, color: '#FFFFFF' },
   input: {
     width: '100%',
     borderRadius: 20,
@@ -97,10 +97,11 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     fontSize: 18,
     fontWeight: '700',
+    fontFamily: 'PlusJakartaSans-Bold',
     backgroundColor: '#18181B',
     color: '#FFFFFF',
   },
   footer: { paddingHorizontal: 24 },
   btn: { borderRadius: 32, paddingVertical: 8 },
-  btnLabel: { fontSize: 18, fontWeight: '900' },
+  btnLabel: { fontSize: 18, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold' },
 });
