@@ -89,39 +89,45 @@ function FloatingTabBar({ state, navigation }: any) {
       style={[
         tStyles.bar,
         {
-          backgroundColor: theme.colors.surface,
-          borderColor: isDark ? '#27272a' : '#F0F0F0',
-          borderWidth: 1,
+          backgroundColor: theme.colors.elevation.level2,
         },
       ]}
     >
       {state.routes.map((route: any, i: number) => {
         const isActive = state.index === i;
         const meta = TAB_META[route.name] || { focused: 'circle', unfocused: 'circle-outline' };
-        const activeColor = isDark ? '#FFFFFF' : '#000000';
-        const inactiveColor = isDark ? '#505050' : '#BDBDBD';
+        
+        // M3 Navigation Bar colors
+        const activeIconColor = theme.colors.onSecondaryContainer;
+        const inactiveIconColor = theme.colors.onSurfaceVariant;
+        const activeBgColor = theme.colors.secondaryContainer;
 
         return (
           <TouchableOpacity
             key={route.key}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
             onPress={() => {
               LayoutAnimation.configureNext({
-                duration: 400,
+                duration: 300,
                 create: { type: 'easeInEaseOut', property: 'opacity' },
-                update: { type: 'easeInEaseOut' },
+                update: { type: 'easeInEaseOut', springDamping: 0.8 },
                 delete: { type: 'easeInEaseOut', property: 'opacity' },
               });
               navigation.navigate(route.name);
             }}
-            style={tStyles.tab}
+            style={tStyles.tabContainer}
           >
-            <IconButton
-              icon={isActive ? meta.focused : meta.unfocused}
-              size={24}
-              iconColor={isActive ? activeColor : inactiveColor}
-              style={{ margin: 0, width: 24, height: 24 }}
-            />
+            <View style={[
+              tStyles.pill, 
+              isActive && { backgroundColor: activeBgColor }
+            ]}>
+              <IconButton
+                icon={isActive ? meta.focused : meta.unfocused}
+                size={26}
+                iconColor={isActive ? activeIconColor : inactiveIconColor}
+                style={{ margin: 0, width: 28, height: 28 }}
+              />
+            </View>
           </TouchableOpacity>
         );
       })}
@@ -133,26 +139,32 @@ const tStyles = StyleSheet.create({
   bar: {
     position: 'absolute',
     bottom: Platform.OS === 'ios' ? 28 : 16,
-    left: 16,
-    right: 16,
+    left: 24,
+    right: 24,
     flexDirection: 'row',
     paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderRadius: 40,
+    paddingVertical: 12,
+    borderRadius: 32,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
     elevation: 8,
     justifyContent: 'space-around',
     alignItems: 'center',
   },
-  tab: {
+  tabContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
   },
+  pill: {
+    paddingHorizontal: 20,
+    paddingVertical: 6,
+    borderRadius: 24, // M3 pill shape
+    alignItems: 'center',
+    justifyContent: 'center',
+  }
 });
 
 // ─── Main Screen (4 Tabs, no drawer) ──────────────────────────────

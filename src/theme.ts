@@ -1,65 +1,105 @@
-import { MD3LightTheme, MD3DarkTheme, configureFonts } from 'react-native-paper';
+import { MD3LightTheme, MD3DarkTheme, configureFonts, MD3Theme } from 'react-native-paper';
 
-export const lightTheme = {
-  ...MD3LightTheme,
-  fonts: configureFonts({
-    config: {
-      fontFamily: 'PlusJakartaSans',
-    },
-  }),
-  colors: {
-    ...MD3LightTheme.colors,
-    primary: '#AAEF00', // Figma vivid lime
-    onPrimary: '#000000',
-    primaryContainer: '#AAEF00',
-    onPrimaryContainer: '#000000',
-    secondary: '#000000',
-    tertiary: '#000000',
-    background: '#FFFFFF',   // pure white per Figma
-    surface: '#FFFFFF',
-    surfaceVariant: '#F5F5F5', // neutral light gray per Figma
-    onSurface: '#000000',      // pure black headings per Figma
-    onSurfaceVariant: '#6B7280',
-    secondaryContainer: '#F5F5F5',
-    elevation: {
-      ...MD3LightTheme.colors.elevation,
-      level1: '#FFFFFF',
-      level2: '#FFFFFF',
-      level3: '#FFFFFF',
-    },
-  },
-  roundness: 4,
+const fontConfig = {
+  displayLarge: { fontFamily: 'PlusJakartaSans-ExtraBold', fontSize: 57, letterSpacing: 0, lineHeight: 64 },
+  displayMedium: { fontFamily: 'PlusJakartaSans-ExtraBold', fontSize: 45, letterSpacing: 0, lineHeight: 52 },
+  displaySmall: { fontFamily: 'PlusJakartaSans-Bold', fontSize: 36, letterSpacing: 0, lineHeight: 44 },
+  headlineLarge: { fontFamily: 'PlusJakartaSans-ExtraBold', fontSize: 32, letterSpacing: 0, lineHeight: 40 },
+  headlineMedium: { fontFamily: 'PlusJakartaSans-Bold', fontSize: 28, letterSpacing: 0, lineHeight: 36 },
+  headlineSmall: { fontFamily: 'PlusJakartaSans-Bold', fontSize: 24, letterSpacing: 0, lineHeight: 32 },
+  titleLarge: { fontFamily: 'PlusJakartaSans-Bold', fontSize: 22, letterSpacing: 0, lineHeight: 28 },
+  titleMedium: { fontFamily: 'PlusJakartaSans-SemiBold', fontSize: 16, letterSpacing: 0.15, lineHeight: 24 },
+  titleSmall: { fontFamily: 'PlusJakartaSans-Medium', fontSize: 14, letterSpacing: 0.1, lineHeight: 20 },
+  labelLarge: { fontFamily: 'PlusJakartaSans-Bold', fontSize: 14, letterSpacing: 0.1, lineHeight: 20 },
+  labelMedium: { fontFamily: 'PlusJakartaSans-SemiBold', fontSize: 12, letterSpacing: 0.5, lineHeight: 16 },
+  labelSmall: { fontFamily: 'PlusJakartaSans-Medium', fontSize: 11, letterSpacing: 0.5, lineHeight: 16 },
+  bodyLarge: { fontFamily: 'PlusJakartaSans-Medium', fontSize: 16, letterSpacing: 0.15, lineHeight: 24 },
+  bodyMedium: { fontFamily: 'PlusJakartaSans-Medium', fontSize: 14, letterSpacing: 0.25, lineHeight: 20 },
+  bodySmall: { fontFamily: 'PlusJakartaSans-Medium', fontSize: 12, letterSpacing: 0.4, lineHeight: 16 },
 };
 
-
-
-export const darkTheme = {
-  ...MD3DarkTheme,
-  fonts: configureFonts({
-    config: {
-      fontFamily: 'PlusJakartaSans',
-    },
-  }),
+export const lightTheme: MD3Theme = {
+  ...MD3LightTheme,
+  fonts: configureFonts({ config: fontConfig }),
   colors: {
-    ...MD3DarkTheme.colors,
-    primary: '#AAEF00',
-    onPrimary: '#000000',
-    primaryContainer: '#AAEF00',
-    onPrimaryContainer: '#000000',
-    secondary: '#FFFFFF',
-    tertiary: '#FFFFFF',
-    background: '#09090b', // zinc-950
-    surface: '#18181b', // zinc-900
-    surfaceVariant: '#27272a', // zinc-800
-    onSurface: '#FFFFFF',
-    onSurfaceVariant: '#a1a1aa',
-    secondaryContainer: '#18181b',
+    ...MD3LightTheme.colors,
+    primary: '#1D6C31',
+    onPrimary: '#FFFFFF',
+    primaryContainer: '#A5F5A9',
+    onPrimaryContainer: '#002107',
+    secondary: '#516350',
+    onSecondary: '#FFFFFF',
+    secondaryContainer: '#D4E8D0',
+    onSecondaryContainer: '#0F1F10',
+    tertiary: '#39656B',
+    onTertiary: '#FFFFFF',
+    tertiaryContainer: '#BCEBF2',
+    onTertiaryContainer: '#001F23',
+    error: '#BA1A1A',
+    onError: '#FFFFFF',
+    errorContainer: '#FFDAD6',
+    onErrorContainer: '#410002',
+    background: '#FDFDF5',
+    onBackground: '#1A1C18',
+    surface: '#FDFDF5',
+    onSurface: '#1A1C18',
+    surfaceVariant: '#DFE4D7',
+    onSurfaceVariant: '#43483F',
+    outline: '#73796E',
+    outlineVariant: '#C3C8BC',
+    surfaceDisabled: '#1A1C18',
+    onSurfaceDisabled: '#1A1C18',
     elevation: {
-      ...MD3DarkTheme.colors.elevation,
-      level1: '#18181b',
-      level2: '#18181b',
-      level3: '#18181b',
+      ...MD3LightTheme.colors.elevation,
+      level1: '#F4F5ED',
+      level2: '#EDF0E7',
+      level3: '#E7ECE2',
+      level4: '#E5EBDF',
+      level5: '#E0E9DB',
     },
   },
-  roundness: 4,
+  roundness: 3, // M3 base multiplier
+};
+
+export const darkTheme: MD3Theme = {
+  ...MD3DarkTheme,
+  fonts: configureFonts({ config: fontConfig }),
+  colors: {
+    ...MD3DarkTheme.colors,
+    primary: '#8AD88F',
+    onPrimary: '#003914',
+    primaryContainer: '#005321',
+    onPrimaryContainer: '#A5F5A9',
+    secondary: '#B8CCB5',
+    onSecondary: '#243424',
+    secondaryContainer: '#3A4B3A',
+    onSecondaryContainer: '#D4E8D0',
+    tertiary: '#A1CED5',
+    onTertiary: '#00363C',
+    tertiaryContainer: '#1F4D53',
+    onTertiaryContainer: '#BCEBF2',
+    error: '#FFB4AB',
+    onError: '#690005',
+    errorContainer: '#93000A',
+    onErrorContainer: '#FFDAD6',
+    background: '#1A1C18',
+    onBackground: '#E3E3DC',
+    surface: '#1A1C18',
+    onSurface: '#E3E3DC',
+    surfaceVariant: '#43483F',
+    onSurfaceVariant: '#C3C8BC',
+    outline: '#8D9387',
+    outlineVariant: '#43483F',
+    surfaceDisabled: '#E3E3DC',
+    onSurfaceDisabled: '#E3E3DC',
+    elevation: {
+      ...MD3DarkTheme.colors.elevation,
+      level1: '#1F241E',
+      level2: '#222921',
+      level3: '#262F24',
+      level4: '#273125',
+      level5: '#2A3528',
+    },
+  },
+  roundness: 3,
 };

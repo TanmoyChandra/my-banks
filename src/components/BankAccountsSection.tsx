@@ -17,12 +17,10 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
   const [expanded, setExpanded] = useState(false);
   const theme = useTheme();
   const bank = findBankByName(account.bankName);
-  const isDark = theme.dark;
-
-  const cardBg = isDark ? '#1c1c1c' : '#F5F5F5'; // neutral per Figma
-  const cardBorder = isDark ? '#2d2d2d' : '#E5E7EB';
-  const mainTextColor = isDark ? '#FFFFFF' : '#000000'; // pure black per Figma
-  const subTextColor = isDark ? '#a1a1aa' : '#6B7280'; // neutral gray per Figma
+  const cardBg = theme.colors.surfaceVariant;
+  const cardBorder = theme.colors.outlineVariant;
+  const mainTextColor = theme.colors.onSurface;
+  const subTextColor = theme.colors.onSurfaceVariant;
 
   const toggleExpand = () => {
     LayoutAnimation.configureNext({

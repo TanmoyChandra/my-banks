@@ -70,11 +70,11 @@ function TransactionModal({
     }
   }, [visible, initialData]);
 
-  const bgColor = isDark ? '#18181b' : '#FFFFFF';
-  const inputBg = isDark ? '#27272a' : '#F5F5F5';
-  const textColor = isDark ? '#FFFFFF' : '#000000';
-  const subColor = isDark ? '#a1a1aa' : '#6B7280';
-  const borderColor = isDark ? '#27272a' : '#E5E7EB';
+  const bgColor = theme.colors.elevation.level3;
+  const inputBg = theme.colors.surfaceVariant;
+  const textColor = theme.colors.onSurface;
+  const subColor = theme.colors.onSurfaceVariant;
+  const borderColor = theme.colors.outlineVariant;
 
   const handleSave = () => {
     const val = parseFloat(amount.replace(/,/g, ''));
@@ -133,13 +133,13 @@ function TransactionModal({
                 <View style={[styles.toggleRow, { backgroundColor: inputBg }]}>
                   <TouchableOpacity
                     activeOpacity={0.8}
-                    style={[styles.toggleBtn, txType === 'debit' && styles.toggleActive]}
+                    style={[styles.toggleBtn, txType === 'debit' && { backgroundColor: theme.colors.errorContainer }]}
                     onPress={() => setTxType('debit')}
                   >
                     <Text
                       style={[
                         styles.toggleLabel,
-                        { color: txType === 'debit' ? '#000000' : subColor },
+                        { color: txType === 'debit' ? theme.colors.onErrorContainer : subColor },
                       ]}
                     >
                       ↑ Spent
@@ -147,13 +147,13 @@ function TransactionModal({
                   </TouchableOpacity>
                   <TouchableOpacity
                     activeOpacity={0.8}
-                    style={[styles.toggleBtn, txType === 'credit' && styles.toggleActiveGreen]}
+                    style={[styles.toggleBtn, txType === 'credit' && { backgroundColor: theme.colors.primaryContainer }]}
                     onPress={() => setTxType('credit')}
                   >
                     <Text
                       style={[
                         styles.toggleLabel,
-                        { color: txType === 'credit' ? '#000000' : subColor },
+                        { color: txType === 'credit' ? theme.colors.onPrimaryContainer : subColor },
                       ]}
                     >
                       ↓ Payment Made
@@ -176,7 +176,7 @@ function TransactionModal({
                   placeholder="0.00"
                   placeholderTextColor={subColor}
                   keyboardType="decimal-pad"
-                  selectionColor="#AAEF00"
+                  selectionColor={theme.colors.primary}
                 />
 
                 {/* Description */}
@@ -187,7 +187,7 @@ function TransactionModal({
                   onChangeText={setDescription}
                   placeholder="e.g. Amazon purchase"
                   placeholderTextColor={subColor}
-                  selectionColor="#AAEF00"
+                  selectionColor={theme.colors.primary}
                 />
 
                 {/* Payee (Hide if Payment Made) */}
@@ -200,7 +200,7 @@ function TransactionModal({
                       onChangeText={setPayee}
                       placeholder="e.g. me"
                       placeholderTextColor={subColor}
-                      selectionColor="#AAEF00"
+                      selectionColor={theme.colors.primary}
                     />
                   </>
                 )}
@@ -227,7 +227,6 @@ function TransactionModal({
                 )}
               </ScrollView>
 
-              {/* Actions */}
               <View style={styles.modalActions}>
                 <TouchableOpacity
                   style={[styles.modalCancelBtn, { borderColor }]}
@@ -237,11 +236,11 @@ function TransactionModal({
                   <Text style={[styles.modalCancelLabel, { color: textColor }]}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalAddBtn, { backgroundColor: '#AAEF00' }]}
+                  style={[styles.modalAddBtn, { backgroundColor: theme.colors.primary }]}
                   onPress={handleSave}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.modalAddLabel}>{initialData ? 'Save' : 'Add'}</Text>
+                  <Text style={[styles.modalAddLabel, { color: theme.colors.onPrimary }]}>{initialData ? 'Save' : 'Add'}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -426,7 +425,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
           </View>
           <View style={[styles.statDivider]} />
           <View style={styles.statBox}>
-            <Text style={[styles.statValue, { color: '#AAEF00' }]}>
+            <Text style={[styles.statValue, { color: theme.colors.primary }]}>
               ₹{fmt(cardTxs.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0))}
             </Text>
             <Text style={styles.statLabel}>Total Paid</Text>
@@ -470,14 +469,14 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
 
       {/* ── FAB ── */}
       <TouchableOpacity
-        style={[styles.fab, { bottom: insets.bottom + 24 }]}
+        style={[styles.fab, { bottom: insets.bottom + 24, backgroundColor: theme.colors.primaryContainer, shadowColor: theme.colors.primaryContainer }]}
         activeOpacity={0.85}
         onPress={() => {
           setEditingTx(null);
           setModalVisible(true);
         }}
       >
-        <Text style={styles.fabIcon}>+</Text>
+        <Text style={[styles.fabIcon, { color: theme.colors.onPrimaryContainer }]}>+</Text>
       </TouchableOpacity>
 
       {/* ── Add/Edit Modal ── */}
@@ -687,17 +686,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // FAB
   fab: {
     position: 'absolute',
     right: 24,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#AAEF00',
+    width: 64, // M3 FAB size
+    height: 64,
+    borderRadius: 16, // M3 squircle FAB
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#AAEF00',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.5,
     shadowRadius: 12,
@@ -706,7 +702,6 @@ const styles = StyleSheet.create({
   fabIcon: {
     fontSize: 30,
     fontWeight: '900',
-    color: '#000000',
     lineHeight: 34,
   },
 
@@ -749,8 +744,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 12,
   },
-  toggleActive: { backgroundColor: '#EF4444' },
-  toggleActiveGreen: { backgroundColor: '#AAEF00' },
+  toggleActive: {},
+  toggleActiveGreen: {},
   toggleLabel: {
     fontSize: 14,
     fontWeight: '700',

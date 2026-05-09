@@ -58,11 +58,10 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
     }
   };
 
-  const isDark = theme.dark;
-  const cardBg = isDark ? '#1c1c1c' : '#F5F5F5'; // neutral per Figma
-  const cardBorder = isDark ? '#2d2d2d' : '#E5E7EB';
-  const mainTextColor = isDark ? '#FFFFFF' : '#000000'; // pure black per Figma
-  const subTextColor = isDark ? '#a1a1aa' : '#6B7280'; // neutral gray per Figma
+  const cardBg = theme.colors.surfaceVariant;
+  const cardBorder = theme.colors.outlineVariant;
+  const mainTextColor = theme.colors.onSurface;
+  const subTextColor = theme.colors.onSurfaceVariant;
 
   return (
     <View style={[styles.page, { width: width + PAGE_GAP }]}>
@@ -114,8 +113,8 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
       
       <Button
         mode="contained"
-        buttonColor="#AAEF00"
-        textColor="#000000"
+        buttonColor={theme.colors.primaryContainer}
+        textColor={theme.colors.onPrimaryContainer}
         icon="share-variant"
         onPress={handleShare}
         style={[styles.shareButton, { width }]}

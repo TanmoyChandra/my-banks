@@ -55,11 +55,11 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
   const insets = useSafeAreaInsets();
   const userName = useUiStore(s => s.userName);
 
-  const bgColor = isDark ? '#09090b' : '#FFFFFF';
-  const surfaceColor = isDark ? '#18181b' : '#F5F5F5';
-  const textColor = isDark ? '#FFFFFF' : '#000000';
-  const subColor = isDark ? '#a1a1aa' : '#6B7280';
-  const borderColor = isDark ? '#27272a' : '#EBEBEB';
+  const bgColor = theme.colors.background;
+  const surfaceColor = theme.colors.surfaceVariant;
+  const textColor = theme.colors.onSurface;
+  const subColor = theme.colors.onSurfaceVariant;
+  const borderColor = theme.colors.outlineVariant;
 
   return (
     <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: insets.top }]}>
@@ -83,7 +83,7 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           icon="📷"
           title="UPI / QR Codes"
           subtitle="Add and manage your UPI IDs and QR codes"
-          accentColor="#AAEF00"
+          accentColor={theme.colors.primaryContainer}
           onPress={() => onNavigate('setup-qr')}
           isDark={isDark}
           bgColor={surfaceColor}
@@ -96,7 +96,7 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           icon="🏦"
           title="Bank Accounts"
           subtitle="Store IFSC, account number and branch details"
-          accentColor="#000000"
+          accentColor={theme.colors.secondaryContainer}
           onPress={() => onNavigate('setup-accounts')}
           isDark={isDark}
           bgColor={surfaceColor}
@@ -109,7 +109,7 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           icon="💳"
           title="Debit / Credit Cards"
           subtitle="Save card numbers, expiry dates and CVV"
-          accentColor="#1e1b4b"
+          accentColor={theme.colors.tertiaryContainer}
           onPress={() => onNavigate('setup-cards')}
           isDark={isDark}
           bgColor={surfaceColor}
