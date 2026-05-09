@@ -39,7 +39,7 @@ function SetupCard({
         onPress={onPress}
         left={(props) => (
           <View style={[styles.cardIconBox, { backgroundColor: accentColor, marginLeft: 16, marginRight: 8, marginTop: 8 }]}>
-            <Text style={styles.cardIconText}>{icon}</Text>
+            <List.Icon icon={icon} color={textColor} style={{ margin: 0 }} />
           </View>
         )}
         right={(props) => <List.Icon {...props} icon="chevron-right" color={subColor} />}
@@ -82,7 +82,7 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
         <Text style={[styles.sectionLabel, { color: subColor }]}>DATA SETUP</Text>
 
         <SetupCard
-          icon="📷"
+          icon="qrcode"
           title="UPI / QR Codes"
           subtitle="Add and manage your UPI IDs and QR codes"
           accentColor={theme.colors.primaryContainer}
@@ -95,7 +95,7 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
         />
 
         <SetupCard
-          icon="🏦"
+          icon="bank"
           title="Bank Accounts"
           subtitle="Store IFSC, account number and branch details"
           accentColor={theme.colors.secondaryContainer}
@@ -108,7 +108,7 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
         />
 
         <SetupCard
-          icon="💳"
+          icon="credit-card"
           title="Debit / Credit Cards"
           subtitle="Save card numbers, expiry dates and CVV"
           accentColor={theme.colors.tertiaryContainer}

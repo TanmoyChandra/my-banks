@@ -9,7 +9,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal, Appbar, FAB } from 'react-native-paper';
+import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal, Appbar, FAB, Avatar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -406,7 +406,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
 
         {cardTxs.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>🧾</Text>
+            <Avatar.Icon size={64} icon="receipt" style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }} color={theme.colors.primary} />
             <Text style={[styles.emptyTitle, { color: textColor }]}>No transactions yet</Text>
             <Text style={[styles.emptySubtitle, { color: subColor }]}>
               Tap the + button to add your first entry

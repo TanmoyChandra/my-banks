@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { Button, IconButton, Text, useTheme } from 'react-native-paper';
+import { Button, IconButton, Text, useTheme, Avatar } from 'react-native-paper';
 import Svg, { Path } from 'react-native-svg';
 import { findBankByName } from '../constants/banks';
 import { CardEntry } from '../types';
@@ -184,7 +184,7 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
       </View>
       {cards.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>💳</Text>
+          <Avatar.Icon size={64} icon="credit-card-outline" style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }} color={theme.colors.primary} />
           <Text style={[styles.emptyText, { color: theme.colors.onSurface }]}>No cards yet</Text>
           <Text style={[styles.emptySubText, { color: theme.colors.onSurfaceVariant }]}>
             Open the menu to add your first card
