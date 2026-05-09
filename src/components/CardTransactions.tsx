@@ -9,7 +9,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal, Appbar, FAB, Avatar } from 'react-native-paper';
+import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal, Appbar, FAB, Avatar, List, Chip } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -271,46 +271,37 @@ function TransactionRow({
       overshootLeft={false}
       overshootRight={false}
     >
-      <View style={[styles.txRow, { backgroundColor: rowBg }]}>
-        {/* Icon */}
-        <View
-          style={[
-            styles.txIcon,
-            { backgroundColor: isDebit ? '#FEE2E2' : '#DCFCE7' },
-          ]}
-        >
-          <Text style={[styles.txIconText, { color: isDebit ? '#EF4444' : '#22C55E' }]}>
-            {isDebit ? '↑' : '↓'}
-          </Text>
-        </View>
-
-        {/* Info */}
-        <View style={styles.txInfo}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={[styles.txDesc, { color: textColor, flexShrink: 1 }]} numberOfLines={1}>
-              {tx.description}
-            </Text>
+      <List.Item
+        title={tx.description}
+        titleStyle={{ color: textColor, fontWeight: '700' }}
+        description={() => (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+            <Text style={{ color: subColor, fontSize: 12 }}>{formatDate(tx.date)}</Text>
             {isDebit && tx.payee ? (
-              <View style={[styles.payeeChip, { backgroundColor: chipBg }]}>
-                <Text style={[styles.payeeText, { color: textColor }]}>{tx.payee}</Text>
-              </View>
+              <Chip compact textStyle={{ fontSize: 10, lineHeight: 12 }} style={{ marginLeft: 8, height: 24, borderRadius: 12 }}>
+                {tx.payee}
+              </Chip>
             ) : null}
           </View>
-          <Text style={[styles.txDate, { color: subColor }]}>{formatDate(tx.date)}</Text>
-        </View>
-
-        {/* Amount */}
-        <View style={styles.txRight}>
-          <Text
-            style={[
-              styles.txAmount,
-              { color: isDebit ? '#EF4444' : '#22C55E' },
-            ]}
-          >
-            ₹{fmt(tx.amount)}
-          </Text>
-        </View>
-      </View>
+        )}
+        left={props => (
+          <Avatar.Icon
+            {...props}
+            icon={isDebit ? 'arrow-top-right' : 'arrow-bottom-left'}
+            size={40}
+            color={isDebit ? theme.colors.error : theme.colors.primary}
+            style={[props.style, { backgroundColor: isDebit ? theme.colors.errorContainer : theme.colors.primaryContainer }]}
+          />
+        )}
+        right={props => (
+          <View style={{ justifyContent: 'center', alignItems: 'flex-end', paddingRight: 8 }}>
+            <Text style={{ fontWeight: '800', fontSize: 16, color: isDebit ? theme.colors.error : theme.colors.primary }}>
+              {isDebit ? '-' : '+'}₹{fmt(tx.amount)}
+            </Text>
+          </View>
+        )}
+        style={{ backgroundColor: rowBg, borderBottomWidth: 1, borderBottomColor: theme.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
+      />
     </Swipeable>
   );
 }

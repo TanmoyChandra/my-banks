@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Platform, LayoutAnimation } from 'react-native';
+import { CommonActions } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Text, IconButton, useTheme } from 'react-native-paper';
+import { Text, IconButton, useTheme, BottomNavigation, Icon, Appbar } from 'react-native-paper';
 import { useUiStore } from '../store/useUiStore';
 import { useWalletStore } from '../store/useWalletStore';
 import { CardEntry } from '../types';
@@ -36,41 +37,20 @@ function AppHeader() {
   };
 
   return (
-    <View style={[hStyles.header, { backgroundColor: theme.colors.background }]}>
-      <Text style={[hStyles.title, { color: theme.colors.onSurface }]}>MyBanks</Text>
-      <IconButton
-        icon={isDark ? 'weather-sunny' : 'moon-waning-crescent'}
-        size={20}
-        iconColor={isDark ? '#000000' : '#FFFFFF'}
-        style={[hStyles.themeBtn, { backgroundColor: isDark ? '#AAEF00' : '#1c1c1c' }]}
-        onPress={handleToggleTheme}
+    <Appbar.Header style={{ backgroundColor: theme.colors.background }} mode="center-aligned">
+      <Appbar.Content 
+        title="MyBanks" 
+        titleStyle={{ fontSize: 22, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', color: theme.colors.onSurface }} 
       />
-    </View>
+      <Appbar.Action 
+        icon={isDark ? 'weather-sunny' : 'moon-waning-crescent'} 
+        iconColor={isDark ? '#000000' : '#FFFFFF'} 
+        style={{ backgroundColor: isDark ? '#AAEF00' : '#1c1c1c' }}
+        onPress={handleToggleTheme} 
+      />
+    </Appbar.Header>
   );
 }
-
-const hStyles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'android' ? 44 : 56,
-    paddingBottom: 12,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
-  },
-  themeBtn: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-});
 
 // ─── Tab bar: icons only (no labels) ──────────────────────────
 const TAB_META: Record<string, { focused: string; unfocused: string }> = {
@@ -80,92 +60,50 @@ const TAB_META: Record<string, { focused: string; unfocused: string }> = {
   Settings: { focused: 'cog',             unfocused: 'cog-outline' },
 };
 
-function FloatingTabBar({ state, navigation }: any) {
-  const theme = useTheme();
-  const isDark = useUiStore(s => s.isDark);
-
+function PaperTabBar({ navigation, state, descriptors, insets }: any) {
   return (
-    <View
-      style={[
-        tStyles.bar,
-        {
-          backgroundColor: theme.colors.elevation.level2,
-        },
-      ]}
-    >
-      {state.routes.map((route: any, i: number) => {
-        const isActive = state.index === i;
-        const meta = TAB_META[route.name] || { focused: 'circle', unfocused: 'circle-outline' };
-        
-        // M3 Navigation Bar colors
-        const activeIconColor = theme.colors.onSecondaryContainer;
-        const inactiveIconColor = theme.colors.onSurfaceVariant;
-        const activeBgColor = theme.colors.secondaryContainer;
+    <BottomNavigation.Bar
+      navigationState={state}
+      safeAreaInsets={insets}
+      onTabPress={({ route, preventDefault }) => {
+        const event = navigation.emit({
+          type: 'tabPress',
+          target: route.key,
+          canPreventDefault: true,
+        });
 
-        return (
-          <TouchableOpacity
-            key={route.key}
-            activeOpacity={0.8}
-            onPress={() => {
-              LayoutAnimation.configureNext({
-                duration: 300,
-                create: { type: 'easeInEaseOut', property: 'opacity' },
-                update: { type: 'easeInEaseOut', springDamping: 0.8 },
-                delete: { type: 'easeInEaseOut', property: 'opacity' },
-              });
-              navigation.navigate(route.name);
-            }}
-            style={tStyles.tabContainer}
-          >
-            <View style={[
-              tStyles.pill, 
-              isActive && { backgroundColor: activeBgColor }
-            ]}>
-              <IconButton
-                icon={isActive ? meta.focused : meta.unfocused}
-                size={26}
-                iconColor={isActive ? activeIconColor : inactiveIconColor}
-                style={{ margin: 0, width: 28, height: 28 }}
-              />
-            </View>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
+        if (event.defaultPrevented) {
+          preventDefault();
+        } else {
+         navigation.dispatch({
+            ...CommonActions.navigate(route.name, route.params),
+            target: state.key,
+          });
+        }
+      }}
+      renderIcon={({ route, focused, color }) => {
+        const { options } = descriptors[route.key];
+        if (options.tabBarIcon) {
+          return options.tabBarIcon({ focused, color, size: 24 });
+        }
+
+        const meta = TAB_META[route.name] || { focused: 'circle', unfocused: 'circle-outline' };
+        return <Icon source={focused ? meta.focused : meta.unfocused} color={color} size={24} />;
+      }}
+      getLabelText={({ route }) => {
+        const { options } = descriptors[route.key];
+        const label =
+          options.tabBarLabel !== undefined
+            ? options.tabBarLabel
+            : options.title !== undefined
+            ? options.title
+            : route.name;
+
+        return label as string;
+      }}
+    />
   );
 }
-
-const tStyles = StyleSheet.create({
-  bar: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 28 : 16,
-    left: 24,
-    right: 24,
-    flexDirection: 'row',
-    paddingHorizontal: 8,
-    paddingVertical: 12,
-    borderRadius: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 8,
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  tabContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pill: {
-    paddingHorizontal: 20,
-    paddingVertical: 6,
-    borderRadius: 24, // M3 pill shape
-    alignItems: 'center',
-    justifyContent: 'center',
-  }
-});
 
 // ─── Main Screen (4 Tabs, no drawer) ──────────────────────────────
 function MainScreen({ navigation }: any) {
@@ -174,9 +112,9 @@ function MainScreen({ navigation }: any) {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <BottomTab.Navigator
-        tabBar={props => <FloatingTabBar {...props} />}
+        tabBar={props => <PaperTabBar {...props} />}
         sceneContainerStyle={{ backgroundColor: theme.colors.background }}
-        screenOptions={{ headerShown: false, animation: 'fade' }}
+        screenOptions={{ headerShown: false, animation: 'shift' }}
       >
         <BottomTab.Screen name="QR">
           {() => <QRTab />}

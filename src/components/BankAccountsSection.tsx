@@ -97,7 +97,11 @@ const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) =
 
       {accounts.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Add new</Text>
+          <Avatar.Icon size={64} icon="bank-outline" style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }} color={theme.colors.primary} />
+          <Text style={[styles.emptyText, { color: theme.colors.onSurface }]}>No bank accounts</Text>
+          <Text style={[styles.emptySubText, { color: theme.colors.onSurfaceVariant }]}>
+            Add accounts from Settings to view them here
+          </Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -197,6 +201,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '900',
     opacity: 0.3,
+  },
+  emptySubText: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans-Medium',
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
 });
 
