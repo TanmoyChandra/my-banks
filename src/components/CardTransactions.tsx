@@ -7,12 +7,11 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
-import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal, Appbar, FAB, Avatar, List, Chip } from 'react-native-paper';
+import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal, Appbar, FAB, Avatar, List, Chip, Paragraph } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { DatePickerModal } from 'react-native-paper-dates';
 import { CardEntry, CardTransaction } from '../types';
 import { useWalletStore } from '../store/useWalletStore';
 
@@ -75,14 +74,20 @@ function TransactionModal({
   const subColor = theme.colors.onSurfaceVariant;
   const borderColor = theme.colors.outlineVariant;
 
+  const [dialogState, setDialogState] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });
+
+  const showAlert = (title: string, message: string) => {
+    setDialogState({ visible: true, title, message });
+  };
+
   const handleSave = () => {
     const val = parseFloat(amount.replace(/,/g, ''));
     if (!val || val <= 0) {
-      Alert.alert('Invalid Amount', 'Please enter a valid amount greater than 0.');
+      showAlert('Invalid Amount', 'Please enter a valid amount greater than 0.');
       return;
     }
     if (!description.trim()) {
-      Alert.alert('Missing Description', 'Please add a short description.');
+      showAlert('Missing Description', 'Please add a short description.');
       return;
     }
 
@@ -103,9 +108,9 @@ function TransactionModal({
     onClose();
   };
 
-  const handleDateChange = (event: any, selectedDate?: Date) => {
+  const handleConfirmDate = (params: any) => {
     setShowPicker(false);
-    if (selectedDate) setDate(selectedDate);
+    if (params.date) setDate(params.date);
   };
 
   return (
@@ -173,25 +178,28 @@ function TransactionModal({
                 )}
 
                 {/* Date */}
-                <Text style={[styles.fieldLabel, { color: subColor }]}>Date</Text>
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  style={[styles.input, { backgroundColor: inputBg, justifyContent: 'center' }]}
-                  onPress={() => setShowPicker(true)}
-                >
-                  <Text style={{ color: textColor, fontSize: 16, fontFamily: 'PlusJakartaSans-SemiBold' }}>
-                    {formatDate(date.toISOString())}
-                  </Text>
+                <TouchableOpacity activeOpacity={0.8} onPress={() => setShowPicker(true)}>
+                  <View pointerEvents="none">
+                    <PaperInput
+                      mode="outlined"
+                      label="Date"
+                      value={formatDate(date.toISOString())}
+                      style={{ marginBottom: 16 }}
+                      right={<PaperInput.Icon icon="calendar" />}
+                    />
+                  </View>
                 </TouchableOpacity>
 
-                {showPicker && (
-                  <DateTimePicker
-                    value={date}
-                    mode="date"
-                    display="default"
-                    onChange={handleDateChange}
-                  />
-                )}
+                <DatePickerModal
+                  locale="en"
+                  mode="single"
+                  visible={showPicker}
+                  onDismiss={() => setShowPicker(false)}
+                  date={date}
+                  onConfirm={handleConfirmDate}
+                  animationType="slide"
+                  presentationStyle="formSheet"
+                />
               </ScrollView>
 
               <View style={styles.modalActions}>
@@ -212,6 +220,20 @@ function TransactionModal({
               </View>
             </View>
           </TouchableOpacity>
+
+          <Portal>
+            <Dialog visible={dialogState.visible} onDismiss={() => setDialogState(p => ({ ...p, visible: false }))} style={{ backgroundColor: theme.colors.surface }}>
+              <Dialog.Title style={{ color: theme.colors.onSurface }}>{dialogState.title}</Dialog.Title>
+              <Dialog.Content>
+                <Paragraph style={{ color: theme.colors.onSurfaceVariant }}>{dialogState.message}</Paragraph>
+              </Dialog.Content>
+              <Dialog.Actions>
+                <Button onPress={() => setDialogState(p => ({ ...p, visible: false }))} textColor={theme.colors.primary}>
+                  OK
+                </Button>
+              </Dialog.Actions>
+            </Dialog>
+          </Portal>
         </KeyboardAvoidingView>
       </PaperModal>
     </Portal>

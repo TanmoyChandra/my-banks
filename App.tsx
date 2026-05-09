@@ -10,6 +10,9 @@ import { useFonts } from 'expo-font';
 import { lightTheme, darkTheme } from './src/theme';
 import { useUiStore } from './src/store/useUiStore';
 import RootNavigator from './src/navigation/RootNavigator';
+import { enGB, registerTranslation } from 'react-native-paper-dates';
+
+registerTranslation('en', enGB);
 
 export default function App() {
   const isDark = useUiStore((s) => s.isDark);

@@ -10,7 +10,10 @@ import {
   useTheme,
   Surface,
   SegmentedButtons,
-  Avatar
+  Avatar,
+  Portal,
+  Dialog,
+  Paragraph
 } from 'react-native-paper';
 import { BankAccount } from '../../types';
 import BankPicker from '../BankPicker';
@@ -39,9 +42,15 @@ const SetupAccounts: React.FC<SetupAccountsProps> = ({ accounts, onAdd, onUpdate
   const [bankPickerVisible, setBankPickerVisible] = useState(false);
   const theme = useTheme();
 
+  const [dialogState, setDialogState] = useState<{ visible: boolean; title: string; message: string; onConfirm?: () => void; isDestructive?: boolean }>({ visible: false, title: '', message: '' });
+
+  const showAlert = (title: string, message: string, onConfirm?: () => void, isDestructive?: boolean) => {
+    setDialogState({ visible: true, title, message, onConfirm, isDestructive });
+  };
+
   const handleSave = () => {
     if (!form.bankName.trim() || !form.accountHolder.trim() || !form.accountNumber.trim() || form.ifsc.length < 11) {
-      Alert.alert('Validation Error', 'Please fill all required fields and ensure IFSC is 11 characters.');
+      showAlert('Validation Error', 'Please fill all required fields and ensure IFSC is 11 characters.');
       return;
     }
     if (editId) {
@@ -65,10 +74,7 @@ const SetupAccounts: React.FC<SetupAccountsProps> = ({ accounts, onAdd, onUpdate
   };
 
   const confirmDelete = (id: string) => {
-    Alert.alert('Delete Account', 'Are you sure you want to delete this account?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => onDelete(id) },
-    ]);
+    showAlert('Delete Account', 'Are you sure you want to delete this account?', () => onDelete(id), true);
   };
 
   return (
@@ -188,8 +194,33 @@ const SetupAccounts: React.FC<SetupAccountsProps> = ({ accounts, onAdd, onUpdate
       <BankPicker 
         visible={bankPickerVisible} 
         onDismiss={() => setBankPickerVisible(false)} 
-        onSelect={(name) => setForm(p => ({ ...p, bankName: name }))} 
+        onSelect={(bankName) => setForm(p => ({ ...p, bankName }))} 
       />
+
+      <Portal>
+        <Dialog visible={dialogState.visible} onDismiss={() => setDialogState(p => ({ ...p, visible: false }))} style={{ backgroundColor: theme.colors.surface }}>
+          <Dialog.Title style={{ color: theme.colors.onSurface }}>{dialogState.title}</Dialog.Title>
+          <Dialog.Content>
+            <Paragraph style={{ color: theme.colors.onSurfaceVariant }}>{dialogState.message}</Paragraph>
+          </Dialog.Content>
+          <Dialog.Actions>
+            {dialogState.onConfirm && (
+              <Button onPress={() => setDialogState(p => ({ ...p, visible: false }))} textColor={theme.colors.primary}>
+                Cancel
+              </Button>
+            )}
+            <Button 
+              onPress={() => {
+                setDialogState(p => ({ ...p, visible: false }));
+                if (dialogState.onConfirm) dialogState.onConfirm();
+              }} 
+              textColor={dialogState.isDestructive ? theme.colors.error : theme.colors.primary}
+            >
+              {dialogState.onConfirm ? (dialogState.isDestructive ? 'Delete' : 'Confirm') : 'OK'}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 };
