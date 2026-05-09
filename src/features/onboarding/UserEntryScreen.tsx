@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, TextInput, KeyboardAvoidingView, Platform, Animated } from 'react-native';
-import { Button, Text } from 'react-native-paper';
+import { Button, Text, TextInput as PaperInput, useTheme } from 'react-native-paper';
 import { useUiStore } from '../../store/useUiStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -9,6 +9,7 @@ export default function UserEntryScreen() {
   const [name, setName] = useState('');
   const completeOnboarding = useUiStore((s) => s.completeOnboarding);
   const insets = useSafeAreaInsets();
+  const theme = useTheme();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
@@ -28,37 +29,36 @@ export default function UserEntryScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 24) }]}
+      style={[styles.container, { paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, 24), backgroundColor: theme.colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.header}>
-        <View style={styles.iconContainer}>
-          <Icon name="bank" size={24} color="#000000" />
+        <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryContainer }]}>
+          <Icon name="bank" size={24} color={theme.colors.onPrimaryContainer} />
         </View>
       </View>
 
       <View style={styles.content}>
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: theme.colors.onBackground }]}>
             Welcome to My{'\n'}Banks
           </Text>
         </Animated.View>
 
         <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
             Enter your name to personalize the app. No{'\n'}password, OTP, or account setup needed.
           </Text>
         </Animated.View>
 
         <Animated.View style={[styles.inputContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-          <Text style={styles.label}>Your name</Text>
-          <TextInput
-            style={styles.input}
+          <PaperInput
+            mode="outlined"
+            label="Your name"
+            style={{ backgroundColor: theme.colors.surfaceVariant }}
             value={name}
             onChangeText={setName}
             placeholder="Alex Morgan"
-            placeholderTextColor="#71717A"
-            selectionColor="#AAEF00"
             autoFocus
           />
         </Animated.View>
@@ -67,8 +67,8 @@ export default function UserEntryScreen() {
       <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
         <Button
           mode="contained"
-          buttonColor="#AAEF00"
-          textColor="#000000"
+          buttonColor={theme.colors.primary}
+          textColor={theme.colors.onPrimary}
           onPress={handleSubmit}
           disabled={!name.trim()}
           style={styles.btn}

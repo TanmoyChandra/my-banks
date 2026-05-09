@@ -113,10 +113,10 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.sheetHeader, { backgroundColor: theme.colors.surface }]}>
-        <Text style={[styles.sheetTitle, { color: theme.colors.onSurface }]}>Setup Debit/Credit Card</Text>
-        <IconButton icon="close" size={24} iconColor={theme.colors.onSurface} onPress={onBack} />
-      </View>
+      <Appbar.Header style={{ backgroundColor: theme.colors.surface }}>
+        <Appbar.Content title="Setup Debit/Credit Card" titleStyle={{ fontWeight: '900' }} />
+        <Appbar.Action icon="close" onPress={onBack} />
+      </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {showForm ? (

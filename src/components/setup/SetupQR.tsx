@@ -141,7 +141,7 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: false,
         quality: 1,
       });
@@ -315,10 +315,10 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <View style={[styles.sheetHeader, { backgroundColor: theme.colors.surface }]}>
-        <Text style={[styles.sheetTitle, { color: theme.colors.onSurface }]}>Setup QR Code</Text>
-        <IconButton icon="close" size={24} iconColor={theme.colors.onSurface} onPress={onBack} />
-      </View>
+      <Appbar.Header style={{ backgroundColor: theme.colors.surface }}>
+        <Appbar.Content title="Setup QR Code" titleStyle={{ fontWeight: '900' }} />
+        <Appbar.Action icon="close" onPress={onBack} />
+      </Appbar.Header>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {showForm ? (

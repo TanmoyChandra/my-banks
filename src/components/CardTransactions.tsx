@@ -9,7 +9,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal } from 'react-native-paper';
+import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal, Appbar, FAB } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -355,18 +355,12 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: insets.top }]}>
+    <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: 0 }]}>
       {/* ── Header ── */}
-      <View style={[styles.header, { backgroundColor: bgColor }]}>
-        <TouchableOpacity onPress={onBack} style={styles.backBtn} activeOpacity={0.7}>
-          <Text style={[styles.backArrow, { color: textColor }]}>←</Text>
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: textColor }]}>{cardLabel}</Text>
-          <Text style={[styles.headerSub, { color: subColor }]}>{maskedNum} · {card.type}</Text>
-        </View>
-        <View style={{ width: 44 }} />
-      </View>
+      <Appbar.Header style={{ backgroundColor: bgColor }}>
+        <Appbar.BackAction onPress={onBack} />
+        <Appbar.Content title={cardLabel} subtitle={`${maskedNum} · ${card.type}`} titleStyle={{ fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold' }} subtitleStyle={{ fontFamily: 'PlusJakartaSans-Medium' }} />
+      </Appbar.Header>
 
       {/* ── Mini card strip ── */}
       <View style={[styles.miniCardStrip, { backgroundColor: cardBg }]}>
@@ -434,16 +428,15 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
       </ScrollView>
 
       {/* ── FAB ── */}
-      <TouchableOpacity
-        style={[styles.fab, { bottom: insets.bottom + 24, backgroundColor: theme.colors.primaryContainer, shadowColor: theme.colors.primaryContainer }]}
-        activeOpacity={0.85}
+      <FAB
+        icon="plus"
+        style={[styles.fab, { bottom: insets.bottom + 24, backgroundColor: theme.colors.primaryContainer }]}
+        color={theme.colors.onPrimaryContainer}
         onPress={() => {
           setEditingTx(null);
           setModalVisible(true);
         }}
-      >
-        <Text style={[styles.fabIcon, { color: theme.colors.onPrimaryContainer }]}>+</Text>
-      </TouchableOpacity>
+      />
 
       {/* ── Add/Edit Modal ── */}
       <TransactionModal
@@ -676,15 +669,6 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: 24,
-    width: 64, // M3 FAB size
-    height: 64,
-    borderRadius: 16, // M3 squircle FAB
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 10,
   },
   fabIcon: {
     fontSize: 30,
