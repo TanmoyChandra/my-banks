@@ -10,7 +10,9 @@ import {
   useTheme,
   Surface,
   Avatar,
-  ActivityIndicator
+  ActivityIndicator,
+  Portal,
+  Dialog
 } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -52,6 +54,12 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
   const scanTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const theme = useTheme();
 
+  const [dialogState, setDialogState] = useState<{ visible: boolean; title: string; message: string; onConfirm?: () => void }>({ visible: false, title: '', message: '' });
+
+  const showAlert = (title: string, message: string, onConfirm?: () => void) => {
+    setDialogState({ visible: true, title, message, onConfirm });
+  };
+
   useEffect(() => {
     return () => {
       if (scanTimeoutRef.current) {
@@ -72,7 +80,7 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
     scanTimeoutRef.current = setTimeout(() => {
       pendingImageRef.current = null;
       setLoading(false);
-      Alert.alert('Scan Timed Out', 'The QR decoder did not respond. Please try a clearer image.');
+      showAlert('Scan Timed Out', 'The QR decoder did not respond. Please try a clearer image.');
     }, SCAN_TIMEOUT_MS);
   };
 
@@ -93,7 +101,7 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
 
   const handleSave = () => {
     if (!form.upiId.trim() && !form.qrValue.trim()) {
-      Alert.alert('Required Fields', 'Please enter a UPI ID or scan a QR code.');
+      showAlert('Required Fields', 'Please enter a UPI ID or scan a QR code.');
       return;
     }
     const qrValue = form.qrValue.trim() || `upi://pay?pa=${encodeURIComponent(form.upiId.trim())}&pn=${encodeURIComponent(form.name.trim() || form.bankName.trim())}&cu=INR`;
@@ -128,7 +136,7 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Gallery access is required.');
+        showAlert('Permission Denied', 'Gallery access is required.');
         return;
       }
 
@@ -153,14 +161,14 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
           sendImageToDecoder(dataUri);
         } else {
           setLoading(false);
-          Alert.alert('Scan Failed', 'Could not read the selected image.');
+          showAlert('Scan Failed', 'Could not read the selected image.');
         }
       }
     } catch (e) {
       pendingImageRef.current = null;
       clearScanTimeout();
       setLoading(false);
-      Alert.alert('Error', 'Failed to pick image.');
+      showAlert('Error', 'Failed to pick image.');
     }
   };
 
@@ -187,7 +195,7 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
       if (data.success) {
         parseUPIData(data.code, data.ocrText);
       } else {
-        Alert.alert('Scan Failed', data.error || 'No QR code found. Please ensure the image is clear and contains a UPI QR code.');
+        showAlert('Scan Failed', data.error || 'No QR code found. Please ensure the image is clear and contains a UPI QR code.');
       }
     } catch (e) {
       pendingImageRef.current = null;
@@ -198,7 +206,7 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
 
   const parseUPIData = (url: string, ocrText?: string | null) => {
     if (!url) {
-      Alert.alert('Invalid QR', 'This is not a valid UPI QR code.');
+      showAlert('Invalid QR', 'This is not a valid UPI QR code.');
       return;
     }
 
@@ -216,7 +224,7 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
       }));
       setShowForm(true);
     } catch (e) {
-      Alert.alert('Error', 'Failed to parse payment details.');
+      showAlert('Error', 'Failed to parse payment details.');
     }
   };
 
@@ -425,7 +433,9 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
                     right={() => (
                       <View style={styles.itemActions}>
                         <IconButton icon="pencil" size={20} onPress={() => handleEdit(entry)} />
-                        <IconButton icon="delete" size={20} iconColor={theme.colors.error} onPress={() => onDelete(entry.id)} />
+                        <IconButton icon="delete" size={20} iconColor={theme.colors.error} onPress={() => {
+                          showAlert('Delete Entry', 'Are you sure you want to delete this UPI entry?', () => onDelete(entry.id));
+                        }} />
                       </View>
                     )}
                   />
@@ -453,6 +463,29 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
         onDismiss={() => setBankPickerVisible(false)} 
         onSelect={(name) => setForm(p => ({ ...p, bankName: name }))} 
       />
+
+      <Portal>
+        <Dialog visible={dialogState.visible} onDismiss={() => setDialogState(s => ({ ...s, visible: false }))}>
+          <Dialog.Title>{dialogState.title}</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">{dialogState.message}</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            {dialogState.onConfirm && (
+              <Button onPress={() => setDialogState(s => ({ ...s, visible: false }))}>Cancel</Button>
+            )}
+            <Button 
+              textColor={dialogState.onConfirm ? theme.colors.error : theme.colors.primary} 
+              onPress={() => {
+                if (dialogState.onConfirm) dialogState.onConfirm();
+                setDialogState(s => ({ ...s, visible: false }));
+              }}
+            >
+              {dialogState.onConfirm ? 'Delete' : 'OK'}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 };

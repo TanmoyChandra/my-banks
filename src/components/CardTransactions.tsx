@@ -8,9 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  Modal,
 } from 'react-native';
-import { Text, IconButton, useTheme } from 'react-native-paper';
+import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -110,15 +109,9 @@ function TransactionModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity
-        style={styles.modalOverlay}
-        activeOpacity={1}
-        onPress={onClose}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
+    <Portal>
+      <PaperModal visible={visible} onDismiss={onClose} contentContainerStyle={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <TouchableOpacity activeOpacity={1} onPress={() => {}}>
             <View style={[styles.modalSheet, { backgroundColor: bgColor, borderColor }]}>
               {/* Handle */}
@@ -130,36 +123,15 @@ function TransactionModal({
 
               {/* Type toggle (Hide if Edit Mode) */}
               {!initialData && (
-                <View style={[styles.toggleRow, { backgroundColor: inputBg }]}>
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    style={[styles.toggleBtn, txType === 'debit' && { backgroundColor: theme.colors.errorContainer }]}
-                    onPress={() => setTxType('debit')}
-                  >
-                    <Text
-                      style={[
-                        styles.toggleLabel,
-                        { color: txType === 'debit' ? theme.colors.onErrorContainer : subColor },
-                      ]}
-                    >
-                      ↑ Spent
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    style={[styles.toggleBtn, txType === 'credit' && { backgroundColor: theme.colors.primaryContainer }]}
-                    onPress={() => setTxType('credit')}
-                  >
-                    <Text
-                      style={[
-                        styles.toggleLabel,
-                        { color: txType === 'credit' ? theme.colors.onPrimaryContainer : subColor },
-                      ]}
-                    >
-                      ↓ Payment Made
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                <SegmentedButtons
+                  value={txType}
+                  onValueChange={(val) => setTxType(val as 'debit' | 'credit')}
+                  buttons={[
+                    { value: 'debit', label: '↑ Spent' },
+                    { value: 'credit', label: '↓ Payment Made' },
+                  ]}
+                  style={{ marginBottom: 20 }}
+                />
               )}
 
               <ScrollView 
@@ -168,41 +140,36 @@ function TransactionModal({
                 style={{ maxHeight: 400 }}
               >
                 {/* Amount */}
-                <Text style={[styles.fieldLabel, { color: subColor }]}>Amount (₹)</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
+                <PaperInput
+                  mode="outlined"
+                  label="Amount (₹)"
                   value={amount}
                   onChangeText={setAmount}
                   placeholder="0.00"
-                  placeholderTextColor={subColor}
                   keyboardType="decimal-pad"
-                  selectionColor={theme.colors.primary}
+                  style={{ marginBottom: 16 }}
                 />
 
                 {/* Description */}
-                <Text style={[styles.fieldLabel, { color: subColor }]}>Description</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
+                <PaperInput
+                  mode="outlined"
+                  label="Description"
                   value={description}
                   onChangeText={setDescription}
                   placeholder="e.g. Amazon purchase"
-                  placeholderTextColor={subColor}
-                  selectionColor={theme.colors.primary}
+                  style={{ marginBottom: 16 }}
                 />
 
                 {/* Payee (Hide if Payment Made) */}
                 {txType === 'debit' && (
-                  <>
-                    <Text style={[styles.fieldLabel, { color: subColor }]}>For whom (Payee)</Text>
-                    <TextInput
-                      style={[styles.input, { backgroundColor: inputBg, color: textColor }]}
-                      value={payee}
-                      onChangeText={setPayee}
-                      placeholder="e.g. me"
-                      placeholderTextColor={subColor}
-                      selectionColor={theme.colors.primary}
-                    />
-                  </>
+                  <PaperInput
+                    mode="outlined"
+                    label="For whom (Payee)"
+                    value={payee}
+                    onChangeText={setPayee}
+                    placeholder="e.g. me"
+                    style={{ marginBottom: 16 }}
+                  />
                 )}
 
                 {/* Date */}
@@ -246,8 +213,8 @@ function TransactionModal({
             </View>
           </TouchableOpacity>
         </KeyboardAvoidingView>
-      </TouchableOpacity>
-    </Modal>
+      </PaperModal>
+    </Portal>
   );
 }
 
@@ -278,21 +245,21 @@ function TransactionRow({
 
   const renderLeftActions = () => (
     <TouchableOpacity 
-      style={{ width: 80, backgroundColor: '#3b82f6', justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 10 }}
+      style={{ width: 80, backgroundColor: theme.colors.secondaryContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 10, marginLeft: 8 }}
       onPress={handleEditTap}
       activeOpacity={0.8}
     >
-      <Text style={{ color: '#FFF', fontWeight: 'bold', fontFamily: 'PlusJakartaSans-Bold' }}>Edit</Text>
+      <IconButton icon="pencil" iconColor={theme.colors.onSecondaryContainer} />
     </TouchableOpacity>
   );
 
   const renderRightActions = () => (
     <TouchableOpacity 
-      style={{ width: 80, backgroundColor: '#EF4444', justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 10 }}
+      style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 10, marginRight: 8 }}
       onPress={onDelete}
       activeOpacity={0.8}
     >
-      <Text style={{ color: '#FFF', fontWeight: 'bold', fontFamily: 'PlusJakartaSans-Bold' }}>Delete</Text>
+      <IconButton icon="delete" iconColor={theme.colors.onErrorContainer} />
     </TouchableOpacity>
   );
 
@@ -381,11 +348,10 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
     ? `••••  ${card.cardNumber.replace(/\D/g, '').slice(-4)}`
     : '••••';
 
+  const [deleteDialog, setDeleteDialog] = useState<string | null>(null);
+
   const handleDelete = (id: string) => {
-    Alert.alert('Delete Transaction', 'Remove this transaction?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteTransaction(id) },
-    ]);
+    setDeleteDialog(id);
   };
 
   return (
@@ -489,6 +455,27 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
           setTimeout(() => setEditingTx(null), 300);
         }}
       />
+
+      <Portal>
+        <Dialog visible={!!deleteDialog} onDismiss={() => setDeleteDialog(null)}>
+          <Dialog.Title>Delete Transaction</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">Remove this transaction?</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setDeleteDialog(null)}>Cancel</Button>
+            <Button 
+              textColor={theme.colors.error} 
+              onPress={() => {
+                if (deleteDialog) deleteTransaction(deleteDialog);
+                setDeleteDialog(null);
+              }}
+            >
+              Delete
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 }

@@ -10,7 +10,9 @@ import {
   useTheme,
   Surface,
   SegmentedButtons,
-  Avatar
+  Avatar,
+  Portal,
+  Dialog
 } from 'react-native-paper';
 import { CardEntry } from '../../types';
 import BankPicker from '../BankPicker';
@@ -54,10 +56,16 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
   const [showForm, setShowForm] = useState(false);
   const [bankPickerVisible, setBankPickerVisible] = useState(false);
   const theme = useTheme();
+  
+  const [dialogState, setDialogState] = useState<{ visible: boolean; title: string; message: string; onConfirm?: () => void }>({ visible: false, title: '', message: '' });
+
+  const showAlert = (title: string, message: string, onConfirm?: () => void) => {
+    setDialogState({ visible: true, title, message, onConfirm });
+  };
 
   const handleSave = () => {
     if (!form.bankName.trim() || !form.holderName.trim() || form.cardNumber.length < 12) {
-      Alert.alert('Incomplete Info', 'Please provide valid bank name, card holder name, and card number.');
+      showAlert('Incomplete Info', 'Please provide valid bank name, card holder name, and card number.');
       return;
     }
     if (editId) {
@@ -100,10 +108,7 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
   };
 
   const confirmDelete = (id: string) => {
-    Alert.alert('Delete Card', 'Are you sure you want to delete this card?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => onDelete(id) },
-    ]);
+    showAlert('Delete Card', 'Are you sure you want to delete this card?', () => onDelete(id));
   };
 
   return (
@@ -258,6 +263,29 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
         onDismiss={() => setBankPickerVisible(false)} 
         onSelect={(name) => setForm(p => ({ ...p, bankName: name }))} 
       />
+
+      <Portal>
+        <Dialog visible={dialogState.visible} onDismiss={() => setDialogState(s => ({ ...s, visible: false }))}>
+          <Dialog.Title>{dialogState.title}</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="bodyMedium">{dialogState.message}</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            {dialogState.onConfirm && (
+              <Button onPress={() => setDialogState(s => ({ ...s, visible: false }))}>Cancel</Button>
+            )}
+            <Button 
+              textColor={dialogState.onConfirm ? theme.colors.error : theme.colors.primary} 
+              onPress={() => {
+                if (dialogState.onConfirm) dialogState.onConfirm();
+                setDialogState(s => ({ ...s, visible: false }));
+              }}
+            >
+              {dialogState.onConfirm ? 'Delete' : 'OK'}
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 };
