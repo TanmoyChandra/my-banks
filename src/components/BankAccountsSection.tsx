@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View, TouchableOpacity, Share, Image, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { Text, Button, useTheme, IconButton } from 'react-native-paper';
+import { Text, Button, useTheme, IconButton, List, Surface, Avatar } from 'react-native-paper';
 import * as Clipboard from 'expo-clipboard';
 import { BankAccount } from '../types';
 import { findBankByName } from '../constants/banks';
@@ -56,52 +56,32 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
   );
 
   return (
-    <View style={styles.cardWrapper}>
-      <TouchableOpacity 
-        activeOpacity={0.9}
-        onPress={toggleExpand}
-        style={[styles.accountCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
-      >
-        <View style={[styles.headerRow, { marginBottom: expanded ? 16 : 0 }]}>
-          <View style={[styles.bankLogoBox, { backgroundColor: '#ffffff' }]}>
-            {bank ? (
-              <Image source={bank.symbol} style={styles.bankLogo} resizeMode="contain" />
-            ) : (
-              <Text style={styles.bankInitials}>
-                {account.bankName.slice(0, 2).toUpperCase()}
-              </Text>
-            )}
-          </View>
-          <View style={styles.headerText}>
-            <Text variant="titleMedium" numberOfLines={1} style={[styles.bankTitle, { color: mainTextColor }]}>
-              {account.bankName}
-            </Text>
-            <Text style={[styles.accountTypeLabel, { color: subTextColor }]}>
-              {expanded ? `${account.accountType} Account` : account.accountNumber.slice(-4).padStart(account.accountNumber.length, '*')}
-            </Text>
-          </View>
-          {expanded && (
-            <IconButton 
-              icon="share-variant" 
-              size={20} 
-              iconColor={mainTextColor}
-              onPress={handleShare}
-              style={styles.headerShare}
-            />
-          )}
-        </View>
-
-        {expanded && (
-          <View style={styles.expandedContent}>
-            <View style={[styles.divider, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]} />
-            <InfoRow label="ACCOUNT HOLDER" value={account.accountHolder} />
-            <InfoRow label="ACCOUNT NUMBER" value={account.accountNumber} />
-            <InfoRow label="IFSC CODE" value={account.ifsc.toUpperCase()} />
-            <InfoRow label="BRANCH" value={account.branchName} />
-          </View>
+    <Surface elevation={1} style={{ borderRadius: 16, marginBottom: 16, marginHorizontal: 24, overflow: 'hidden' }}>
+      <List.Accordion
+        title={account.bankName}
+        description={expanded ? `${account.accountType} Account` : account.accountNumber.slice(-4).padStart(account.accountNumber.length, '*')}
+        expanded={expanded}
+        onPress={() => setExpanded(!expanded)}
+        left={props => bank ? (
+          <Avatar.Image {...props} source={bank.symbol} size={40} style={[props.style, { backgroundColor: 'white' }]} />
+        ) : (
+          <Avatar.Text {...props} label={account.bankName.slice(0, 2).toUpperCase()} size={40} />
         )}
-      </TouchableOpacity>
-    </View>
+        style={{ backgroundColor: cardBg }}
+        titleStyle={[styles.bankTitle, { color: mainTextColor }]}
+        descriptionStyle={[styles.accountTypeLabel, { color: subTextColor }]}
+      >
+        <View style={{ paddingHorizontal: 16, paddingBottom: 16, backgroundColor: cardBg }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: -8, marginBottom: 8 }}>
+            <IconButton icon="share-variant" size={20} iconColor={mainTextColor} onPress={handleShare} />
+          </View>
+          <InfoRow label="ACCOUNT HOLDER" value={account.accountHolder} />
+          <InfoRow label="ACCOUNT NUMBER" value={account.accountNumber} />
+          <InfoRow label="IFSC CODE" value={account.ifsc.toUpperCase()} />
+          <InfoRow label="BRANCH" value={account.branchName} />
+        </View>
+      </List.Accordion>
+    </Surface>
   );
 };
 

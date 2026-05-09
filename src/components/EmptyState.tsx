@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Text, Button } from 'react-native-paper';
 
 interface EmptyStateProps {
   icon: React.ReactNode;
@@ -17,13 +18,14 @@ const EmptyState: React.FC<EmptyStateProps> = ({ icon, title, description, actio
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
-      <TouchableOpacity
-        style={styles.button}
+      <Button
+        mode="contained-tonal"
         onPress={onAction}
-        activeOpacity={0.8}
+        style={styles.button}
+        labelStyle={styles.buttonText}
       >
-        <Text style={styles.buttonText}>{actionLabel}</Text>
-      </TouchableOpacity>
+        {actionLabel}
+      </Button>
     </View>
   );
 };
@@ -60,20 +62,13 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   button: {
-    backgroundColor: '#6750A4',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     borderRadius: 100,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
   },
   buttonText: {
-    color: 'white',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });
 

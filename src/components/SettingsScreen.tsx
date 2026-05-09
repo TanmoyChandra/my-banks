@@ -6,7 +6,7 @@ import {
   ScrollView,
   Platform,
 } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
+import { Text, useTheme, List, Surface } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUiStore } from '../store/useUiStore';
 
@@ -32,20 +32,22 @@ function SetupCard({
   isDark, bgColor, borderColor, textColor, subColor,
 }: SetupCardProps) {
   return (
-    <TouchableOpacity
-      activeOpacity={0.82}
-      onPress={onPress}
-      style={[styles.card, { backgroundColor: bgColor, borderColor }]}
-    >
-      <View style={[styles.cardIconBox, { backgroundColor: accentColor }]}>
-        <Text style={styles.cardIconText}>{icon}</Text>
-      </View>
-      <View style={styles.cardText}>
-        <Text style={[styles.cardTitle, { color: textColor }]}>{title}</Text>
-        <Text style={[styles.cardSubtitle, { color: subColor }]}>{subtitle}</Text>
-      </View>
-      <Text style={[styles.cardChevron, { color: subColor }]}>›</Text>
-    </TouchableOpacity>
+    <Surface elevation={1} style={{ borderRadius: 16, marginBottom: 12, overflow: 'hidden' }}>
+      <List.Item
+        title={title}
+        description={subtitle}
+        onPress={onPress}
+        left={(props) => (
+          <View style={[styles.cardIconBox, { backgroundColor: accentColor, marginLeft: 16, marginRight: 8, marginTop: 8 }]}>
+            <Text style={styles.cardIconText}>{icon}</Text>
+          </View>
+        )}
+        right={(props) => <List.Icon {...props} icon="chevron-right" color={subColor} />}
+        titleStyle={[styles.cardTitle, { color: textColor }]}
+        descriptionStyle={[styles.cardSubtitle, { color: subColor }]}
+        style={{ backgroundColor: bgColor }}
+      />
+    </Surface>
   );
 }
 
