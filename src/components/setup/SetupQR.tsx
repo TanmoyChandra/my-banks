@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { 
   Appbar, 
   TextInput, 
@@ -12,7 +13,8 @@ import {
   Avatar,
   ActivityIndicator,
   Portal,
-  Dialog
+  Dialog,
+  Paragraph
 } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -41,6 +43,74 @@ const emptyForm = (): Omit<QREntry, 'id'> => ({
 });
 
 const SCAN_TIMEOUT_MS = 30000;
+
+// ─── QR Row Component ─────────────────────────────────────
+function QRRow({ 
+  entry, 
+  onEdit, 
+  onDelete 
+}: { 
+  entry: QREntry; 
+  onEdit: () => void; 
+  onDelete: () => void; 
+}) {
+  const theme = useTheme();
+  const swipeableRef = useRef<Swipeable>(null);
+
+  const handleEditTap = () => {
+    swipeableRef.current?.close();
+    onEdit();
+  };
+
+  const renderLeftActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: theme.colors.secondaryContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 12, marginLeft: 4 }}
+      onPress={handleEditTap}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="pencil" iconColor={theme.colors.onSecondaryContainer} />
+    </TouchableOpacity>
+  );
+
+  const renderRightActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 12, marginRight: 4 }}
+      onPress={() => {
+        swipeableRef.current?.close();
+        onDelete();
+      }}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="delete" iconColor={theme.colors.onErrorContainer} />
+    </TouchableOpacity>
+  );
+
+  return (
+    <Swipeable
+      ref={swipeableRef}
+      renderLeftActions={renderLeftActions}
+      renderRightActions={renderRightActions}
+      overshootLeft={false}
+      overshootRight={false}
+    >
+      <Surface style={styles.listItem} elevation={1}>
+        <List.Item
+          title={entry.name || entry.bankName || entry.upiId || 'QR Entry'}
+          titleStyle={{ fontWeight: '700' }}
+          description={entry.upiId || entry.qrValue}
+          left={props => {
+            const bank = findBankByName(entry.bankName);
+            if (bank) {
+              return <Avatar.Image {...props} source={bank.symbol} size={40} style={[props.style, { backgroundColor: 'transparent' }]} />;
+            }
+            return <List.Icon {...props} icon="qrcode" />;
+          }}
+          style={{ backgroundColor: theme.colors.surface }}
+        />
+      </Surface>
+    </Swipeable>
+  );
+}
 
 const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, onBack }) => {
   const [form, setForm] = useState<Omit<QREntry, 'id'>>(emptyForm());
@@ -419,27 +489,12 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
               </View>
             ) : (
               entries.map(entry => (
-                <Surface key={entry.id} style={styles.listItem} elevation={1}>
-                  <List.Item
-                    title={entry.name || entry.bankName || entry.upiId || 'QR Entry'}
-                    description={entry.upiId || entry.qrValue}
-                    left={props => {
-                      const bank = findBankByName(entry.bankName);
-                      if (bank) {
-                        return <Avatar.Image {...props} source={bank.symbol} size={40} style={[props.style, { backgroundColor: 'transparent' }]} />;
-                      }
-                      return <List.Icon {...props} icon="qrcode" />;
-                    }}
-                    right={() => (
-                      <View style={styles.itemActions}>
-                        <IconButton icon="pencil" size={20} onPress={() => handleEdit(entry)} />
-                        <IconButton icon="delete" size={20} iconColor={theme.colors.error} onPress={() => {
-                          showAlert('Delete Entry', 'Are you sure you want to delete this UPI entry?', () => onDelete(entry.id));
-                        }} />
-                      </View>
-                    )}
-                  />
-                </Surface>
+                <QRRow
+                  key={entry.id}
+                  entry={entry}
+                  onEdit={() => handleEdit(entry)}
+                  onDelete={() => showAlert('Delete Entry', 'Are you sure you want to delete this UPI entry?', () => onDelete(entry.id))}
+                />
               ))
             )}
           </View>

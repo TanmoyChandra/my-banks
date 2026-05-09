@@ -7,7 +7,7 @@ import {
   Platform,
   LayoutAnimation,
 } from 'react-native';
-import { Text, useTheme, List, Surface, IconButton } from 'react-native-paper';
+import { Text, useTheme, List, Surface, IconButton, Avatar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUiStore } from '../store/useUiStore';
 
@@ -69,8 +69,8 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
     <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: insets.top }]}>
       {/* Page header */}
       <View style={styles.header}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View style={{ flex: 1, marginRight: 16 }}>
             <Text style={[styles.pageTitle, { color: textColor }]}>Settings</Text>
             {userName ? (
               <Text style={[styles.pageSubtitle, { color: subColor }]}>
@@ -78,19 +78,27 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
               </Text>
             ) : null}
           </View>
-          <IconButton
-            icon={isDark ? 'weather-sunny' : 'moon-waning-crescent'}
-            size={24}
-            iconColor={isDark ? '#000000' : '#FFFFFF'}
-            style={{ backgroundColor: isDark ? '#AAEF00' : '#1c1c1c', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}
-            onPress={() => {
-              LayoutAnimation.configureNext({
-                duration: 600,
-                update: { type: 'easeInEaseOut' },
-              });
-              toggleTheme();
-            }}
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <IconButton
+              icon={isDark ? 'weather-sunny' : 'moon-waning-crescent'}
+              size={24}
+              iconColor={isDark ? '#000000' : '#FFFFFF'}
+              style={{ backgroundColor: isDark ? '#AAEF00' : '#1c1c1c', margin: 0 }}
+              onPress={() => {
+                LayoutAnimation.configureNext({
+                  duration: 600,
+                  update: { type: 'easeInEaseOut' },
+                });
+                toggleTheme();
+              }}
+            />
+            <Avatar.Text 
+              size={40} 
+              label={userName ? userName.charAt(0).toUpperCase() : '?'} 
+              style={{ backgroundColor: theme.colors.primaryContainer }} 
+              labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+            />
+          </View>
         </View>
       </View>
 

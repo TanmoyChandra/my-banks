@@ -13,12 +13,12 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import { captureRef } from 'react-native-view-shot';
-import { Button, IconButton, Text, useTheme } from 'react-native-paper';
+import { Button, IconButton, Text, useTheme, Avatar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 import { QREntry } from '../types';
-
 import { findBankByName } from '../constants/banks';
+import { useUiStore } from '../store/useUiStore';
 
 interface QRSectionProps {
   entries: QREntry[];
@@ -143,8 +143,18 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.sectionIntro}>
-        <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Saved UPI identities</Text>
-        <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Scan, import, copy, or share payment addresses without searching through screenshots.</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View style={{ flex: 1, marginRight: 16 }}>
+            <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Saved UPI identities</Text>
+            <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Scan, import, copy, or share payment addresses without searching through screenshots.</Text>
+          </View>
+          <Avatar.Text 
+            size={40} 
+            label={useUiStore.getState().userName ? useUiStore.getState().userName.charAt(0).toUpperCase() : '?'} 
+            style={{ backgroundColor: theme.colors.primaryContainer }} 
+            labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+          />
+        </View>
       </View>
 
       {entries.length === 0 ? (

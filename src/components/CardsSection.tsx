@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { findBankByName } from '../constants/banks';
 import { CardEntry } from '../types';
+import { useUiStore } from '../store/useUiStore';
 
 interface CardsSectionProps {
   cards: CardEntry[];
@@ -175,14 +176,26 @@ const BankCard: React.FC<{ card: CardEntry; index: number; onPress: () => void }
 const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => {} }) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const userName = useUiStore(s => s.userName);
+  const initials = userName ? userName.charAt(0).toUpperCase() : '?';
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.sectionIntro}>
-        <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Payment cards</Text>
-        <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
-          Tap a card to view & manage transactions. CVV stays masked until tapped.
-        </Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <View style={{ flex: 1, marginRight: 16 }}>
+            <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Payment cards</Text>
+            <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
+              Tap a card to view & manage transactions. CVV stays masked until tapped.
+            </Text>
+          </View>
+          <Avatar.Text 
+            size={40} 
+            label={initials} 
+            style={{ backgroundColor: theme.colors.primaryContainer }} 
+            labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+          />
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

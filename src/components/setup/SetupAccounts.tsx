@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { 
   Appbar, 
   TextInput, 
@@ -34,6 +35,68 @@ const emptyForm = (): Omit<BankAccount, 'id'> => ({
   accountType: 'Savings',
   branchName: '',
 });
+
+// ─── Account Row Component ─────────────────────────────────────
+function AccountRow({ 
+  account, 
+  onEdit, 
+  onDelete 
+}: { 
+  account: BankAccount; 
+  onEdit: () => void; 
+  onDelete: () => void; 
+}) {
+  const theme = useTheme();
+  const swipeableRef = useRef<Swipeable>(null);
+
+  const handleEditTap = () => {
+    swipeableRef.current?.close();
+    onEdit();
+  };
+
+  const renderLeftActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: theme.colors.secondaryContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 12, marginLeft: 4 }}
+      onPress={handleEditTap}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="pencil" iconColor={theme.colors.onSecondaryContainer} />
+    </TouchableOpacity>
+  );
+
+  const renderRightActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 12, marginRight: 4 }}
+      onPress={() => {
+        swipeableRef.current?.close();
+        onDelete();
+      }}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="delete" iconColor={theme.colors.onErrorContainer} />
+    </TouchableOpacity>
+  );
+
+  return (
+    <Swipeable
+      ref={swipeableRef}
+      renderLeftActions={renderLeftActions}
+      renderRightActions={renderRightActions}
+      overshootLeft={false}
+      overshootRight={false}
+    >
+      <Surface style={styles.listItem} elevation={1}>
+        <List.Item
+          title={account.bankName}
+          titleStyle={{ fontWeight: '700' }}
+          description={`${account.accountType} • ${account.accountNumber.slice(-4)}`}
+          left={props => <List.Icon {...props} icon="bank" />}
+          style={{ backgroundColor: theme.colors.surface }}
+        />
+      </Surface>
+    </Swipeable>
+  );
+}
 
 const SetupAccounts: React.FC<SetupAccountsProps> = ({ accounts, onAdd, onUpdate, onDelete, onBack }) => {
   const [form, setForm] = useState<Omit<BankAccount, 'id'>>(emptyForm());
@@ -172,19 +235,12 @@ const SetupAccounts: React.FC<SetupAccountsProps> = ({ accounts, onAdd, onUpdate
               </View>
             ) : (
               accounts.map(account => (
-                <Surface key={account.id} style={styles.listItem} elevation={1}>
-                  <List.Item
-                    title={account.bankName}
-                    description={`${account.accountType} • ${account.accountNumber.slice(-4)}`}
-                    left={props => <List.Icon {...props} icon="bank" />}
-                    right={() => (
-                      <View style={styles.itemActions}>
-                        <IconButton icon="pencil" size={20} onPress={() => handleEdit(account)} />
-                        <IconButton icon="delete" size={20} iconColor={theme.colors.error} onPress={() => confirmDelete(account.id)} />
-                      </View>
-                    )}
-                  />
-                </Surface>
+                <AccountRow
+                  key={account.id}
+                  account={account}
+                  onEdit={() => handleEdit(account)}
+                  onDelete={() => confirmDelete(account.id)}
+                />
               ))
             )}
           </View>
