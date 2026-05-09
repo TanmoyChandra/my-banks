@@ -5,8 +5,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  LayoutAnimation,
 } from 'react-native';
-import { Text, useTheme, List, Surface } from 'react-native-paper';
+import { Text, useTheme, List, Surface, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUiStore } from '../store/useUiStore';
 
@@ -62,17 +63,35 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
   const textColor = theme.colors.onSurface;
   const subColor = theme.colors.onSurfaceVariant;
   const borderColor = theme.colors.outlineVariant;
+  const toggleTheme = useUiStore(s => s.toggleTheme);
 
   return (
     <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: insets.top }]}>
       {/* Page header */}
       <View style={styles.header}>
-        <Text style={[styles.pageTitle, { color: textColor }]}>Settings</Text>
-        {userName ? (
-          <Text style={[styles.pageSubtitle, { color: subColor }]}>
-            Hi, {userName} 👋
-          </Text>
-        ) : null}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View>
+            <Text style={[styles.pageTitle, { color: textColor }]}>Settings</Text>
+            {userName ? (
+              <Text style={[styles.pageSubtitle, { color: subColor }]}>
+                Hi, {userName} 👋
+              </Text>
+            ) : null}
+          </View>
+          <IconButton
+            icon={isDark ? 'weather-sunny' : 'moon-waning-crescent'}
+            size={24}
+            iconColor={isDark ? '#000000' : '#FFFFFF'}
+            style={{ backgroundColor: isDark ? '#AAEF00' : '#1c1c1c', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}
+            onPress={() => {
+              LayoutAnimation.configureNext({
+                duration: 600,
+                update: { type: 'easeInEaseOut' },
+              });
+              toggleTheme();
+            }}
+          />
+        </View>
       </View>
 
       <ScrollView

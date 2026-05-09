@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button, IconButton, Text, useTheme, Avatar } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { findBankByName } from '../constants/banks';
 import { CardEntry } from '../types';
@@ -173,35 +174,37 @@ const BankCard: React.FC<{ card: CardEntry; index: number; onPress: () => void }
 
 const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => {} }) => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.sectionIntro}>
         <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Payment cards</Text>
         <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
           Tap a card to view & manage transactions. CVV stays masked until tapped.
         </Text>
       </View>
-      {cards.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Avatar.Icon size={64} icon="credit-card-outline" style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }} color={theme.colors.primary} />
-          <Text style={[styles.emptyText, { color: theme.colors.onSurface }]}>No cards yet</Text>
-          <Text style={[styles.emptySubText, { color: theme.colors.onSurfaceVariant }]}>
-            Open the menu to add your first card
-          </Text>
-        </View>
-      ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {cards.map((card, index) => (
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {cards.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Avatar.Icon size={64} icon="credit-card-outline" style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }} color={theme.colors.primary} />
+            <Text style={[styles.emptyText, { color: theme.colors.onSurface }]}>No cards yet</Text>
+            <Text style={[styles.emptySubText, { color: theme.colors.onSurfaceVariant }]}>
+              Open the menu to add your first card
+            </Text>
+          </View>
+        ) : (
+          cards.map((card, index) => (
             <BankCard
               key={card.id}
               card={card}
               index={index}
               onPress={() => onCardPress(card)}
             />
-          ))}
-        </ScrollView>
-      )}
+          ))
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -210,19 +213,16 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   sectionIntro: { paddingHorizontal: 24, paddingBottom: 20, paddingTop: 8 },
   introTitle: {
-    fontSize: 28,
+    fontSize: 34,
     fontWeight: '900',
     fontFamily: 'PlusJakartaSans-ExtraBold',
-    color: '#000000',
     marginTop: 0,
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
   introText: {
-    fontSize: 14,
-    lineHeight: 24,
+    fontSize: 15,
     fontFamily: 'PlusJakartaSans-Medium',
-    color: '#52525b',
-    marginTop: 8,
+    marginTop: 4,
   },
   introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#AAEF00', alignItems: 'center', justifyContent: 'center' },
   addButton: { borderRadius: 24 },

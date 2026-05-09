@@ -22,35 +22,7 @@ import OnboardingFlow from '../features/onboarding/OnboardingFlow';
 const Stack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
 
-// ─── Header ────────────────────────────────────────────────────
-function AppHeader() {
-  const theme = useTheme();
-  const isDark = useUiStore(s => s.isDark);
-  const toggleTheme = useUiStore(s => s.toggleTheme);
 
-  const handleToggleTheme = () => {
-    LayoutAnimation.configureNext({
-      duration: 600,
-      update: { type: 'easeInEaseOut' },
-    });
-    toggleTheme();
-  };
-
-  return (
-    <Appbar.Header style={{ backgroundColor: theme.colors.background }} mode="center-aligned">
-      <Appbar.Content 
-        title="MyBanks" 
-        titleStyle={{ fontSize: 22, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', color: theme.colors.onSurface }} 
-      />
-      <Appbar.Action 
-        icon={isDark ? 'weather-sunny' : 'moon-waning-crescent'} 
-        iconColor={isDark ? '#000000' : '#FFFFFF'} 
-        style={{ backgroundColor: isDark ? '#AAEF00' : '#1c1c1c' }}
-        onPress={handleToggleTheme} 
-      />
-    </Appbar.Header>
-  );
-}
 
 // ─── Tab bar: icons only (no labels) ──────────────────────────
 const TAB_META: Record<string, { focused: string; unfocused: string }> = {
@@ -139,7 +111,6 @@ function QRTab() {
   const theme = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader />
       <QRSection entries={entries} />
     </View>
   );
@@ -150,7 +121,6 @@ function CardsTab({ navigation }: { navigation: any }) {
   const theme = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader />
       <CardsSection
         cards={cards}
         onCardPress={(card: CardEntry) => navigation.navigate('CardTransactions', { cardId: card.id })}
@@ -164,7 +134,6 @@ function AccountsTab() {
   const theme = useTheme();
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <AppHeader />
       <BankAccountsSection accounts={accounts} />
     </View>
   );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View, TouchableOpacity, Share, Image, LayoutAnimation, Platform, UIManager } from 'react-native';
 import { Text, Button, useTheme, IconButton, List, Surface, Avatar } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { BankAccount } from '../types';
 import { findBankByName } from '../constants/banks';
@@ -87,27 +88,29 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
 
 const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.sectionIntro}>
         <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Bank accounts</Text>
         <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Keep IFSC and account details easy to find while masking sensitive numbers.</Text>
       </View>
 
-      {accounts.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Avatar.Icon size={64} icon="bank-outline" style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }} color={theme.colors.primary} />
-          <Text style={[styles.emptyText, { color: theme.colors.onSurface }]}>No bank accounts</Text>
-          <Text style={[styles.emptySubText, { color: theme.colors.onSurfaceVariant }]}>
-            Add accounts from Settings to view them here
-          </Text>
-        </View>
-      ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {accounts.map(acc => <AccountItem key={acc.id} account={acc} />)}
-        </ScrollView>
-      )}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+
+        {accounts.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Avatar.Icon size={64} icon="bank-outline" style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }} color={theme.colors.primary} />
+            <Text style={[styles.emptyText, { color: theme.colors.onSurface }]}>No bank accounts</Text>
+            <Text style={[styles.emptySubText, { color: theme.colors.onSurfaceVariant }]}>
+              Add accounts from Settings to view them here
+            </Text>
+          </View>
+        ) : (
+          accounts.map(acc => <AccountItem key={acc.id} account={acc} />)
+        )}
+      </ScrollView>
     </View>
   );
 };
@@ -115,8 +118,8 @@ const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) =
 const styles = StyleSheet.create({
   container: { flex: 1 },
   sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
-  introTitle: { fontSize: 28, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', color: '#000000', marginTop: 0, letterSpacing: -0.5 },
-  introText: { fontSize: 14, lineHeight: 24, fontFamily: 'PlusJakartaSans-Medium', color: '#52525b', marginTop: 8 },
+  introTitle: { fontSize: 34, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', marginTop: 0, letterSpacing: -1 },
+  introText: { fontSize: 15, fontFamily: 'PlusJakartaSans-Medium', marginTop: 4 },
   scrollContent: { paddingBottom: 96 },
   cardWrapper: {
     paddingHorizontal: 24,

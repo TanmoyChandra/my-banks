@@ -14,6 +14,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import { captureRef } from 'react-native-view-shot';
 import { Button, IconButton, Text, useTheme } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 import { QREntry } from '../types';
 
@@ -130,6 +131,7 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const { width: screenWidth } = useWindowDimensions();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const cardWidth = Math.min(screenWidth - PAGE_SIDE_PADDING * 2.5, 450);
   const snapWidth = cardWidth + PAGE_GAP;
 
@@ -139,7 +141,7 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.sectionIntro}>
         <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Saved UPI identities</Text>
         <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Scan, import, copy, or share payment addresses without searching through screenshots.</Text>
@@ -189,8 +191,8 @@ const styles = StyleSheet.create({
   introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#AAEF00', alignItems: 'center', justifyContent: 'center' },
   addButton: { borderRadius: 24 },
   addButtonLabel: { fontWeight: '900', fontSize: 14 },
-  introTitle: { fontSize: 28, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', color: '#000000', marginTop: 0, letterSpacing: -0.5 },
-  introText: { fontSize: 14, lineHeight: 24, fontFamily: 'PlusJakartaSans-Medium', color: '#52525b', marginTop: 8 },
+  introTitle: { fontSize: 34, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', marginTop: 0, letterSpacing: -1 },
+  introText: { fontSize: 15, fontFamily: 'PlusJakartaSans-Medium', marginTop: 4 },
   carouselContent: {
     paddingLeft: PAGE_SIDE_PADDING,
     paddingRight: PAGE_SIDE_PADDING - PAGE_GAP,
