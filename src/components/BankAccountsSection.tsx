@@ -6,6 +6,7 @@ import * as Clipboard from 'expo-clipboard';
 import { BankAccount } from '../types';
 import { findBankByName } from '../constants/banks';
 import { useUiStore } from '../store/useUiStore';
+import { getCardColors } from '../constants/cardColors';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -40,10 +41,8 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
     outputRange: [1, 0],
   });
 
-  const cardBg = '#202020';
-  const textColor = '#FFFFFF';
+  const { bg: cardBg, textColor, mutedColor } = getCardColors(account.color, theme.dark);
   const accentColor = '#C9F158';
-  const mutedColor = 'rgba(255,255,255,0.55)';
 
   const maskedNumber = account.accountNumber
     ? account.accountNumber.slice(-4).padStart(account.accountNumber.length, '•')

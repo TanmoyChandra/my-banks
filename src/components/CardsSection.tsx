@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { findBankByName } from '../constants/banks';
 import { CardEntry } from '../types';
+import { getCardColors } from '../constants/cardColors';
 import { useUiStore } from '../store/useUiStore';
 
 interface CardsSectionProps {
@@ -58,12 +59,12 @@ const WaveTexture = () => (
   </View>
 );
 
-const NetworkMark = ({ card, fallbackLabel }: { card: CardEntry; fallbackLabel: string }) => {
+const NetworkMark = ({ card, fallbackLabel, textColor }: { card: CardEntry; fallbackLabel: string; textColor: string }) => {
   const bankData = findBankByName(card.bankName);
   const label = card.bankName || fallbackLabel;
   const isRupay = label === 'RuPay';
   if (isRupay) {
-    return <Text style={styles.rupayText}>RuPay</Text>;
+    return <Text style={[styles.rupayText, { color: textColor }]}>RuPay</Text>;
   }
 
   return (
@@ -71,11 +72,11 @@ const NetworkMark = ({ card, fallbackLabel }: { card: CardEntry; fallbackLabel: 
       {bankData ? (
         <Image source={bankData.symbol} style={styles.bankLogo} resizeMode="contain" />
       ) : (
-        <Text variant="labelMedium" style={styles.bankInitials}>
+        <Text variant="labelMedium" style={[styles.bankInitials, { color: textColor }]}>
           {label.slice(0, 2).toUpperCase()}
         </Text>
       )}
-      <Text variant="titleMedium" numberOfLines={1} adjustsFontSizeToFit style={styles.networkLabel}>{label}</Text>
+      <Text variant="titleMedium" numberOfLines={1} adjustsFontSizeToFit style={[styles.networkLabel, { color: textColor }]}>{label}</Text>
     </View>
   );
 };
@@ -93,14 +94,12 @@ const Chip = () => (
 );
 
 
-const CARD_COLORS = ['#040404', '#1c1917', '#450a0a', '#064e3b', '#1e1b4b', '#18181b'];
-
 const BankCard: React.FC<{ card: CardEntry; index: number; onPress: () => void }> = ({ card, index, onPress }) => {
   const theme = useTheme();
   const network = networkName(card);
   const [showCvv, setShowCvv] = useState(false);
 
-  const backgroundColor = card.color || CARD_COLORS[index % CARD_COLORS.length];
+  const { bg: backgroundColor, textColor, mutedColor } = getCardColors(card.color, theme.dark);
 
   return (
     <TouchableOpacity
@@ -113,30 +112,30 @@ const BankCard: React.FC<{ card: CardEntry; index: number; onPress: () => void }
         <WaveTexture />
 
         <View style={styles.topRow}>
-          <NetworkMark card={card} fallbackLabel={network} />
+          <NetworkMark card={card} fallbackLabel={network} textColor={textColor} />
           <Chip />
         </View>
 
         <View style={styles.numberBlock}>
-          <Text variant="titleMedium" numberOfLines={1} adjustsFontSizeToFit style={styles.cardHolderName}>
+          <Text variant="titleMedium" numberOfLines={1} adjustsFontSizeToFit style={[styles.cardHolderName, { color: textColor }]}>
             {(card.holderName || 'Card Holder').replace(/\s+/g, ' ')}
           </Text>
-          <Text variant="headlineSmall" numberOfLines={1} adjustsFontSizeToFit style={styles.cardNumber}>
+          <Text variant="headlineSmall" numberOfLines={1} adjustsFontSizeToFit style={[styles.cardNumber, { color: textColor }]}>
             {formatCardNumber(card.cardNumber)}
           </Text>
         </View>
 
         <View style={styles.bottomRow}>
           <View style={styles.holderBlock}>
-            <Text variant="bodySmall" style={styles.validLabel}>Valid Thru</Text>
-            <Text variant="titleMedium" style={styles.validValue}>{card.expiry || 'MM/YY'}</Text>
+            <Text variant="bodySmall" style={[styles.validLabel, { color: mutedColor }]}>Valid Thru</Text>
+            <Text variant="titleMedium" style={[styles.validValue, { color: textColor }]}>{card.expiry || 'MM/YY'}</Text>
           </View>
 
           <View style={styles.validBlock}>
-            <Text variant="bodySmall" style={styles.validLabel}>CVV</Text>
+            <Text variant="bodySmall" style={[styles.validLabel, { color: mutedColor }]}>CVV</Text>
             <Text
               variant="titleMedium"
-              style={styles.validValue}
+              style={[styles.validValue, { color: textColor }]}
               onPress={(e) => { e.stopPropagation?.(); if (card.cvv) setShowCvv(!showCvv); }}
             >
               {card.cvv ? (showCvv ? card.cvv : '***') : '***'}
@@ -145,7 +144,7 @@ const BankCard: React.FC<{ card: CardEntry; index: number; onPress: () => void }
 
           {/* Tap hint */}
           <View style={styles.tapHint}>
-            <Text style={styles.tapHintText}>Tap for transactions →</Text>
+            <Text style={[styles.tapHintText, { color: mutedColor }]}>Tap for transactions →</Text>
           </View>
         </View>
       </View>

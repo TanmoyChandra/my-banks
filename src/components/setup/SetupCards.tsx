@@ -17,27 +17,10 @@ import {
 } from 'react-native-paper';
 import { CardEntry } from '../../types';
 import BankPicker from '../BankPicker';
+import ColorPicker from '../ColorPicker';
+import { CARD_COLORS } from '../../constants/cardColors';
 
-const PREDEFINED_COLORS = [
-  '#1c1917', // Stone
-  '#450a0a', // Red
-  '#064e3b', // Green
-  '#1e1b4b', // Indigo
-  '#18181b', // Zinc
-  '#3f2b1c', // Brown
-  '#4c1d95', // Violet
-  '#312e81', // Blue
-  '#134e4a', // Teal
-  '#020617', // Obsidian
-];
-
-interface SetupCardsProps {
-  cards: CardEntry[];
-  onAdd: (card: Omit<CardEntry, 'id'>) => void;
-  onUpdate: (id: string, card: Omit<CardEntry, 'id'>) => void;
-  onDelete: (id: string) => void;
-  onBack: () => void;
-}
+const FIRST_COLOR = CARD_COLORS[0].key;
 
 const emptyForm = (): Omit<CardEntry, 'id'> => ({
   type: 'Debit',
@@ -47,7 +30,7 @@ const emptyForm = (): Omit<CardEntry, 'id'> => ({
   expiry: '',
   cvv: '',
   nickname: '',
-  color: PREDEFINED_COLORS[0],
+  color: FIRST_COLOR,
 });
 
 // ─── Card Row Component ─────────────────────────────────────
@@ -254,25 +237,10 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
               style={styles.input}
             />
 
-            <View style={styles.inputGroup}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.colorRow}>
-                {PREDEFINED_COLORS.map(c => (
-                  <TouchableOpacity 
-                    key={c}
-                    onPress={() => setForm(p => ({ ...p, color: c }))}
-                    style={[
-                      styles.colorCircle, 
-                      { backgroundColor: c },
-                      form.color === c && { borderColor: theme.colors.primary, borderWidth: 3 }
-                    ]}
-                  >
-                    {form.color === c && (
-                      <IconButton icon="check" iconColor="#FFFFFF" size={16} style={{ margin: 0 }} />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
+            <ColorPicker
+              selected={form.color}
+              onSelect={key => setForm(p => ({ ...p, color: key }))}
+            />
 
             <View style={styles.buttonRow}>
               <Button mode="outlined" onPress={handleCancel} style={styles.flexBtn}>

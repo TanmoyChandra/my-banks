@@ -29,6 +29,7 @@ export interface BankAccount {
   ifsc: string;
   accountType: 'Savings' | 'Current';
   branchName: string;
+  color?: string;
 }
 
 export interface CardTransaction {

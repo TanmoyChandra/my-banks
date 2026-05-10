@@ -18,6 +18,8 @@ import {
 } from 'react-native-paper';
 import { BankAccount } from '../../types';
 import BankPicker from '../BankPicker';
+import ColorPicker from '../ColorPicker';
+import { CARD_COLORS } from '../../constants/cardColors';
 
 interface SetupAccountsProps {
   accounts: BankAccount[];
@@ -34,6 +36,7 @@ const emptyForm = (): Omit<BankAccount, 'id'> => ({
   ifsc: '',
   accountType: 'Savings',
   branchName: '',
+  color: CARD_COLORS[0].key,
 });
 
 // ─── Account Row Component ─────────────────────────────────────
@@ -206,6 +209,11 @@ const SetupAccounts: React.FC<SetupAccountsProps> = ({ accounts, onAdd, onUpdate
               onChangeText={v => setForm(p => ({ ...p, branchName: v }))}
               mode="outlined"
               style={styles.input}
+            />
+
+            <ColorPicker
+              selected={form.color}
+              onSelect={key => setForm(p => ({ ...p, color: key }))}
             />
 
             <View style={styles.buttonRow}>
