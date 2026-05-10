@@ -223,19 +223,9 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  sectionIntro: { paddingHorizontal: 24, paddingBottom: 20, paddingTop: 8 },
-  introTitle: {
-    fontSize: 34,
-    fontWeight: '900',
-    fontFamily: 'SpaceGrotesk',
-    marginTop: 0,
-    letterSpacing: -1,
-  },
-  introText: {
-    fontSize: 15,
-    fontFamily: 'SpaceGrotesk',
-    marginTop: 4,
-  },
+  sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
+  introTitle: { fontSize: 28, fontWeight: '700', marginBottom: 6, fontFamily: 'SpaceGrotesk', letterSpacing: -0.5 },
+  introText: { fontSize: 14, fontFamily: 'SpaceGrotesk', lineHeight: 20 },
   introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#AAEF00', alignItems: 'center', justifyContent: 'center' },
   addButton: { borderRadius: 24 },
   addButtonLabel: { fontWeight: '900', fontSize: 14 },

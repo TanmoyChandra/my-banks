@@ -3,7 +3,7 @@ import {
   View, StyleSheet, ScrollView, TouchableOpacity,
   Image, Alert,
 } from 'react-native';
-import { Text, useTheme, IconButton, TextInput as PaperInput, Button, Surface, Portal, Dialog } from 'react-native-paper';
+import { Text, useTheme, IconButton, TextInput as PaperInput, Button, Surface, Portal, Dialog, List, Avatar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { MerchantQR } from '../../types';
@@ -181,32 +181,45 @@ export default function SetupMerchantQR({ onBack }: Props) {
               </View>
             ) : (
               merchants.map(m => (
-                <Surface key={m.id} style={[styles.merchantItem, { backgroundColor: surfaceBg }]} elevation={0}>
-                  {m.imageUri ? (
-                    <Image source={{ uri: m.imageUri }} style={styles.thumbImage} resizeMode="contain" />
-                  ) : (
-                    <View style={[styles.thumbPlaceholder, { backgroundColor: theme.colors.surfaceVariant }]}>
-                      <Text style={{ fontSize: 22 }}>🏪</Text>
-                    </View>
-                  )}
-                  <View style={styles.merchantMeta}>
-                    <Text style={[styles.merchantName, { color: textColor }]}>{m.name}</Text>
-                    {m.category ? <Text style={[styles.merchantCat, { color: subColor }]}>{m.category}</Text> : null}
-                    {m.upiId ? <Text style={[styles.merchantUpi, { color: subColor }]}>{m.upiId}</Text> : null}
-                  </View>
-                  <IconButton
-                    icon="pencil-outline"
-                    size={20}
-                    iconColor={subColor}
-                    onPress={() => openEdit(m)}
-                    style={{ margin: 0 }}
-                  />
-                  <IconButton
-                    icon="delete-outline"
-                    size={20}
-                    iconColor={theme.colors.error}
-                    onPress={() => setDeleteId(m.id)}
-                    style={{ margin: 0 }}
+                <Surface key={m.id} style={styles.listItem} elevation={1}>
+                  <List.Item
+                    title={m.name}
+                    titleStyle={{ fontWeight: '700' }}
+                    description={m.category || m.upiId || 'No details'}
+                    left={props => (
+                      m.imageUri ? (
+                        <Avatar.Image 
+                          {...props} 
+                          source={{ uri: m.imageUri }} 
+                          size={40} 
+                          style={[props.style, { backgroundColor: 'transparent' }]} 
+                        />
+                      ) : (
+                        <Avatar.Icon 
+                          {...props} 
+                          icon="account" 
+                          size={40} 
+                          style={[props.style, { backgroundColor: theme.colors.surfaceVariant }]} 
+                        />
+                      )
+                    )}
+                    right={() => (
+                      <View style={styles.itemActions}>
+                        <IconButton
+                          icon="pencil-outline"
+                          size={20}
+                          iconColor={subColor}
+                          onPress={() => openEdit(m)}
+                        />
+                        <IconButton
+                          icon="delete-outline"
+                          size={20}
+                          iconColor={theme.colors.error}
+                          onPress={() => setDeleteId(m.id)}
+                        />
+                      </View>
+                    )}
+                    style={{ backgroundColor: surfaceBg }}
                   />
                 </Surface>
               ))
@@ -266,13 +279,8 @@ const styles = StyleSheet.create({
   input: { marginBottom: 12 },
   saveBtn: { borderRadius: 14, marginTop: 4 },
 
-  merchantItem: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, padding: 12, marginBottom: 10 },
-  thumbImage: { width: 48, height: 48, borderRadius: 10, marginRight: 12 },
-  thumbPlaceholder: { width: 48, height: 48, borderRadius: 10, marginRight: 12, justifyContent: 'center', alignItems: 'center' },
-  merchantMeta: { flex: 1 },
-  merchantName: { fontSize: 15, fontWeight: '700', fontFamily: 'SpaceGrotesk' },
-  merchantCat: { fontSize: 12, fontFamily: 'SpaceGrotesk', marginTop: 2 },
-  merchantUpi: { fontSize: 11, fontFamily: 'SpaceGrotesk', marginTop: 1, opacity: 0.7 },
+  listItem: { borderRadius: 12, marginBottom: 12, overflow: 'hidden' },
+  itemActions: { flexDirection: 'row' },
 
   emptyContainer: { alignItems: 'center', paddingTop: 80 },
   emptyEmoji: { fontSize: 48, marginBottom: 12 },

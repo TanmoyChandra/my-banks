@@ -112,21 +112,8 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           icon="qrcode"
           title="UPI / QR Codes"
           subtitle="Add and manage your UPI IDs and QR codes"
-          accentColor={theme.colors.primaryContainer}
+          accentColor="#AAEF00"
           onPress={() => onNavigate('setup-qr')}
-          isDark={isDark}
-          bgColor={surfaceColor}
-          borderColor={borderColor}
-          textColor={textColor}
-          subColor={subColor}
-        />
-
-        <SetupCard
-          icon="bank"
-          title="Bank Accounts"
-          subtitle="Store IFSC, account number and branch details"
-          accentColor={theme.colors.secondaryContainer}
-          onPress={() => onNavigate('setup-accounts')}
           isDark={isDark}
           bgColor={surfaceColor}
           borderColor={borderColor}
@@ -138,7 +125,7 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           icon="credit-card"
           title="Debit / Credit Cards"
           subtitle="Save card numbers, expiry dates and CVV"
-          accentColor={theme.colors.tertiaryContainer}
+          accentColor="#AAEF00"
           onPress={() => onNavigate('setup-cards')}
           isDark={isDark}
           bgColor={surfaceColor}
@@ -151,8 +138,21 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           icon="store"
           title="Merchant QR Codes"
           subtitle="Add frequently-used merchant QR codes from your gallery"
-          accentColor="#E8F5E9"
+          accentColor="#AAEF00"
           onPress={() => onNavigate('setup-merchant-qr')}
+          isDark={isDark}
+          bgColor={surfaceColor}
+          borderColor={borderColor}
+          textColor={textColor}
+          subColor={subColor}
+        />
+
+        <SetupCard
+          icon="bank"
+          title="Bank Accounts"
+          subtitle="Store IFSC, account number and branch details"
+          accentColor="#AAEF00"
+          onPress={() => onNavigate('setup-accounts')}
           isDark={isDark}
           bgColor={surfaceColor}
           borderColor={borderColor}
@@ -185,17 +185,8 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 24,
   },
-  pageTitle: {
-    fontSize: 34,
-    fontWeight: '900',
-    fontFamily: 'SpaceGrotesk',
-    letterSpacing: -1,
-  },
-  pageSubtitle: {
-    fontSize: 15,
-    fontFamily: 'SpaceGrotesk',
-    marginTop: 4,
-  },
+  pageTitle: { fontSize: 28, fontWeight: '700', marginBottom: 6, fontFamily: 'SpaceGrotesk', letterSpacing: -0.5 },
+  pageSubtitle: { fontSize: 14, fontFamily: 'SpaceGrotesk', lineHeight: 20 },
 
   content: {
     paddingHorizontal: 20,
