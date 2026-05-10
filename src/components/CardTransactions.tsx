@@ -8,7 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal, Appbar, FAB, Avatar, List, Chip, Paragraph } from 'react-native-paper';
+import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal, Appbar, FAB, Avatar, List, Chip, Paragraph, Surface } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
 import { DatePickerModal } from 'react-native-paper-dates';
@@ -267,7 +267,7 @@ function TransactionRow({
 
   const renderLeftActions = () => (
     <TouchableOpacity 
-      style={{ width: 80, backgroundColor: theme.colors.secondaryContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 10, marginLeft: 8 }}
+      style={{ width: 80, backgroundColor: theme.colors.secondaryContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 24, marginBottom: 12, marginLeft: 0 }}
       onPress={handleEditTap}
       activeOpacity={0.8}
     >
@@ -277,7 +277,7 @@ function TransactionRow({
 
   const renderRightActions = () => (
     <TouchableOpacity 
-      style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 16, marginBottom: 10, marginRight: 8 }}
+      style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 24, marginBottom: 12, marginRight: 0 }}
       onPress={onDelete}
       activeOpacity={0.8}
     >
@@ -292,38 +292,41 @@ function TransactionRow({
       renderRightActions={renderRightActions}
       overshootLeft={false}
       overshootRight={false}
+      containerStyle={{ marginBottom: 12 }}
     >
-      <List.Item
-        title={tx.description}
-        titleStyle={{ color: textColor, fontWeight: '700' }}
-        description={() => (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-            <Text style={{ color: subColor, fontSize: 12 }}>{formatDate(tx.date)}</Text>
-            {isDebit && tx.payee ? (
-              <Chip compact textStyle={{ fontSize: 10, lineHeight: 12 }} style={{ marginLeft: 8, height: 24, borderRadius: 12 }}>
-                {tx.payee}
-              </Chip>
-            ) : null}
-          </View>
-        )}
-        left={props => (
-          <Avatar.Icon
-            {...props}
-            icon={isDebit ? 'arrow-top-right' : 'arrow-bottom-left'}
-            size={40}
-            color={isDebit ? theme.colors.error : theme.colors.primary}
-            style={[props.style, { backgroundColor: isDebit ? theme.colors.errorContainer : theme.colors.primaryContainer }]}
-          />
-        )}
-        right={props => (
-          <View style={{ justifyContent: 'center', alignItems: 'flex-end', paddingRight: 8 }}>
-            <Text style={{ fontWeight: '800', fontSize: 16, color: isDebit ? theme.colors.error : theme.colors.primary }}>
-              {isDebit ? '-' : '+'}₹{fmt(tx.amount)}
-            </Text>
-          </View>
-        )}
-        style={{ backgroundColor: rowBg, borderBottomWidth: 1, borderBottomColor: theme.dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}
-      />
+      <Surface style={[styles.txRow, { backgroundColor: rowBg }]} elevation={1}>
+        <List.Item
+          title={tx.description}
+          titleStyle={{ color: textColor, fontWeight: '700', fontSize: 16 }}
+          description={() => (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+              <Text style={{ color: subColor, fontSize: 12 }}>{formatDate(tx.date)}</Text>
+              {isDebit && tx.payee ? (
+                <Chip compact textStyle={{ fontSize: 10, lineHeight: 12 }} style={{ marginLeft: 8, height: 24, borderRadius: 12 }}>
+                  {tx.payee}
+                </Chip>
+              ) : null}
+            </View>
+          )}
+          left={props => (
+            <Avatar.Icon
+              {...props}
+              icon={isDebit ? 'arrow-top-right' : 'arrow-bottom-left'}
+              size={40}
+              color={isDebit ? theme.colors.error : theme.colors.primary}
+              style={[props.style, { backgroundColor: isDebit ? theme.colors.errorContainer : theme.colors.primaryContainer }]}
+            />
+          )}
+          right={props => (
+            <View style={{ justifyContent: 'center', alignItems: 'flex-end', paddingRight: 8 }}>
+              <Text style={{ fontWeight: '800', fontSize: 16, color: isDebit ? theme.colors.error : theme.colors.primary }}>
+                {isDebit ? '-' : '+'}₹{fmt(tx.amount)}
+              </Text>
+            </View>
+          )}
+          style={{ paddingVertical: 8 }}
+        />
+      </Surface>
     </Swipeable>
   );
 }
@@ -595,12 +598,9 @@ const styles = StyleSheet.create({
   },
 
   txRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
-    gap: 12,
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: 0, // Handled by Swipeable container
   },
   txIcon: {
     width: 40,

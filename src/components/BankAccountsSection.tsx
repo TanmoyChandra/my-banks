@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   accountCard: {
-    borderRadius: 15,
+    borderRadius: 24,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderWidth: 1,
