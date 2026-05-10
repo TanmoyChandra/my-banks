@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   bankInitials: {
     fontSize: 14,
     fontWeight: '900',
-    color: '#202020',
+    color: '#FFFFFF',
     fontFamily: 'SpaceGrotesk',
   },
   headerText: { flex: 1 },

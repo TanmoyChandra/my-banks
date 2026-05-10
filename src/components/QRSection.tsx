@@ -166,7 +166,7 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
           <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Add new</Text>
         </View>
       ) : (
-        <>
+        <View style={styles.carouselWrapper}>
           <FlatList
             data={entries}
             horizontal
@@ -177,6 +177,7 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
             decelerationRate="fast"
             contentContainerStyle={styles.carouselContent}
             onMomentumScrollEnd={handleMomentumEnd}
+            style={{ flexGrow: 0 }}
           />
 
           <View style={styles.dots}>
@@ -190,7 +191,7 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
               />
             ))}
           </View>
-        </>
+        </View>
       )}
     </View>
   );
@@ -203,10 +204,13 @@ const styles = StyleSheet.create({
   sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
   introTitle: { fontSize: 28, fontWeight: '700', marginBottom: 6, fontFamily: 'SpaceGrotesk', letterSpacing: -0.5 },
   introText: { fontSize: 14, fontFamily: 'SpaceGrotesk', lineHeight: 20 },
+  carouselWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+  },
   carouselContent: {
     paddingLeft: PAGE_SIDE_PADDING,
     paddingRight: PAGE_SIDE_PADDING - PAGE_GAP,
-    paddingBottom: 12,
   },
   page: {
     paddingRight: PAGE_GAP,
@@ -228,7 +232,6 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   nameText: {
-    color: '#25232A',
     flexShrink: 1,
     fontWeight: '500',
   },
@@ -264,11 +267,9 @@ const styles = StyleSheet.create({
     width: 45,
   },
   bankInitials: {
-    color: '#202124',
     fontWeight: '800',
   },
   bankName: {
-    color: '#25232A',
     flexShrink: 1,
     fontWeight: '600',
     fontSize: 15,

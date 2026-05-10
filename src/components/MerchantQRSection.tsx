@@ -77,8 +77,8 @@ function MerchantRow({
     if (merchant.upiId) Clipboard.setStringAsync(merchant.upiId);
   };
 
-  // Dynamic height: more space if there's an image
-  const maxExpandHeight = merchant.imageUri ? 380 : 130;
+  // Fixed expand height — always consistent regardless of image
+  const maxExpandHeight = 160;
   const expandedHeight = animValue.interpolate({
     inputRange: [0, 1],
     outputRange: [0, maxExpandHeight],
@@ -112,34 +112,45 @@ function MerchantRow({
         </View>
       </TouchableOpacity>
 
-      {/* Expanded: QR image + details */}
+      {/* Expanded: compact info row */}
       <Animated.View style={{ height: expandedHeight, opacity: expandedOpacity, overflow: 'hidden' }}>
         <View style={styles.expandedContent}>
           <View style={[styles.divider, { backgroundColor: theme.colors.surfaceVariant }]} />
 
-          {/* QR Image — tappable for full screen */}
-          {merchant.imageUri ? (
-            <TouchableOpacity activeOpacity={0.85} onPress={() => setFullScreen(true)} style={styles.qrImageWrapper}>
-              <Image source={{ uri: merchant.imageUri }} style={styles.qrImage} resizeMode="contain" />
-              <Text style={[styles.tapHint, { color: subColor }]}>Tap to view full screen</Text>
-            </TouchableOpacity>
-          ) : null}
+          <View style={styles.expandedRow}>
+            {/* Compact QR thumbnail */}
+            {merchant.imageUri ? (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                onPress={() => setFullScreen(true)}
+                style={styles.thumbnailWrapper}
+              >
+                <Image source={{ uri: merchant.imageUri }} style={styles.thumbnail} resizeMode="cover" />
+                <View style={styles.thumbnailOverlay}>
+                  <IconButton icon="fullscreen" size={16} iconColor="#fff" style={{ margin: 0 }} />
+                </View>
+              </TouchableOpacity>
+            ) : null}
 
-          {/* UPI ID — tappable to copy */}
-          {merchant.upiId ? (
-            <TouchableOpacity onPress={copyUpi} activeOpacity={0.7} style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: subColor }]}>UPI ID  •  tap to copy</Text>
-              <Text style={[styles.detailValue, { color: textColor }]}>{merchant.upiId}</Text>
-            </TouchableOpacity>
-          ) : null}
-
-          {/* Notes */}
-          {merchant.notes ? (
-            <View style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: subColor }]}>Notes</Text>
-              <Text style={[styles.detailValue, { color: textColor }]}>{merchant.notes}</Text>
+            {/* Details column */}
+            <View style={styles.detailsColumn}>
+              {merchant.upiId ? (
+                <TouchableOpacity onPress={copyUpi} activeOpacity={0.7} style={styles.detailRow}>
+                  <Text style={[styles.detailLabel, { color: subColor }]}>UPI ID  •  tap to copy</Text>
+                  <Text style={[styles.detailValue, { color: textColor }]} numberOfLines={1}>{merchant.upiId}</Text>
+                </TouchableOpacity>
+              ) : null}
+              {merchant.notes ? (
+                <View style={styles.detailRow}>
+                  <Text style={[styles.detailLabel, { color: subColor }]}>Notes</Text>
+                  <Text style={[styles.detailValue, { color: textColor }]} numberOfLines={2}>{merchant.notes}</Text>
+                </View>
+              ) : null}
+              {!merchant.upiId && !merchant.notes ? (
+                <Text style={[styles.detailLabel, { color: subColor }]}>No details added</Text>
+              ) : null}
             </View>
-          ) : null}
+          </View>
         </View>
       </Animated.View>
 
@@ -244,13 +255,28 @@ const styles = StyleSheet.create({
   merchantCategory: { fontSize: 13, fontFamily: 'SpaceGrotesk', marginTop: 2 },
   rowActions: { flexDirection: 'row', alignItems: 'center' },
   expandedContent: { paddingHorizontal: 16, paddingBottom: 16 },
-  divider: { height: 1, marginBottom: 16 },
-  qrImageWrapper: { alignItems: 'center', marginBottom: 12 },
-  qrImage: { width: 200, height: 200, borderRadius: 12 },
-  tapHint: { fontSize: 11, fontFamily: 'SpaceGrotesk', marginTop: 6 },
-  detailRow: { marginBottom: 10 },
+  divider: { height: 1, marginBottom: 12 },
+  expandedRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  thumbnailWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    overflow: 'hidden',
+    position: 'relative',
+    flexShrink: 0,
+  },
+  thumbnail: { width: 80, height: 80 },
+  thumbnailOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    borderTopLeftRadius: 8,
+  },
+  detailsColumn: { flex: 1, justifyContent: 'center' },
+  detailRow: { marginBottom: 8 },
   detailLabel: { fontSize: 11, fontWeight: '600', fontFamily: 'SpaceGrotesk', letterSpacing: 0.4, marginBottom: 2 },
-  detailValue: { fontSize: 15, fontWeight: '600', fontFamily: 'SpaceGrotesk' },
+  detailValue: { fontSize: 14, fontWeight: '600', fontFamily: 'SpaceGrotesk' },
   emptyContainer: { flex: 1, alignItems: 'center', paddingTop: 80 },
   emptyEmoji: { fontSize: 48, marginBottom: 12 },
   emptyTitle: { fontSize: 20, fontWeight: '700', fontFamily: 'SpaceGrotesk', opacity: 0.4 },

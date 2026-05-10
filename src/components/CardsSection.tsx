@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   networkRow: { alignItems: 'center', flex: 1, flexDirection: 'row', marginRight: 12 },
   bankLogo: { height: 24, width: 24 },
-  bankInitials: { color: '#040404', fontWeight: '800' },
+  bankInitials: { color: '#FFFFFF', fontWeight: '800' },
   networkLabel: { color: '#F6F6F6', flex: 1, fontWeight: '900', marginLeft: 8, fontFamily: 'SpaceGrotesk' },
   rupayText: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', fontFamily: 'SpaceGrotesk' },
 
