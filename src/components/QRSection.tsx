@@ -73,12 +73,12 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
           </Text>
         </View>
 
-        <View style={[styles.qrFrame, { backgroundColor: '#FFFFFF' }]}>
+        <View style={styles.qrFrame}>
           <QRCode
             value={upiLink}
             size={qrSize}
-            color="#111111"
-            backgroundColor="#FFFFFF"
+            color={mainTextColor}
+            backgroundColor="transparent"
           />
         </View>
 
@@ -234,13 +234,7 @@ const styles = StyleSheet.create({
   },
   qrFrame: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderColor: '#ECE6F0',
-    borderRadius: 14,
-    borderWidth: 1,
     justifyContent: 'center',
-    overflow: 'hidden',
-    padding: 8,
   },
   scanText: {
     color: '#6B6F76',

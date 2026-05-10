@@ -175,7 +175,12 @@ export default function SetupMerchantQR({ onBack }: Props) {
           <>
             {merchants.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Text style={styles.emptyEmoji}>🏪</Text>
+                <Avatar.Icon
+                  size={72}
+                  icon="store-outline"
+                  style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 12 }}
+                  color={subColor}
+                />
                 <Text style={[styles.emptyTitle, { color: textColor, opacity: 0.4 }]}>No merchant QRs yet</Text>
                 <Text style={[styles.emptySubText, { color: subColor }]}>Tap + to add your first one</Text>
               </View>
@@ -197,7 +202,7 @@ export default function SetupMerchantQR({ onBack }: Props) {
                       ) : (
                         <Avatar.Icon 
                           {...props} 
-                          icon="account" 
+                          icon="qrcode" 
                           size={40} 
                           style={[props.style, { backgroundColor: theme.colors.surfaceVariant }]} 
                         />

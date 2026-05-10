@@ -6,10 +6,12 @@ import {
   ScrollView,
   Platform,
   LayoutAnimation,
+  Animated,
 } from 'react-native';
-import { Text, useTheme, List, Surface, IconButton, Avatar } from 'react-native-paper';
+import { Text, useTheme, List, Surface, IconButton, Avatar, Icon } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUiStore } from '../store/useUiStore';
+import { useEffect, useRef } from 'react';
 
 interface SettingsScreenProps {
   onNavigate: (screen: 'setup-qr' | 'setup-cards' | 'setup-accounts' | 'setup-merchant-qr') => void;
@@ -33,7 +35,7 @@ function SetupCard({
   isDark, bgColor, borderColor, textColor, subColor,
 }: SetupCardProps) {
   return (
-    <Surface elevation={1} style={{ borderRadius: 16, marginBottom: 12, overflow: 'hidden' }}>
+    <Surface elevation={0} style={{ borderRadius: 16, marginBottom: 12, overflow: 'hidden', backgroundColor: bgColor }}>
       <List.Item
         title={title}
         description={subtitle}
@@ -46,7 +48,7 @@ function SetupCard({
         right={(props) => <List.Icon {...props} icon="chevron-right" color={subColor} />}
         titleStyle={[styles.cardTitle, { color: textColor }]}
         descriptionStyle={[styles.cardSubtitle, { color: subColor }]}
-        style={{ backgroundColor: bgColor }}
+        style={{ backgroundColor: 'transparent' }}
       />
     </Surface>
   );
@@ -65,6 +67,21 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
   const borderColor = theme.colors.outlineVariant;
   const toggleTheme = useUiStore(s => s.toggleTheme);
 
+  const rotateAnim = useRef(new Animated.Value(isDark ? 1 : 0)).current;
+
+  useEffect(() => {
+    Animated.timing(rotateAnim, {
+      toValue: isDark ? 1 : 0,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [isDark]);
+
+  const spin = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '180deg'],
+  });
+
   return (
     <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: insets.top + 16 }]}>
       {/* Page header */}
@@ -74,24 +91,26 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
             <Text style={[styles.pageTitle, { color: textColor }]}>Settings</Text>
             {userName ? (
               <Text style={[styles.pageSubtitle, { color: subColor }]}>
-                Hi, {userName} 👋
+                Hi, {userName}
               </Text>
             ) : null}
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <IconButton
-              icon={isDark ? 'weather-sunny' : 'moon-waning-crescent'}
-              size={24}
-              iconColor={isDark ? '#000000' : '#FFFFFF'}
-              style={{ backgroundColor: isDark ? '#AAEF00' : '#1c1c1c', margin: 0 }}
-              onPress={() => {
-                LayoutAnimation.configureNext({
-                  duration: 600,
-                  update: { type: 'easeInEaseOut' },
-                });
-                toggleTheme();
-              }}
-            />
+            <Animated.View style={{ transform: [{ rotate: spin }] }}>
+              <IconButton
+                icon={isDark ? 'weather-sunny' : 'moon-waning-crescent'}
+                size={24}
+                iconColor={isDark ? '#000000' : '#FFFFFF'}
+                style={{ backgroundColor: isDark ? '#AAEF00' : '#1c1c1c', margin: 0 }}
+                onPress={() => {
+                  LayoutAnimation.configureNext({
+                    duration: 300,
+                    update: { type: 'easeInEaseOut' },
+                  });
+                  toggleTheme();
+                }}
+              />
+            </Animated.View>
             <Avatar.Text 
               size={40} 
               label={userName ? userName.charAt(0).toUpperCase() : '?'} 

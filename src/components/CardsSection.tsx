@@ -43,7 +43,7 @@ const WaveTexture = () => (
           <Path
             key={index}
             d={`M-100 ${y} C 100 ${y + bend}, 200 ${y - bend}, 300 ${y} S 500 ${y + bend}, 600 ${y}`}
-            stroke="rgba(255,255,255,0.06)"
+            stroke="rgba(255,255,255,0.09)"
             strokeWidth="1.5"
             fill="none"
           />
@@ -51,7 +51,7 @@ const WaveTexture = () => (
       })}
       <Path
         d="M-100 240 C 100 120, 200 120, 300 180 S 500 240, 600 100"
-        stroke="rgba(255,255,255,0.06)"
+        stroke="rgba(255,255,255,0.08)"
         strokeWidth="30"
         fill="none"
       />
@@ -81,17 +81,7 @@ const NetworkMark = ({ card, fallbackLabel, textColor }: { card: CardEntry; fall
   );
 };
 
-const Chip = () => (
-  <View style={styles.chip}>
-    <View style={styles.chipGrid}>
-      <View style={styles.chipLineH} />
-      <View style={[styles.chipLineH, { top: 24 }]} />
-      <View style={styles.chipLineV} />
-      <View style={[styles.chipLineV, { left: 42 }]} />
-      <View style={styles.chipCenter} />
-    </View>
-  </View>
-);
+
 
 
 const BankCard: React.FC<{ card: CardEntry; index: number; onPress: () => void }> = ({ card, index, onPress }) => {
@@ -113,7 +103,11 @@ const BankCard: React.FC<{ card: CardEntry; index: number; onPress: () => void }
 
         <View style={styles.topRow}>
           <NetworkMark card={card} fallbackLabel={network} textColor={textColor} />
-          <Chip />
+          <View style={[styles.cardTypeBadge, { borderColor: 'rgba(255,255,255,0.3)' }]}>
+            <Text style={[styles.cardTypeBadgeText, { color: textColor }]}>
+              {card.type?.toUpperCase() ?? 'DEBIT'}
+            </Text>
+          </View>
         </View>
 
         <View style={styles.numberBlock}>
@@ -240,65 +234,43 @@ const styles = StyleSheet.create({
   cardFace: {
     aspectRatio: 1.72,
     backgroundColor: '#040404',
-    borderRadius: 18,
+    borderRadius: 20,
     justifyContent: 'space-between',
     overflow: 'hidden',
     paddingHorizontal: 22,
     paddingVertical: 20,
-    // iOS shadow (adds to 3D feel)
+    // Rich shadow for premium depth
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.45,
-    shadowRadius: 20,
-    elevation: 14,
-    // Subtle highlight border on top edge to simulate light hitting the card
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.55,
+    shadowRadius: 22,
+    elevation: 18,
+    // Subtle highlight on top-left edge
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.12)',
+    borderTopColor: 'rgba(255,255,255,0.14)',
     borderLeftWidth: 1,
-    borderLeftColor: 'rgba(255,255,255,0.06)',
+    borderLeftColor: 'rgba(255,255,255,0.08)',
   },
 
-  topRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  topRow: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },
+  cardTypeBadge: {
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  cardTypeBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    fontFamily: 'SpaceGrotesk',
+    opacity: 0.8,
+  },
   networkRow: { alignItems: 'center', flex: 1, flexDirection: 'row', marginRight: 12 },
   bankLogo: { height: 24, width: 24 },
   bankInitials: { color: '#040404', fontWeight: '800' },
   networkLabel: { color: '#F6F6F6', flex: 1, fontWeight: '900', marginLeft: 8, fontFamily: 'SpaceGrotesk' },
   rupayText: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', fontFamily: 'SpaceGrotesk' },
-
-  chip: {
-    backgroundColor: '#E0B545',
-    borderRadius: 8,
-    height: 37,
-    overflow: 'hidden',
-    width: 57,
-  },
-  chipGrid: { flex: 1 },
-  chipLineH: {
-    backgroundColor: 'rgba(75,55,10,0.55)',
-    height: 1,
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 10,
-  },
-  chipLineV: {
-    backgroundColor: 'rgba(75,55,10,0.55)',
-    bottom: 0,
-    left: 14,
-    position: 'absolute',
-    top: 0,
-    width: 1,
-  },
-  chipCenter: {
-    borderColor: 'rgba(75,55,10,0.55)',
-    borderRadius: 4,
-    borderWidth: 1,
-    height: 22,
-    left: 20,
-    position: 'absolute',
-    top: 7,
-    width: 18,
-  },
 
   numberBlock: { marginTop: 13 },
   cardHolderName: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 1, marginBottom: 8, fontFamily: 'SpaceGrotesk' },

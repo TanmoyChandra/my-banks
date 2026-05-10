@@ -92,7 +92,7 @@ function MerchantRow({
         <View style={[styles.categoryBadge, { backgroundColor: isDark ? '#2A2A2A' : '#F2F3F5' }]}>
           <Avatar.Icon
             size={36}
-            icon="account"
+            icon="qrcode"
             style={{ backgroundColor: 'transparent' }}
             color={subColor}
           />
@@ -186,7 +186,12 @@ export default function MerchantQRSection() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {merchants.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyEmoji}>🏪</Text>
+            <Avatar.Icon
+              size={72}
+              icon="store-outline"
+              style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }}
+              color={theme.colors.onSurfaceVariant}
+            />
             <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>No merchant QR codes</Text>
             <Text style={[styles.emptySubText, { color: theme.colors.onSurfaceVariant }]}>
               Add them from Settings → Merchant QR Codes
