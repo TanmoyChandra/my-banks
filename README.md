@@ -20,6 +20,7 @@ If tunnel fails with `failed to start tunnel` or `remote gone away`, try clearin
 
 ```bash
 npm run tunnel -- --clear
+npx expo start --lan
 ```
 
 If it still fails, use LAN mode while your phone and computer are on the same Wi-Fi:
