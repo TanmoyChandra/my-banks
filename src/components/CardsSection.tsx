@@ -152,19 +152,19 @@ const BankCard: React.FC<{ card: CardEntry; index: number; onPress: () => void }
 
       {/* Quick copy actions below card */}
       <View style={styles.cardActions}>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'PlusJakartaSans-Medium' }}
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'SpaceGrotesk' }}
           onPress={(e) => { Clipboard.setStringAsync(card.holderName || ''); }}>
           Name
         </Button>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'PlusJakartaSans-Medium' }}
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'SpaceGrotesk' }}
           onPress={() => Clipboard.setStringAsync(card.cardNumber.replace(/\D/g, ''))}>
           Number
         </Button>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'PlusJakartaSans-Medium' }}
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'SpaceGrotesk' }}
           onPress={() => Clipboard.setStringAsync(card.expiry || '')}>
           Date
         </Button>
-        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'PlusJakartaSans-Medium' }}
+        <Button compact mode="text" textColor={theme.colors.onSurface} icon="content-copy" labelStyle={{ fontSize: 12, fontFamily: 'SpaceGrotesk' }}
           onPress={() => Clipboard.setStringAsync(card.cvv || '')}>
           CVV
         </Button>
@@ -180,7 +180,7 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <View style={styles.sectionIntro}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <View style={{ flex: 1, marginRight: 16 }}>
@@ -228,13 +228,13 @@ const styles = StyleSheet.create({
   introTitle: {
     fontSize: 34,
     fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontFamily: 'SpaceGrotesk',
     marginTop: 0,
     letterSpacing: -1,
   },
   introText: {
     fontSize: 15,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
     marginTop: 4,
   },
   introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#AAEF00', alignItems: 'center', justifyContent: 'center' },
@@ -273,8 +273,8 @@ const styles = StyleSheet.create({
   networkRow: { alignItems: 'center', flex: 1, flexDirection: 'row', marginRight: 12 },
   bankLogo: { height: 24, width: 24 },
   bankInitials: { color: '#040404', fontWeight: '800' },
-  networkLabel: { color: '#F6F6F6', flex: 1, fontWeight: '900', marginLeft: 8, fontFamily: 'PlusJakartaSans-ExtraBold' },
-  rupayText: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold' },
+  networkLabel: { color: '#F6F6F6', flex: 1, fontWeight: '900', marginLeft: 8, fontFamily: 'SpaceGrotesk' },
+  rupayText: { color: '#FFFFFF', fontSize: 22, fontWeight: '900', fontFamily: 'SpaceGrotesk' },
 
   chip: {
     backgroundColor: '#E0B545',
@@ -312,14 +312,14 @@ const styles = StyleSheet.create({
   },
 
   numberBlock: { marginTop: 13 },
-  cardHolderName: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 1, marginBottom: 8, fontFamily: 'PlusJakartaSans-ExtraBold' },
-  cardNumber: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 4, fontSize: 24, fontFamily: 'PlusJakartaSans-ExtraBold' },
+  cardHolderName: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 1, marginBottom: 8, fontFamily: 'SpaceGrotesk' },
+  cardNumber: { color: '#FFFFFF', fontWeight: '900', letterSpacing: 4, fontSize: 24, fontFamily: 'SpaceGrotesk' },
 
   bottomRow: { alignItems: 'flex-end', flexDirection: 'row', justifyContent: 'space-between' },
   holderBlock: { flex: 1, marginRight: 16 },
   validBlock: { alignItems: 'flex-start', minWidth: 78 },
   validLabel: { color: '#FFFFFF', marginTop: 14, fontWeight: '700', fontSize: 12, opacity: 0.7 },
-  validValue: { color: '#FFFFFF', fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold' },
+  validValue: { color: '#FFFFFF', fontWeight: '900', fontFamily: 'SpaceGrotesk' },
 
   tapHint: {
     position: 'absolute',
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   tapHintText: {
     color: 'rgba(255,255,255,0.4)',
     fontSize: 10,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
   },
 
   cardActions: {
@@ -351,12 +351,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 22,
     fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontFamily: 'SpaceGrotesk',
     marginBottom: 8,
   },
   emptySubText: {
     fontSize: 14,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
     textAlign: 'center',
     paddingHorizontal: 40,
   },

@@ -12,10 +12,12 @@ import { CardEntry } from '../types';
 import QRSection from '../components/QRSection';
 import CardsSection from '../components/CardsSection';
 import BankAccountsSection from '../components/BankAccountsSection';
+import MerchantQRSection from '../components/MerchantQRSection';
 import CardTransactions from '../components/CardTransactions';
 import SetupQR from '../components/setup/SetupQR';
 import SetupCards from '../components/setup/SetupCards';
 import SetupAccounts from '../components/setup/SetupAccounts';
+import SetupMerchantQR from '../components/setup/SetupMerchantQR';
 import SettingsScreen from '../components/SettingsScreen';
 import OnboardingFlow from '../features/onboarding/OnboardingFlow';
 
@@ -26,10 +28,11 @@ const BottomTab = createBottomTabNavigator();
 
 // ─── Tab bar: icons only (no labels) ──────────────────────────
 const TAB_META: Record<string, { focused: string; unfocused: string }> = {
-  QR:       { focused: 'qrcode-scan',      unfocused: 'qrcode' },
-  Cards:    { focused: 'card-bulleted',    unfocused: 'card-bulleted-outline' },
-  Accounts: { focused: 'bank',             unfocused: 'bank-outline' },
-  Settings: { focused: 'cog',             unfocused: 'cog-outline' },
+  QR:        { focused: 'qrcode-scan',      unfocused: 'qrcode' },
+  Cards:     { focused: 'card-bulleted',    unfocused: 'card-bulleted-outline' },
+  Merchants: { focused: 'store',            unfocused: 'store-outline' },
+  Accounts:  { focused: 'bank',             unfocused: 'bank-outline' },
+  Settings:  { focused: 'cog',             unfocused: 'cog-outline' },
 };
 
 function PaperTabBar({ navigation, state, descriptors, insets }: any) {
@@ -94,6 +97,9 @@ function MainScreen({ navigation }: any) {
         <BottomTab.Screen name="Cards">
           {() => <CardsTab navigation={navigation} />}
         </BottomTab.Screen>
+        <BottomTab.Screen name="Merchants">
+          {() => <MerchantsTab />}
+        </BottomTab.Screen>
         <BottomTab.Screen name="Accounts">
           {() => <AccountsTab />}
         </BottomTab.Screen>
@@ -139,6 +145,15 @@ function AccountsTab() {
   );
 }
 
+function MerchantsTab() {
+  const theme = useTheme();
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <MerchantQRSection />
+    </View>
+  );
+}
+
 function SettingsTab({ navigation }: { navigation: any }) {
   const theme = useTheme();
   return (
@@ -148,6 +163,7 @@ function SettingsTab({ navigation }: { navigation: any }) {
           if (screen === 'setup-qr') navigation.navigate('SetupQR');
           else if (screen === 'setup-cards') navigation.navigate('SetupCards');
           else if (screen === 'setup-accounts') navigation.navigate('SetupAccounts');
+          else if (screen === 'setup-merchant-qr') navigation.navigate('SetupMerchantQR');
         }}
       />
     </View>
@@ -192,6 +208,10 @@ function SetupAccountsScreen({ navigation }: any) {
   return <SetupAccounts accounts={accounts} onAdd={addAccount} onUpdate={updateAccount} onDelete={deleteAccount} onBack={() => navigation.goBack()} />;
 }
 
+function SetupMerchantQRScreen({ navigation }: any) {
+  return <SetupMerchantQR onBack={() => navigation.goBack()} />;
+}
+
 // ─── Root Navigator ────────────────────────────────────────────
 export default function RootNavigator() {
   const theme = useTheme();
@@ -216,6 +236,7 @@ export default function RootNavigator() {
             <Stack.Screen name="SetupQR" component={SetupQRScreen} />
             <Stack.Screen name="SetupCards" component={SetupCardsScreen} />
             <Stack.Screen name="SetupAccounts" component={SetupAccountsScreen} />
+            <Stack.Screen name="SetupMerchantQR" component={SetupMerchantQRScreen} />
           </Stack.Group>
         </>
       )}

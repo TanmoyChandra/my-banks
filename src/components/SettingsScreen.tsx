@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUiStore } from '../store/useUiStore';
 
 interface SettingsScreenProps {
-  onNavigate: (screen: 'setup-qr' | 'setup-cards' | 'setup-accounts') => void;
+  onNavigate: (screen: 'setup-qr' | 'setup-cards' | 'setup-accounts' | 'setup-merchant-qr') => void;
 }
 
 interface SetupCardProps {
@@ -66,7 +66,7 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
   const toggleTheme = useUiStore(s => s.toggleTheme);
 
   return (
-    <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: insets.top }]}>
+    <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: insets.top + 16 }]}>
       {/* Page header */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -147,6 +147,19 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           subColor={subColor}
         />
 
+        <SetupCard
+          icon="store"
+          title="Merchant QR Codes"
+          subtitle="Add frequently-used merchant QR codes from your gallery"
+          accentColor="#E8F5E9"
+          onPress={() => onNavigate('setup-merchant-qr')}
+          isDark={isDark}
+          bgColor={surfaceColor}
+          borderColor={borderColor}
+          textColor={textColor}
+          subColor={subColor}
+        />
+
         {/* App info */}
         <View style={[styles.infoBox, { backgroundColor: surfaceColor, borderColor }]}>
           <Text style={[styles.infoTitle, { color: textColor }]}>MyBanks</Text>
@@ -175,12 +188,12 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 34,
     fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontFamily: 'SpaceGrotesk',
     letterSpacing: -1,
   },
   pageSubtitle: {
     fontSize: 15,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
     marginTop: 4,
   },
 
@@ -190,7 +203,7 @@ const styles = StyleSheet.create({
 
   sectionLabel: {
     fontSize: 11,
-    fontFamily: 'PlusJakartaSans-Bold',
+    fontFamily: 'SpaceGrotesk',
     fontWeight: '700',
     letterSpacing: 1.2,
     marginBottom: 12,
@@ -227,12 +240,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '800',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontFamily: 'SpaceGrotesk',
     marginBottom: 3,
   },
   cardSubtitle: {
     fontSize: 13,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
     lineHeight: 18,
   },
   cardChevron: {
@@ -252,25 +265,25 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 18,
     fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontFamily: 'SpaceGrotesk',
     marginBottom: 8,
   },
   infoText: {
     fontSize: 13,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 12,
   },
   infoVersion: {
     fontSize: 12,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
     opacity: 0.5,
   },
 
   footerText: {
     fontSize: 13,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
     textAlign: 'center',
     opacity: 0.5,
     marginBottom: 8,

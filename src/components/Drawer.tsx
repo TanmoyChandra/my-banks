@@ -111,13 +111,13 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: 14,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
     color: '#71717a',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontFamily: 'SpaceGrotesk',
   },
   content: {
     flex: 1,
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   menuText: {
     fontSize: 16,
     fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontFamily: 'SpaceGrotesk',
   },
   footer: {
     padding: 16,

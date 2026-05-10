@@ -8,7 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Modal as PaperModal, Appbar, FAB, Avatar, List, Chip, Paragraph, Surface } from 'react-native-paper';
+import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Appbar, FAB, Avatar, List, Chip, Paragraph, Surface } from 'react-native-paper';
+import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
 import { DatePickerModal } from 'react-native-paper-dates';
@@ -114,12 +115,21 @@ function TransactionModal({
   };
 
   return (
-    <Portal>
-      <PaperModal visible={visible} onDismiss={onClose} contentContainerStyle={styles.modalOverlay}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-            <View style={[styles.modalSheet, { backgroundColor: bgColor, borderColor }]}>
-              {/* Handle */}
+    <>
+      <Modal
+        isVisible={visible}
+        onBackdropPress={onClose}
+        onSwipeComplete={onClose}
+        swipeDirection={['down']}
+        style={{ margin: 0, justifyContent: 'flex-end' }}
+        
+        avoidKeyboard={true}
+        useNativeDriver={true}
+        useNativeDriverForBackdrop={true}
+        hideModalContentWhileAnimating={true}
+      >
+        <View style={[styles.modalSheet, { backgroundColor: bgColor, borderColor }]}>
+          {/* Handle */}
               <View style={[styles.handle, { backgroundColor: subColor }]} />
 
               <Text style={[styles.modalTitle, { color: textColor }]}>
@@ -218,25 +228,23 @@ function TransactionModal({
                   <Text style={[styles.modalAddLabel, { color: theme.colors.onPrimary }]}>{initialData ? 'Save' : 'Add'}</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </TouchableOpacity>
+        </View>
+      </Modal>
 
-          <Portal>
-            <Dialog visible={dialogState.visible} onDismiss={() => setDialogState(p => ({ ...p, visible: false }))} style={{ backgroundColor: theme.colors.surface }}>
-              <Dialog.Title style={{ color: theme.colors.onSurface }}>{dialogState.title}</Dialog.Title>
-              <Dialog.Content>
-                <Paragraph style={{ color: theme.colors.onSurfaceVariant }}>{dialogState.message}</Paragraph>
-              </Dialog.Content>
-              <Dialog.Actions>
-                <Button onPress={() => setDialogState(p => ({ ...p, visible: false }))} textColor={theme.colors.primary}>
-                  OK
-                </Button>
-              </Dialog.Actions>
-            </Dialog>
-          </Portal>
-        </KeyboardAvoidingView>
-      </PaperModal>
-    </Portal>
+      <Portal>
+        <Dialog visible={dialogState.visible} onDismiss={() => setDialogState(p => ({ ...p, visible: false }))} style={{ backgroundColor: theme.colors.surface }}>
+          <Dialog.Title style={{ color: theme.colors.onSurface }}>{dialogState.title}</Dialog.Title>
+          <Dialog.Content>
+            <Paragraph style={{ color: theme.colors.onSurfaceVariant }}>{dialogState.message}</Paragraph>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setDialogState(p => ({ ...p, visible: false }))} textColor={theme.colors.primary}>
+              OK
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+    </>
   );
 }
 
@@ -245,20 +253,25 @@ function TransactionRow({
   tx,
   onEdit,
   onDelete,
+  onToggleFlag,
 }: {
   tx: CardTransaction;
   onEdit: () => void;
   onDelete: () => void;
+  onToggleFlag: () => void;
 }) {
   const theme = useTheme();
-  const swipeableRef = useRef<Swipeable>(null);
+  const swipeableRef = useRef<any>(null);
 
   const isDark = theme.dark;
-  const textColor = isDark ? '#FFFFFF' : '#000000';
-  const subColor = isDark ? '#a1a1aa' : '#6B7280';
-  const rowBg = isDark ? '#18181b' : '#F5F5F5';
-  const chipBg = isDark ? '#27272a' : '#E5E7EB';
+  const textColor = isDark ? '#FFFFFF' : '#202020';
+  const subColor = isDark ? '#A1A1A1' : '#7A7A7A';
   const isDebit = tx.type === 'debit';
+  const amountColor = isDebit ? textColor : '#4F7922';
+
+  const iconName = isDebit ? 'arrow-top-right' : 'arrow-bottom-left';
+  const iconColor = isDebit ? theme.colors.error : '#4F7922';
+  const iconBg = isDebit ? theme.colors.errorContainer : '#E8F5E9';
 
   const handleEditTap = () => {
     swipeableRef.current?.close();
@@ -267,23 +280,26 @@ function TransactionRow({
 
   const renderLeftActions = () => (
     <TouchableOpacity 
-      style={{ width: 80, backgroundColor: theme.colors.secondaryContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 24, marginBottom: 12, marginLeft: 0 }}
+      style={{ width: 80, backgroundColor: isDark ? '#1C3118' : '#E8F5E9', justifyContent: 'center', alignItems: 'center' }}
       onPress={handleEditTap}
       activeOpacity={0.8}
     >
-      <IconButton icon="pencil" iconColor={theme.colors.onSecondaryContainer} />
+      <IconButton icon="pencil" iconColor={isDark ? '#A1D99B' : '#4F7922'} />
     </TouchableOpacity>
   );
 
   const renderRightActions = () => (
     <TouchableOpacity 
-      style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center', borderRadius: 24, marginBottom: 12, marginRight: 0 }}
+      style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center' }}
       onPress={onDelete}
       activeOpacity={0.8}
     >
       <IconButton icon="delete" iconColor={theme.colors.onErrorContainer} />
     </TouchableOpacity>
   );
+
+  const formattedTime = new Date(tx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const displayAmount = isDebit ? `-₹${tx.amount.toFixed(2)}` : `+₹${tx.amount.toFixed(2)}`;
 
   return (
     <Swipeable
@@ -292,41 +308,30 @@ function TransactionRow({
       renderRightActions={renderRightActions}
       overshootLeft={false}
       overshootRight={false}
-      containerStyle={{ marginBottom: 12 }}
     >
-      <Surface style={[styles.txRow, { backgroundColor: rowBg }]} elevation={1}>
-        <List.Item
-          title={tx.description}
-          titleStyle={{ color: textColor, fontWeight: '700', fontSize: 16 }}
-          description={() => (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-              <Text style={{ color: subColor, fontSize: 12 }}>{formatDate(tx.date)}</Text>
-              {isDebit && tx.payee ? (
-                <Chip compact textStyle={{ fontSize: 10, lineHeight: 12 }} style={{ marginLeft: 8, height: 24, borderRadius: 12 }}>
-                  {tx.payee}
-                </Chip>
-              ) : null}
-            </View>
-          )}
-          left={props => (
-            <Avatar.Icon
-              {...props}
-              icon={isDebit ? 'arrow-top-right' : 'arrow-bottom-left'}
-              size={40}
-              color={isDebit ? theme.colors.error : theme.colors.primary}
-              style={[props.style, { backgroundColor: isDebit ? theme.colors.errorContainer : theme.colors.primaryContainer }]}
-            />
-          )}
-          right={props => (
-            <View style={{ justifyContent: 'center', alignItems: 'flex-end', paddingRight: 8 }}>
-              <Text style={{ fontWeight: '800', fontSize: 16, color: isDebit ? theme.colors.error : theme.colors.primary }}>
-                {isDebit ? '-' : '+'}₹{fmt(tx.amount)}
-              </Text>
-            </View>
-          )}
-          style={{ paddingVertical: 8 }}
-        />
-      </Surface>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 16, backgroundColor: theme.colors.surface }}>
+        <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: iconBg, alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
+          <IconButton icon={iconName} iconColor={iconColor} size={24} style={{ margin: 0 }} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: textColor, fontWeight: '700', fontSize: 16, fontFamily: 'SpaceGrotesk' }}>{tx.description}</Text>
+          <Text style={{ color: subColor, fontSize: 13, fontFamily: 'SpaceGrotesk', marginTop: 2 }}>
+            {tx.payee || 'General'} • {formattedTime}
+          </Text>
+        </View>
+        <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+          <Text style={{ fontWeight: '700', fontSize: 16, color: amountColor, fontFamily: 'SpaceGrotesk' }}>
+            {displayAmount}
+          </Text>
+          <IconButton 
+            icon={tx.isFlagged ? "flag" : "flag-outline"} 
+            iconColor={tx.isFlagged ? theme.colors.error : subColor} 
+            size={18} 
+            onPress={onToggleFlag}
+            style={{ margin: 0, marginTop: 4, width: 24, height: 24 }} 
+          />
+        </View>
+      </View>
     </Swipeable>
   );
 }
@@ -341,6 +346,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
 
   const transactions = useWalletStore((s) => s.transactions);
   const deleteTransaction = useWalletStore((s) => s.deleteTransaction);
+  const updateTransaction = useWalletStore((s) => s.updateTransaction);
 
   const cardTxs = useMemo(
     () => transactions.filter((t) => t.cardId === card.id),
@@ -353,21 +359,48 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
     }, 0);
   }, [cardTxs]);
 
-  const bgColor = isDark ? '#09090b' : '#FFFFFF';
-  const textColor = isDark ? '#FFFFFF' : '#000000';
-  const subColor = isDark ? '#a1a1aa' : '#6B7280';
-  const headerBg = isDark ? '#18181b' : '#F5F5F5';
-  const cardBg = card.color || '#040404';
+  const groupedTxs = useMemo(() => {
+    const groups: { [key: string]: CardTransaction[] } = {};
+    const sorted = [...cardTxs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    sorted.forEach(tx => {
+      const d = new Date(tx.date);
+      const today = new Date();
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+      
+      let key = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
+      if (d.toDateString() === today.toDateString()) {
+        key = 'TODAY';
+      } else if (d.toDateString() === yesterday.toDateString()) {
+        key = 'YESTERDAY';
+      }
+      
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(tx);
+    });
+    return groups;
+  }, [cardTxs]);
+
+  const bgColor = theme.colors.background;
+  const textColor = isDark ? '#FFFFFF' : '#202020';
+  const subColor = isDark ? '#A1A1A1' : '#7A7A7A';
 
   const cardLabel = card.nickname.trim() || (card.type === 'Credit' ? 'Credit Card' : 'Debit Card');
-  const maskedNum = card.cardNumber
-    ? `••••  ${card.cardNumber.replace(/\D/g, '').slice(-4)}`
-    : '••••';
 
   const [deleteDialog, setDeleteDialog] = useState<string | null>(null);
+  const [unflagDialog, setUnflagDialog] = useState<CardTransaction | null>(null);
 
   const handleDelete = (id: string) => {
     setDeleteDialog(id);
+  };
+
+  const handleToggleFlag = (tx: CardTransaction) => {
+    if (tx.isFlagged) {
+      setUnflagDialog(tx);
+    } else {
+      updateTransaction(tx.id, { ...tx, isFlagged: true });
+    }
   };
 
   return (
@@ -375,52 +408,56 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
       {/* ── Header ── */}
       <Appbar.Header style={{ backgroundColor: bgColor }}>
         <Appbar.BackAction onPress={onBack} />
-        <Appbar.Content title={cardLabel} subtitle={`${maskedNum} · ${card.type}`} titleStyle={{ fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold' }} subtitleStyle={{ fontFamily: 'PlusJakartaSans-Medium' }} />
+        <Appbar.Content title={cardLabel} titleStyle={{ fontWeight: '700', fontFamily: 'SpaceGrotesk', textAlign: 'center' }} />
+        <Appbar.Action icon="dots-vertical" onPress={() => {}} />
       </Appbar.Header>
 
-      {/* ── Mini card strip ── */}
-      <View style={[styles.miniCardStrip, { backgroundColor: cardBg }]}>
-        {/* Due amount */}
-        <View style={styles.dueSection}>
-          <Text style={styles.dueLabel}>Total Due</Text>
-          <Text style={styles.dueAmount}>
-            {totalDue < 0 ? '-' : ''}₹{fmt(Math.abs(totalDue))}
-          </Text>
-          <Text style={styles.dueSubLabel}>
-            {totalDue < 0 ? 'You have credit balance' : totalDue === 0 ? 'All settled ✓' : 'Outstanding balance'}
-          </Text>
-        </View>
-
-        {/* Stats row */}
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statValue}>
-              ₹{fmt(cardTxs.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0))}
-            </Text>
-            <Text style={styles.statLabel}>Total Spent</Text>
+      <Surface style={[styles.totalCard, { backgroundColor: theme.colors.surface }]} elevation={0}>
+        <Text style={[styles.totalLabel, { color: subColor }]}>Total due</Text>
+        <Text style={[styles.totalAmount, { color: textColor, marginBottom: 8 }]}>
+          ₹ {fmt(Math.abs(totalDue))}
+        </Text>
+        <View style={styles.statsRowNew}>
+          <View>
+            <Text style={[styles.statLabelNew, { color: subColor }]}>Spent amount</Text>
+            <Text style={[styles.statValueNew, { color: textColor }]}>₹ {fmt(cardTxs.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0))}</Text>
           </View>
-          <View style={[styles.statDivider]} />
-          <View style={styles.statBox}>
-            <Text style={[styles.statValue, { color: theme.colors.primary }]}>
-              ₹{fmt(cardTxs.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0))}
-            </Text>
-            <Text style={styles.statLabel}>Total Paid</Text>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={[styles.statLabelNew, { color: subColor }]}>Amount Kept</Text>
+            <Text style={[styles.statValueNew, { color: theme.colors.primary }]}>₹ {fmt(cardTxs.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0))}</Text>
           </View>
         </View>
-      </View>
+      </Surface>
 
-      {/* ── Transaction List ── */}
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.listHeader}>
-          <Text style={[styles.listTitle, { color: textColor }]}>Transactions</Text>
-          <Text style={[styles.listCount, { color: subColor }]}>{cardTxs.length} entries</Text>
-        </View>
 
-        {cardTxs.length === 0 ? (
+        {Object.keys(groupedTxs).map(dateKey => (
+          <View key={dateKey} style={styles.dateGroup}>
+            <Text style={[styles.dateHeader, { color: subColor }]}>{dateKey}</Text>
+            <Surface style={[styles.groupCard, { backgroundColor: theme.colors.surface }]} elevation={0}>
+              {groupedTxs[dateKey].map((tx, index) => (
+                <View key={tx.id}>
+                  {index > 0 && <View style={[styles.txDivider, { backgroundColor: theme.colors.surfaceVariant }]} />}
+                  <TransactionRow 
+                    tx={tx} 
+                    onEdit={() => {
+                      setEditingTx(tx);
+                      setModalVisible(true);
+                    }}
+                    onDelete={() => handleDelete(tx.id)} 
+                    onToggleFlag={() => handleToggleFlag(tx)}
+                  />
+                </View>
+              ))}
+            </Surface>
+          </View>
+        ))}
+
+        {cardTxs.length === 0 && (
           <View style={styles.empty}>
             <Avatar.Icon size={64} icon="receipt" style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }} color={theme.colors.primary} />
             <Text style={[styles.emptyTitle, { color: textColor }]}>No transactions yet</Text>
@@ -428,18 +465,6 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
               Tap the + button to add your first entry
             </Text>
           </View>
-        ) : (
-          cardTxs.map((tx) => (
-            <TransactionRow 
-              key={tx.id} 
-              tx={tx} 
-              onEdit={() => {
-                setEditingTx(tx);
-                setModalVisible(true);
-              }}
-              onDelete={() => handleDelete(tx.id)} 
-            />
-          ))
         )}
       </ScrollView>
 
@@ -484,6 +509,27 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
             </Button>
           </Dialog.Actions>
         </Dialog>
+
+        <Dialog visible={!!unflagDialog} onDismiss={() => setUnflagDialog(null)} style={{ backgroundColor: theme.colors.surface }}>
+          <Dialog.Title style={{ color: theme.colors.onSurface }}>Unflag Transaction</Dialog.Title>
+          <Dialog.Content>
+            <Text style={{ color: theme.colors.onSurfaceVariant }}>Are you sure you want to unflag this transaction?</Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setUnflagDialog(null)}>Cancel</Button>
+            <Button 
+              textColor={theme.colors.error} 
+              onPress={() => {
+                if (unflagDialog) {
+                  updateTransaction(unflagDialog.id, { ...unflagDialog, isFlagged: false });
+                }
+                setUnflagDialog(null);
+              }}
+            >
+              Unflag
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
       </Portal>
     </View>
   );
@@ -507,159 +553,99 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: 22,
   },
-  backArrow: { fontSize: 24, fontFamily: 'PlusJakartaSans-Bold' },
+  backArrow: { fontSize: 24, fontFamily: 'SpaceGrotesk' },
   headerCenter: { flex: 1, alignItems: 'center' },
   headerTitle: {
     fontSize: 17,
     fontWeight: '800',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontFamily: 'SpaceGrotesk',
   },
   headerSub: {
     fontSize: 12,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
     marginTop: 2,
   },
 
-  // Mini card strip (due section)
-  miniCardStrip: {
+  // New Styles
+  totalCard: {
     marginHorizontal: 16,
-    borderRadius: 24,
     padding: 24,
+    borderRadius: 24,
     marginBottom: 8,
-    // 3D shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 14,
   },
-  dueSection: { alignItems: 'center', marginBottom: 20 },
-  dueLabel: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 13,
-    fontFamily: 'PlusJakartaSans-Medium',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+  totalLabel: {
+    fontSize: 14,
+    fontFamily: 'SpaceGrotesk',
+    marginBottom: 8,
   },
-  dueAmount: {
-    color: '#FFFFFF',
-    fontSize: 52,
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+  totalAmount: {
+    fontSize: 40,
     fontWeight: '900',
-    letterSpacing: -2,
-    marginTop: 6,
-    lineHeight: 60,
+    fontFamily: 'SpaceGrotesk',
+    letterSpacing: -1,
   },
-  dueSubLabel: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans-Medium',
-    marginTop: 4,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.12)',
-    paddingTop: 16,
-  },
-  statBox: { flex: 1, alignItems: 'center' },
-  statDivider: { width: 1, height: 32, backgroundColor: 'rgba(255,255,255,0.15)' },
-  statValue: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'PlusJakartaSans-ExtraBold',
-    fontWeight: '900',
-  },
-  statLabel: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 11,
-    fontFamily: 'PlusJakartaSans-Medium',
-    marginTop: 4,
-  },
-
-  // Transaction list
-  listContent: { paddingHorizontal: 16, paddingTop: 16 },
-  listHeader: {
+  statsRowNew: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginTop: 12,
   },
-  listTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
-  },
-  listCount: {
-    fontSize: 13,
-    fontFamily: 'PlusJakartaSans-Medium',
-  },
-
-  txRow: {
-    borderRadius: 24,
-    overflow: 'hidden',
-    marginBottom: 0, // Handled by Swipeable container
-  },
-  txIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  txIconText: { fontSize: 18, fontWeight: '900' },
-  txInfo: { flex: 1 },
-  txDesc: {
-    fontSize: 15,
-    fontWeight: '700',
-    fontFamily: 'PlusJakartaSans-Bold',
-    marginBottom: 4,
-  },
-  txDetailsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  payeeChip: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  payeeText: {
-    fontSize: 10,
-    fontFamily: 'PlusJakartaSans-Bold',
-  },
-  txDate: {
+  statLabelNew: {
     fontSize: 12,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
+    marginBottom: 2,
   },
-  txRight: { alignItems: 'flex-end', justifyContent: 'center' },
-  txAmount: {
-    fontSize: 15,
-    fontWeight: '800',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+  statValueNew: {
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'SpaceGrotesk',
   },
-  txActionRow: {
+  filterRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
     gap: 12,
   },
-  txEdit: {
+  filterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  filterPillText: {
+    fontSize: 13,
+    fontFamily: 'SpaceGrotesk',
+    fontWeight: '700',
+  },
+  filterPillIcon: {
+    margin: 0,
+    width: 20,
+    height: 20,
+    marginLeft: 4,
+  },
+  
+  dateGroup: {
+    marginBottom: 24,
+  },
+  dateHeader: {
     fontSize: 12,
-    fontWeight: '700',
-    fontFamily: 'PlusJakartaSans-Bold',
-    color: '#3b82f6',
+    fontFamily: 'SpaceGrotesk',
+    fontWeight: '800',
+    marginLeft: 24,
+    marginBottom: 12,
+    letterSpacing: 0.5,
   },
-  txDelete: { 
-    fontSize: 12, 
-    fontWeight: '700',
-    fontFamily: 'PlusJakartaSans-Bold', 
-    color: '#EF4444', 
+  groupCard: {
+    marginHorizontal: 16,
+    borderRadius: 24,
+    overflow: 'hidden',
   },
+  txDivider: {
+    height: 1,
+    marginHorizontal: 16,
+    opacity: 0.5,
+  },
+
+  listContent: { paddingBottom: 100 },
 
   // Empty
   empty: {
@@ -670,12 +656,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontFamily: 'SpaceGrotesk',
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
     textAlign: 'center',
   },
 
@@ -713,7 +699,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontFamily: 'SpaceGrotesk',
     marginBottom: 20,
   },
   toggleRow: {
@@ -733,12 +719,12 @@ const styles = StyleSheet.create({
   toggleLabel: {
     fontSize: 14,
     fontWeight: '700',
-    fontFamily: 'PlusJakartaSans-Bold',
+    fontFamily: 'SpaceGrotesk',
   },
   fieldLabel: {
     fontSize: 12,
     fontWeight: '700',
-    fontFamily: 'PlusJakartaSans-Bold',
+    fontFamily: 'SpaceGrotesk',
     letterSpacing: 0.5,
     marginBottom: 8,
     textTransform: 'uppercase',
@@ -748,7 +734,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    fontFamily: 'PlusJakartaSans-SemiBold',
+    fontFamily: 'SpaceGrotesk',
     marginBottom: 16,
   },
   modalActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
@@ -762,7 +748,7 @@ const styles = StyleSheet.create({
   modalCancelLabel: {
     fontSize: 16,
     fontWeight: '700',
-    fontFamily: 'PlusJakartaSans-Bold',
+    fontFamily: 'SpaceGrotesk',
   },
   modalAddBtn: {
     flex: 2,
@@ -773,7 +759,7 @@ const styles = StyleSheet.create({
   modalAddLabel: {
     fontSize: 16,
     fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontFamily: 'SpaceGrotesk',
     color: '#000000',
   },
 });

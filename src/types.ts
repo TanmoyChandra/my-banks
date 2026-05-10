@@ -40,7 +40,17 @@ export interface CardTransaction {
   description: string;
   date: string; // ISO date string
   payee?: string; // who this was paid for/by
+  isFlagged?: boolean; // whether this transaction is flagged
 }
 
 export type TabType = 'qr' | 'cards' | 'accounts';
 export type DrawerScreen = 'setup-qr' | 'setup-cards' | 'setup-accounts' | null;
+
+export interface MerchantQR {
+  id: string;
+  name: string;        // Merchant name e.g. "Swiggy"
+  category?: string;   // e.g. "Food", "Fuel"
+  upiId?: string;      // Decoded UPI ID if available
+  imageUri: string;    // Local image URI from gallery
+  notes?: string;
+}

@@ -132,6 +132,8 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
   const { width: screenWidth } = useWindowDimensions();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const userName = useUiStore(s => s.userName);
+  const initials = userName ? userName.charAt(0).toUpperCase() : '?';
   const cardWidth = Math.min(screenWidth - PAGE_SIDE_PADDING * 2.5, 450);
   const snapWidth = cardWidth + PAGE_GAP;
 
@@ -141,16 +143,18 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <View style={styles.sectionIntro}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <View style={{ flex: 1, marginRight: 16 }}>
-            <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Saved UPI identities</Text>
-            <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Scan, import, copy, or share payment addresses without searching through screenshots.</Text>
+            <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>My QR codes</Text>
+            <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
+              Easily share your QR codes to receive payments from any UPI app.
+            </Text>
           </View>
           <Avatar.Text 
             size={40} 
-            label={useUiStore.getState().userName ? useUiStore.getState().userName.charAt(0).toUpperCase() : '?'} 
+            label={initials} 
             style={{ backgroundColor: theme.colors.primaryContainer }} 
             labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
           />
@@ -197,12 +201,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
-  introHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  introIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#AAEF00', alignItems: 'center', justifyContent: 'center' },
-  addButton: { borderRadius: 24 },
-  addButtonLabel: { fontWeight: '900', fontSize: 14 },
-  introTitle: { fontSize: 34, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', marginTop: 0, letterSpacing: -1 },
-  introText: { fontSize: 15, fontFamily: 'PlusJakartaSans-Medium', marginTop: 4 },
+  introTitle: { fontSize: 28, fontWeight: '700', marginBottom: 6, fontFamily: 'SpaceGrotesk', letterSpacing: -0.5 },
+  introText: { fontSize: 14, fontFamily: 'SpaceGrotesk', lineHeight: 20 },
   carouselContent: {
     paddingLeft: PAGE_SIDE_PADDING,
     paddingRight: PAGE_SIDE_PADDING - PAGE_GAP,

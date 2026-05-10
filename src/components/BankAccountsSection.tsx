@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View, TouchableOpacity, Share, Image, LayoutAnimation, Platform, UIManager } from 'react-native';
-import { Text, Button, useTheme, IconButton, List, Surface, Avatar } from 'react-native-paper';
+import React, { useState, useRef, useEffect } from 'react';
+import { ScrollView, StyleSheet, View, TouchableOpacity, Share, Image, Animated, Platform, UIManager } from 'react-native';
+import { Text, useTheme, IconButton, Avatar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { BankAccount } from '../types';
@@ -16,23 +16,39 @@ interface BankAccountsSectionProps {
 }
 
 const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
+  const [hidden, setHidden] = useState(true);
   const [expanded, setExpanded] = useState(false);
+  const animValue = useRef(new Animated.Value(0)).current;
   const theme = useTheme();
   const bank = findBankByName(account.bankName);
-  const cardBg = theme.colors.surfaceVariant;
-  const cardBorder = theme.colors.outlineVariant;
-  const mainTextColor = theme.colors.onSurface;
-  const subTextColor = theme.colors.onSurfaceVariant;
 
-  const toggleExpand = () => {
-    LayoutAnimation.configureNext({
-      duration: 500,
-      create: { type: 'easeInEaseOut', property: 'opacity' },
-      update: { type: 'easeInEaseOut' },
-      delete: { type: 'easeInEaseOut', property: 'opacity' },
-    });
-    setExpanded(!expanded);
-  };
+  useEffect(() => {
+    Animated.timing(animValue, {
+      toValue: expanded ? 1 : 0,
+      duration: 320,
+      useNativeDriver: false,
+    }).start();
+  }, [expanded]);
+
+  const expandedOpacity = animValue;
+  const expandedTranslate = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-8, 0],
+  });
+  const collapsedOpacity = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0],
+  });
+
+  const cardBg = '#202020';
+  const textColor = '#FFFFFF';
+  const accentColor = '#C9F158';
+  const mutedColor = 'rgba(255,255,255,0.55)';
+
+  const maskedNumber = account.accountNumber
+    ? account.accountNumber.slice(-4).padStart(account.accountNumber.length, '•')
+    : '••••';
+  const displayNumber = hidden ? maskedNumber : account.accountNumber;
 
   const handleCopy = async (text: string) => {
     if (!text) return;
@@ -41,49 +57,91 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
 
   const handleShare = async () => {
     const message = `Bank Account Details\nBank: ${account.bankName}\nHolder: ${account.accountHolder}\nA/C: ${account.accountNumber}\nIFSC: ${account.ifsc}\nType: ${account.accountType}\nBranch: ${account.branchName}`;
-    try {
-      await Share.share({ message });
-    } catch (error) {}
+    try { await Share.share({ message }); } catch {}
   };
 
-  const InfoRow = ({ label, value }: { label: string; value: string }) => (
-    <TouchableOpacity 
-      activeOpacity={0.6} 
-      onPress={() => handleCopy(value)}
-      style={styles.infoRow}
-    >
-      <Text style={[styles.infoLabel, { color: subTextColor }]}>{label}</Text>
-      <Text style={[styles.infoValue, { color: mainTextColor }]}>{value || 'Not provided'}</Text>
-    </TouchableOpacity>
-  );
-
   return (
-    <Surface elevation={1} style={{ borderRadius: 16, marginBottom: 16, marginHorizontal: 24, overflow: 'hidden' }}>
-      <List.Accordion
-        title={account.bankName}
-        description={expanded ? `${account.accountType} Account` : account.accountNumber.slice(-4).padStart(account.accountNumber.length, '*')}
-        expanded={expanded}
-        onPress={() => setExpanded(!expanded)}
-        left={props => bank ? (
-          <Avatar.Image {...props} source={bank.symbol} size={40} style={[props.style, { backgroundColor: 'white' }]} />
-        ) : (
-          <Avatar.Text {...props} label={account.bankName.slice(0, 2).toUpperCase()} size={40} />
-        )}
-        style={{ backgroundColor: cardBg }}
-        titleStyle={[styles.bankTitle, { color: mainTextColor }]}
-        descriptionStyle={[styles.accountTypeLabel, { color: subTextColor }]}
-      >
-        <View style={{ paddingHorizontal: 16, paddingBottom: 16, backgroundColor: cardBg }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: -8, marginBottom: 8 }}>
-            <IconButton icon="share-variant" size={20} iconColor={mainTextColor} onPress={handleShare} />
+    <TouchableOpacity
+      activeOpacity={0.92}
+    onPress={() => setExpanded(!expanded)}
+      style={styles.cardWrapper}
+    >
+      <View style={[styles.accountCard, { backgroundColor: cardBg }]}>
+        {/* Decorative circles */}
+        <View style={styles.decoCircle1} />
+        <View style={styles.decoCircle2} />
+
+        {/* Header row */}
+        <View style={styles.headerRow}>
+          <View style={styles.bankIconBox}>
+            {bank ? (
+              <Image source={bank.symbol} style={styles.bankLogo} resizeMode="contain" />
+            ) : (
+              <Text style={styles.bankInitials}>{account.bankName.slice(0, 2).toUpperCase()}</Text>
+            )}
           </View>
-          <InfoRow label="ACCOUNT HOLDER" value={account.accountHolder} />
-          <InfoRow label="ACCOUNT NUMBER" value={account.accountNumber} />
-          <InfoRow label="IFSC CODE" value={account.ifsc.toUpperCase()} />
-          <InfoRow label="BRANCH" value={account.branchName} />
+          <View style={styles.headerText}>
+            <Text style={[styles.bankTitle, { color: textColor }]}>{account.bankName}</Text>
+            <Text style={[styles.accountTypeLabel, { color: mutedColor }]}>{account.accountType} Account</Text>
+          </View>
+          <IconButton icon="share-variant" size={18} iconColor={mutedColor} onPress={handleShare} style={{ margin: 0 }} />
         </View>
-      </List.Accordion>
-    </Surface>
+
+        {/* Collapsed: masked account number */}
+        <Animated.View style={{
+          opacity: collapsedOpacity,
+          maxHeight: animValue.interpolate({ inputRange: [0, 1], outputRange: [60, 0] }),
+          marginTop: animValue.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }),
+          overflow: 'hidden',
+        }}>
+          <Text style={[styles.infoLabel, { color: mutedColor }]}>Account Number</Text>
+          <Text style={[styles.accountNumber, { color: textColor }]} numberOfLines={1}>{displayNumber}</Text>
+        </Animated.View>
+
+        {/* Expanded: all details */}
+        <Animated.View
+          style={{
+            opacity: expandedOpacity,
+            transform: [{ translateY: expandedTranslate }],
+            overflow: 'hidden',
+            maxHeight: animValue.interpolate({ inputRange: [0, 1], outputRange: [0, 400] }),
+          }}
+        >
+          <View style={styles.expandedContent}>
+            <View style={[styles.divider, { backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+
+            <TouchableOpacity onPress={() => handleCopy(account.accountHolder)} style={styles.infoRow}>
+              <Text style={[styles.infoLabel, { color: mutedColor }]}>ACCOUNT HOLDER</Text>
+              <Text style={[styles.infoValue, { color: textColor }]}>{account.accountHolder || 'Not provided'}</Text>
+            </TouchableOpacity>
+
+            <View style={styles.infoRow}>
+              <Text style={[styles.infoLabel, { color: mutedColor }]}>ACCOUNT NUMBER</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TouchableOpacity onPress={() => handleCopy(account.accountNumber)} style={{ flex: 1 }}>
+                  <Text style={[styles.infoValue, { color: textColor }]}>{displayNumber}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setHidden(!hidden)} style={{ marginLeft: 10 }}>
+                  <Text style={{ color: accentColor, fontFamily: 'SpaceGrotesk', fontSize: 12, fontWeight: '700' }}>
+                    {hidden ? 'SHOW' : 'HIDE'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <TouchableOpacity onPress={() => handleCopy(account.ifsc)} style={styles.infoRow}>
+              <Text style={[styles.infoLabel, { color: mutedColor }]}>IFSC CODE</Text>
+              <Text style={[styles.infoValue, { color: textColor }]}>{account.ifsc?.toUpperCase() || 'Not provided'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => handleCopy(account.branchName)} style={styles.infoRow}>
+              <Text style={[styles.infoLabel, { color: mutedColor }]}>BRANCH</Text>
+              <Text style={[styles.infoValue, { color: textColor }]}>{account.branchName || 'Not provided'}</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </View>
+    </TouchableOpacity>
   );
 };
 
@@ -94,24 +152,25 @@ const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) =
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <View style={styles.sectionIntro}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <View style={{ flex: 1, marginRight: 16 }}>
             <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Bank accounts</Text>
-            <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>Keep IFSC and account details easy to find while masking sensitive numbers.</Text>
+            <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
+              Keep IFSC and account details easy to find while masking sensitive numbers.
+            </Text>
           </View>
-          <Avatar.Text 
-            size={40} 
-            label={initials} 
-            style={{ backgroundColor: theme.colors.primaryContainer }} 
+          <Avatar.Text
+            size={40}
+            label={initials}
+            style={{ backgroundColor: theme.colors.primaryContainer }}
             labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
           />
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-
         {accounts.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Avatar.Icon size={64} icon="bank-outline" style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }} color={theme.colors.primary} />
@@ -131,81 +190,112 @@ const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) =
 const styles = StyleSheet.create({
   container: { flex: 1 },
   sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
-  introTitle: { fontSize: 34, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', marginTop: 0, letterSpacing: -1 },
-  introText: { fontSize: 15, fontFamily: 'PlusJakartaSans-Medium', marginTop: 4 },
+  introTitle: { fontSize: 28, fontWeight: '700', marginBottom: 6, fontFamily: 'SpaceGrotesk', letterSpacing: -0.5 },
+  introText: { fontSize: 14, fontFamily: 'SpaceGrotesk', lineHeight: 20 },
   scrollContent: { paddingBottom: 96 },
+
   cardWrapper: {
-    paddingHorizontal: 24,
-    marginBottom: 24,
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   accountCard: {
     borderRadius: 24,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderWidth: 1,
+    padding: 20,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  decoCircle1: {
+    position: 'absolute',
+    right: -35,
+    top: -35,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+  },
+  decoCircle2: {
+    position: 'absolute',
+    right: 50,
+    top: 15,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  bankLogoBox: {
+  bankIconBox: {
     width: 44,
     height: 44,
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#ECE6F0',
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
   },
   bankLogo: {
-    width: 34,
-    height: 18,
+    width: 28,
+    height: 28,
   },
   bankInitials: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '900',
-    color: '#000',
+    color: '#202020',
+    fontFamily: 'SpaceGrotesk',
   },
-  headerText: {
-    flex: 1,
-  },
+  headerText: { flex: 1 },
   bankTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    fontFamily: 'PlusJakartaSans-ExtraBold',
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'SpaceGrotesk',
   },
   accountTypeLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    fontFamily: 'PlusJakartaSans-SemiBold',
+    fontFamily: 'SpaceGrotesk',
     marginTop: 2,
   },
-  headerShare: {
-    margin: 0,
-    marginRight: -8,
+  infoLabel: {
+    fontSize: 11,
+    fontFamily: 'SpaceGrotesk',
+    fontWeight: '600',
+    letterSpacing: 0.4,
+    marginBottom: 4,
+  },
+  accountNumber: {
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: 'SpaceGrotesk',
+    letterSpacing: 2,
+  },
+  cardStyleNumber: {
+    fontSize: 15,
+    fontWeight: '700',
+    fontFamily: 'SpaceGrotesk',
+    letterSpacing: 3,
+    marginTop: 2,
+  },
+  tapToHide: {
+    fontSize: 13,
+    fontFamily: 'SpaceGrotesk',
+    marginTop: 8,
+    fontWeight: '600',
   },
   expandedContent: {
-    marginTop: 0,
+    marginTop: 16,
   },
   divider: {
     height: 1,
-    width: '100%',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   infoRow: {
-    marginBottom: 14,
-  },
-  infoLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    marginBottom: 4,
+    marginBottom: 12,
   },
   infoValue: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '700',
+    fontFamily: 'SpaceGrotesk',
   },
   emptyContainer: {
     flex: 1,
@@ -220,7 +310,7 @@ const styles = StyleSheet.create({
   },
   emptySubText: {
     fontSize: 14,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'SpaceGrotesk',
     marginTop: 8,
     textAlign: 'center',
     paddingHorizontal: 40,

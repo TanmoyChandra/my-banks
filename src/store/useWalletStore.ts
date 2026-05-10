@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { QREntry, CardEntry, BankAccount, CardTransaction } from '../types';
+import { QREntry, CardEntry, BankAccount, CardTransaction, MerchantQR } from '../types';
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -10,6 +10,7 @@ interface WalletState {
   cards: CardEntry[];
   accounts: BankAccount[];
   transactions: CardTransaction[];
+  merchantQRs: MerchantQR[];
 
   addUpi: (entry: Omit<QREntry, 'id'>) => void;
   updateUpi: (id: string, entry: Omit<QREntry, 'id'>) => void;
@@ -28,6 +29,11 @@ interface WalletState {
   updateTransaction: (id: string, tx: Omit<CardTransaction, 'id'>) => void;
   deleteTransaction: (id: string) => void;
   getTransactionsForCard: (cardId: string) => CardTransaction[];
+
+  // Merchant QR CRUD
+  addMerchantQR: (entry: Omit<MerchantQR, 'id'>) => void;
+  updateMerchantQR: (id: string, entry: Omit<MerchantQR, 'id'>) => void;
+  deleteMerchantQR: (id: string) => void;
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -37,6 +43,7 @@ export const useWalletStore = create<WalletState>()(
       cards: [],
       accounts: [],
       transactions: [],
+      merchantQRs: [],
 
       // UPI CRUD
       addUpi: (entry) =>
@@ -77,6 +84,14 @@ export const useWalletStore = create<WalletState>()(
         set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) })),
       getTransactionsForCard: (cardId) =>
         get().transactions.filter((t) => t.cardId === cardId),
+
+      // Merchant QR CRUD
+      addMerchantQR: (entry) =>
+        set((s) => ({ merchantQRs: [...s.merchantQRs, { ...entry, id: generateId() }] })),
+      updateMerchantQR: (id, entry) =>
+        set((s) => ({ merchantQRs: s.merchantQRs.map((m) => (m.id === id ? { ...entry, id } : m)) })),
+      deleteMerchantQR: (id) =>
+        set((s) => ({ merchantQRs: s.merchantQRs.filter((m) => m.id !== id) })),
     }),
     {
       name: 'mybanks-wallet',

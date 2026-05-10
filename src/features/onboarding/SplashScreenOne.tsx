@@ -72,7 +72,7 @@ export default function SplashScreenOne({ onNext }: SplashScreenOneProps) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000000' },
   header: { paddingHorizontal: 24, paddingTop: 16 },
-  logoText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', letterSpacing: -0.5 },
+  logoText: { color: '#FFFFFF', fontSize: 18, fontWeight: '900', fontFamily: 'SpaceGrotesk', letterSpacing: -0.5 },
   content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
   illustrationContainer: { alignItems: 'center', marginBottom: 48 },
   circleBg: { width: 260, height: 260, borderRadius: 130, backgroundColor: '#E3E6DC', overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end', position: 'relative' },
@@ -82,9 +82,9 @@ const styles = StyleSheet.create({
   greenCard: { width: 60, height: 36, backgroundColor: '#AAEF00', borderRadius: 6, position: 'absolute', left: 40, bottom: 120, transform: [{ rotate: '-15deg' }] },
   blackCard1: { width: 90, height: 56, backgroundColor: '#000000', borderRadius: 12, position: 'absolute', bottom: 30, left: 60 },
   blackCard2: { width: 70, height: 44, backgroundColor: '#000000', borderRadius: 8, position: 'absolute', bottom: 40, right: 30, transform: [{ rotate: '15deg' }], borderWidth: 2, borderColor: '#FFFFFF' },
-  title: { fontSize: 48, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold', letterSpacing: -2, marginBottom: 16, color: '#FFFFFF', lineHeight: 52 },
-  subtitle: { fontSize: 16, lineHeight: 26, fontWeight: '500', fontFamily: 'PlusJakartaSans-Medium', color: '#A1A1AA' },
+  title: { fontSize: 48, fontWeight: '900', fontFamily: 'SpaceGrotesk', letterSpacing: -2, marginBottom: 16, color: '#FFFFFF', lineHeight: 52 },
+  subtitle: { fontSize: 16, lineHeight: 26, fontWeight: '500', fontFamily: 'SpaceGrotesk', color: '#A1A1AA' },
   footer: { paddingHorizontal: 24 },
   btn: { borderRadius: 32, paddingVertical: 8 },
-  btnLabel: { fontSize: 18, fontWeight: '900', fontFamily: 'PlusJakartaSans-ExtraBold' },
+  btnLabel: { fontSize: 18, fontWeight: '900', fontFamily: 'SpaceGrotesk' },
 });
