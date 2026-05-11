@@ -445,9 +445,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
   },
-  holderBlock: { flex: 1, marginRight: 12 },
-  expiryBlock: { alignItems: 'flex-start', marginRight: 16 },
-  networkBlock: { alignItems: 'flex-end' },
+  holderBlock: { flex: 1, marginRight: 8 },
+  expiryBlock: { alignItems: 'flex-start', marginRight: 35 },
+  networkBlock: { alignItems: 'flex-end', minWidth: 72 },
   cardLabel: {
     color: 'rgba(255,255,255,0.45)',
     fontFamily: 'SpaceGrotesk',
