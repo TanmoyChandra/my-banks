@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Credit / Debit Card UI</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #0f0f1a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+      gap: 60px;
+      padding: 60px 20px;
+    }
+
+    h1 {
+      color: #ffffff;
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.5;
+    }
+
+    /* ─── CARD WRAPPER ─── */
+    .cards-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 60px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .card-scene {
+      perspective: 1200px;
+    }
+
+    /* ─── THE CARD ─── */
+    .card {
+      width: 380px;
+      height: 240px;
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.6s cubic-bezier(.23,1,.32,1), box-shadow 0.4s ease;
+      box-shadow:
+        0 30px 80px rgba(0,0,0,0.6),
+        0 8px 20px rgba(0,0,0,0.4);
+    }
+
+    .card:hover {
+      transform: rotateY(-8deg) rotateX(4deg) scale(1.03);
+      box-shadow:
+        0 45px 100px rgba(0,0,0,0.7),
+        0 12px 30px rgba(0,0,0,0.5);
+    }
+
+    /* ── CARD BACKGROUNDS ── */
+    .card-visa {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 35%, #0f3460 70%, #1a1a2e 100%);
+    }
+    .card-mastercard {
+      background: linear-gradient(135deg, #1c0a00 0%, #2d1200 30%, #6b2400 65%, #8b3a00 100%);
+    }
+    .card-rupay {
+      background: linear-gradient(135deg, #0a2f1f 0%, #0d3b28 30%, #145a3c 65%, #1a7a52 100%);
+    }
+
+    /* ── HOLOGRAPHIC SHIMMER OVERLAY ── */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(
+          115deg,
+          transparent 20%,
+          rgba(255,255,255,0.04) 30%,
+          rgba(255,255,255,0.10) 45%,
+          rgba(255,255,255,0.04) 60%,
+          transparent 70%
+        );
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ── CIRCUIT / GEOMETRIC PATTERN ── */
+    .card-pattern {
+      position: absolute;
+      inset: 0;
+      opacity: 0.07;
+      pointer-events: none;
+      z-index: 1;
+      background-image:
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.8) 1px, transparent 1px),
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.8) 1px, transparent 1px),
+        linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
+      background-size:
+        60px 60px,
+        60px 60px,
+        30px 30px,
+        30px 30px;
+    }
+
+    /* ── GLOW CIRCLES ── */
+    .card-glow-1, .card-glow-2 {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .card-glow-1 {
+      width: 260px; height: 260px;
+      top: -80px; right: -60px;
+      opacity: 0.15;
+      filter: blur(40px);
+    }
+    .card-glow-2 {
+      width: 200px; height: 200px;
+      bottom: -80px; left: -40px;
+      opacity: 0.10;
+      filter: blur(35px);
+    }
+    .card-visa .card-glow-1 { background: #4f8ef7; }
+    .card-visa .card-glow-2 { background: #a78bfa; }
+    .card-mastercard .card-glow-1 { background: #ff6b35; }
+    .card-mastercard .card-glow-2 { background: #ffd700; }
+    .card-rupay .card-glow-1 { background: #34d399; }
+    .card-rupay .card-glow-2 { background: #059669; }
+
+    /* ── CARD CONTENT LAYER ── */
+    .card-content {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 22px 26px 20px;
+    }
+
+    /* ── TOP ROW: BANK + CONTACTLESS ── */
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .bank-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .bank-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+
+    .bank-tagline {
+      font-size: 0.55rem;
+      font-weight: 400;
+      color: rgba(255,255,255,0.55);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* ── CONTACTLESS ICON ── */
+    .contactless {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.75;
+    }
+    .contactless svg {
+      width: 26px; height: 26px;
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 2;
+    }
+
+    /* ── CHIP + CARD TYPE ROW ── */
+    .card-middle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2px;
+    }
+
+    /* ── EMV CHIP ── */
+    .chip {
+      width: 46px;
+      height: 36px;
+      background: linear-gradient(135deg, #d4af37 0%, #f5d060 30%, #b8860b 60%, #f0c040 80%, #c8962c 100%);
+      border-radius: 7px;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .chip-lines {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 7px 0;
+    }
+
+    .chip-line {
+      height: 1px;
+      background: rgba(0,0,0,0.2);
+      margin: 0 4px;
+    }
+
+    .chip-center {
+      width: 20px;
+      height: 22px;
+      border: 1px solid rgba(0,0,0,0.25);
+      border-radius: 3px;
+      background: linear-gradient(145deg, #e8c84a, #c8962c);
+      position: relative;
+      z-index: 1;
+    }
+    .chip-center::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px;
+      height: 14px;
+      border: 1px solid rgba(0,0,0,0.2);
+      border-radius: 2px;
+    }
+
+    /* ── CARD TYPE LABEL ── */
+    .card-type-label {
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 3px 8px;
+      border-radius: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ── CARD NUMBER ── */
+    .card-number {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.25rem;
+      font-weight: 400;
+      color: #ffffff;
+      letter-spacing: 0.22em;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .card-number span {
+      letter-spacing: 0.18em;
+    }
+
+    /* ── BOTTOM ROW ── */
+    .card-bottom {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    .card-holder-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .card-label {
+      font-size: 0.52rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .card-value {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+
+    .expiry-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: center;
+    }
+
+    /* ── VISA LOGO ── */
+    .network-visa {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .visa-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.04em;
+      font-style: italic;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      line-height: 1;
+    }
+
+    /* ── MASTERCARD LOGO ── */
+    .network-mastercard {
+      display: flex;
+      align-items: center;
+      gap: -6px;
+    }
+
+    .mc-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      opacity: 0.95;
+    }
+
+    .mc-red {
+      background: #eb001b;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .mc-orange {
+      background: #f79e1b;
+      margin-left: -12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    /* ── RUPAY LOGO ── */
+    .network-rupay {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      line-height: 1;
+    }
+
+    .rupay-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: 0.06em;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .rupay-ru {
+      color: #34d399;
+    }
+
+    .rupay-pay {
+      color: #ffffff;
+    }
+
+    .rupay-tag {
+      font-size: 0.42rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-align: right;
+      margin-top: 1px;
+    }
+
+    /* ── DECORATIVE WAVE (bottom right) ── */
+    .card-wave {
+      position: absolute;
+      bottom: -30px;
+      right: -30px;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      opacity: 0.06;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .card-visa .card-wave { background: radial-gradient(circle, #4f8ef7, transparent 70%); }
+    .card-mastercard .card-wave { background: radial-gradient(circle, #ff8c42, transparent 70%); }
+    .card-rupay .card-wave { background: radial-gradient(circle, #34d399, transparent 70%); }
+
+    /* ── CARD LABEL BELOW ── */
+    .card-tag {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* ── TOGGLE BUTTONS ── */
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 10px 24px;
+      border-radius: 50px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.7);
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn:hover, .btn.active {
+      background: rgba(255,255,255,0.15);
+      color: #ffffff;
+      border-color: rgba(255,255,255,0.35);
+    }
+
+    /* ── SECTION DIVIDER ── */
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+      text-align: center;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 420px) {
+      .card { width: 320px; height: 202px; }
+      .card-number { font-size: 1rem; gap: 12px; letter-spacing: 0.15em; }
+      .bank-name { font-size: 0.8rem; }
+      .card-content { padding: 16px 18px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Card UI Components</h1>
+
+  <div class="cards-grid">
+
+    <!-- ════════════════════════════════ -->
+    <!--          VISA CREDIT CARD        -->
+    <!-- ════════════════════════════════ -->
+    <div>
+      <div class="card-scene">
+        <div class="card card-visa">
+          <!-- Pattern & Glows -->
+          <div class="card-pattern"></div>
+          <div class="card-glow-1"></div>
+          <div class="card-glow-2"></div>
+          <div class="card-wave"></div>
+
+          <div class="card-content">
+            <!-- TOP -->
+            <div class="card-top">
+              <div class="bank-info">
+                <span class="bank-name">Horizon Bank</span>
+                <span class="bank-tagline">Premium Banking</span>
+              </div>
+              <!-- Contactless Icon -->
+              <div class="contactless">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 1C7.03 1 3 5.03 3 10c0 2.76 1.12 5.26 2.93 7.07" stroke-linecap="round"/>
+                  <path d="M12 5c-2.76 0-5 2.24-5 5 0 1.38.56 2.63 1.46 3.54" stroke-linecap="round"/>
+                  <path d="M12 9c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z" fill="white" stroke="none"/>
+                  <path d="M16.54 6.46C17.44 7.37 18 8.62 18 10c0 2.76-2.24 5-5 5" stroke-linecap="round"/>
+                  <path d="M20.07 2.93C21.88 4.74 23 7.24 23 10c0 5.52-4.48 10-10 10" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- CHIP + TYPE -->
+            <div class="card-middle">
+              <div class="chip">
+                <div class="chip-lines">
+                  <div class="chip-line"></div>
+                  <div class="chip-line"></div>
+                  <div class="chip-line"></div>
+                </div>
+                <div class="chip-center"></div>
+              </div>
+              <span class="card-type-label">Credit Card</span>
+            </div>
+
+            <!-- NUMBER -->
+            <div class="card-number">
+              <span>4716</span>
+              <span>••••</span>
+              <span>••••</span>
+              <span>8249</span>
+            </div>
+
+            <!-- BOTTOM -->
+            <div class="card-bottom">
+              <div class="card-holder-block">
+                <span class="card-label">Card Holder</span>
+                <span class="card-value">Alexander Frost</span>
+              </div>
+              <div class="expiry-block">
+                <span class="card-label">Expires</span>
+                <span class="card-value">08 / 28</span>
+              </div>
+              <div class="network-visa">
+                <span class="visa-text">VISA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="card-tag">Visa · Credit Card</p>
+    </div>
+
+    <!-- ════════════════════════════════ -->
+    <!--       MASTERCARD DEBIT CARD      -->
+    <!-- ════════════════════════════════ -->
+    <div>
+      <div class="card-scene">
+        <div class="card card-mastercard">
+          <div class="card-pattern"></div>
+          <div class="card-glow-1"></div>
+          <div class="card-glow-2"></div>
+          <div class="card-wave"></div>
+
+          <div class="card-content">
+            <!-- TOP -->
+            <div class="card-top">
+              <div class="bank-info">
+                <span class="bank-name">Nova Finance</span>
+                <span class="bank-tagline">Your Money, Evolved</span>
+              </div>
+              <div class="contactless">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 1C7.03 1 3 5.03 3 10c0 2.76 1.12 5.26 2.93 7.07" stroke-linecap="round"/>
+                  <path d="M12 5c-2.76 0-5 2.24-5 5 0 1.38.56 2.63 1.46 3.54" stroke-linecap="round"/>
+                  <path d="M12 9c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z" fill="white" stroke="none"/>
+                  <path d="M16.54 6.46C17.44 7.37 18 8.62 18 10c0 2.76-2.24 5-5 5" stroke-linecap="round"/>
+                  <path d="M20.07 2.93C21.88 4.74 23 7.24 23 10c0 5.52-4.48 10-10 10" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- CHIP + TYPE -->
+            <div class="card-middle">
+              <div class="chip">
+                <div class="chip-lines">
+                  <div class="chip-line"></div>
+                  <div class="chip-line"></div>
+                  <div class="chip-line"></div>
+                </div>
+                <div class="chip-center"></div>
+              </div>
+              <span class="card-type-label">Debit Card</span>
+            </div>
+
+            <!-- NUMBER -->
+            <div class="card-number">
+              <span>5412</span>
+              <span>••••</span>
+              <span>••••</span>
+              <span>3371</span>
+            </div>
+
+            <!-- BOTTOM -->
+            <div class="card-bottom">
+              <div class="card-holder-block">
+                <span class="card-label">Card Holder</span>
+                <span class="card-value">Sophia Laurent</span>
+              </div>
+              <div class="expiry-block">
+                <span class="card-label">Expires</span>
+                <span class="card-value">03 / 27</span>
+              </div>
+              <div class="network-mastercard">
+                <div class="mc-circle mc-red"></div>
+                <div class="mc-circle mc-orange"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="card-tag">Mastercard · Debit Card</p>
+    </div>
+
+    <!-- ════════════════════════════════ -->
+    <!--         RUPAY DEBIT CARD         -->
+    <!-- ════════════════════════════════ -->
+    <div>
+      <div class="card-scene">
+        <div class="card card-rupay">
+          <div class="card-pattern"></div>
+          <div class="card-glow-1"></div>
+          <div class="card-glow-2"></div>
+          <div class="card-wave"></div>
+
+          <div class="card-content">
+            <!-- TOP -->
+            <div class="card-top">
+              <div class="bank-info">
+                <span class="bank-name">Bharat Trust</span>
+                <span class="bank-tagline">Empowering India</span>
+              </div>
+              <div class="contactless">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 1C7.03 1 3 5.03 3 10c0 2.76 1.12 5.26 2.93 7.07" stroke-linecap="round"/>
+                  <path d="M12 5c-2.76 0-5 2.24-5 5 0 1.38.56 2.63 1.46 3.54" stroke-linecap="round"/>
+                  <path d="M12 9c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z" fill="white" stroke="none"/>
+                  <path d="M16.54 6.46C17.44 7.37 18 8.62 18 10c0 2.76-2.24 5-5 5" stroke-linecap="round"/>
+                  <path d="M20.07 2.93C21.88 4.74 23 7.24 23 10c0 5.52-4.48 10-10 10" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+
+            <!-- CHIP + TYPE -->
+            <div class="card-middle">
+              <div class="chip">
+                <div class="chip-lines">
+                  <div class="chip-line"></div>
+                  <div class="chip-line"></div>
+                  <div class="chip-line"></div>
+                </div>
+                <div class="chip-center"></div>
+              </div>
+              <span class="card-type-label">Debit Card</span>
+            </div>
+
+            <!-- NUMBER -->
+            <div class="card-number">
+              <span>6074</span>
+              <span>••••</span>
+              <span>••••</span>
+              <span>5918</span>
+            </div>
+
+            <!-- BOTTOM -->
+            <div class="card-bottom">
+              <div class="card-holder-block">
+                <span class="card-label">Card Holder</span>
+                <span class="card-value">Arjun Mehta</span>
+              </div>
+              <div class="expiry-block">
+                <span class="card-label">Expires</span>
+                <span class="card-value">11 / 29</span>
+              </div>
+              <!-- RuPay Logo -->
+              <div class="network-rupay">
+                <span class="rupay-text">
+                  <span class="rupay-ru">Ru</span><span class="rupay-pay">Pay</span>
+                </span>
+                <span class="rupay-tag">India's Own</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="card-tag">RuPay · Debit Card</p>
+    </div>
+
+  </div>
+
+  <!-- ══ INTERACTIVE CONTROLS ══ -->
+  <div class="section-title">Hover over cards to see 3D effect</div>
+
+</body>
+</html>

@@ -12,6 +12,7 @@ export interface QREntry {
 export interface CardEntry {
   id: string;
   type: 'Credit' | 'Debit';
+  network?: 'Visa' | 'Mastercard' | 'RuPay';
   bankName: string;
   holderName: string;
   cardNumber: string;

@@ -41,7 +41,10 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
     outputRange: [1, 0],
   });
 
-  const { bg: cardBg, textColor, mutedColor } = getCardColors(account.color, theme.dark);
+  const palette = getCardColors(account.color);
+  const cardBg = palette.via;
+  const textColor = '#FFFFFF';
+  const mutedColor = 'rgba(255,255,255,0.55)';
   const accentColor = '#C9F158';
 
   const maskedNumber = account.accountNumber

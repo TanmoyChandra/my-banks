@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import {
   View, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Animated, Modal, Dimensions,
+  Image, Modal, Dimensions, Linking, Alert, Animated,
 } from 'react-native';
-import { Text, useTheme, Avatar, IconButton, Portal, Dialog, Button } from 'react-native-paper';
+import { Text, useTheme, Avatar, IconButton, Chip } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { MerchantQR } from '../types';
@@ -12,15 +12,69 @@ import { useWalletStore } from '../store/useWalletStore';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
-// ── Full-screen image viewer ──────────────────────────────────
-function FullScreenImage({ uri, onClose }: { uri: string; onClose: () => void }) {
+// ── Full-screen QR for payment ────────────────────────────────
+function QRPayViewer({
+  uri,
+  merchantName,
+  upiId,
+  onClose,
+}: {
+  uri: string;
+  merchantName: string;
+  upiId?: string;
+  onClose: () => void;
+}) {
+  const theme = useTheme();
+
+  const handlePayUPI = async () => {
+    if (!upiId) return;
+    const url = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(merchantName)}&cu=INR`;
+    const canOpen = await Linking.canOpenURL(url);
+    if (canOpen) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert('No UPI App Found', 'Please install a UPI payment app (GPay, PhonePe, Paytm, etc.)');
+    }
+  };
+
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
       <View style={fsStyles.backdrop}>
-        <TouchableOpacity style={fsStyles.closeBtn} onPress={onClose}>
-          <IconButton icon="close" size={26} iconColor="#fff" style={{ margin: 0 }} />
-        </TouchableOpacity>
-        <Image source={{ uri }} style={fsStyles.fullImage} resizeMode="contain" />
+        {/* Ambient blurred glow behind the QR image */}
+        <Image
+          source={{ uri }}
+          style={fsStyles.ambientBlur}
+          resizeMode="cover"
+          blurRadius={28}
+        />
+        <View style={fsStyles.ambientOverlay} />
+
+        {/* Header */}
+        <View style={fsStyles.header}>
+          <TouchableOpacity onPress={onClose} style={fsStyles.closeBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <IconButton icon="close" size={22} iconColor="#fff" style={{ margin: 0 }} />
+          </TouchableOpacity>
+          <View style={fsStyles.headerText}>
+            <Text style={fsStyles.headerTitle}>{merchantName}</Text>
+            {upiId ? <Text style={fsStyles.headerSub}>{upiId}</Text> : null}
+          </View>
+        </View>
+
+        {/* QR image — large, fills most of the screen */}
+        <View style={fsStyles.qrContainer}>
+          <Image source={{ uri }} style={fsStyles.qrImage} resizeMode="contain" />
+        </View>
+
+        <Text style={fsStyles.hint}>
+          Open your payment app scanner and point it at this QR code
+        </Text>
+
+        {upiId ? (
+          <TouchableOpacity onPress={handlePayUPI} style={fsStyles.upiButton} activeOpacity={0.85}>
+            <IconButton icon="send" size={16} iconColor="#000" style={{ margin: 0 }} />
+            <Text style={fsStyles.upiButtonText}>Pay via UPI ID instead</Text>
+          </TouchableOpacity>
+        ) : null}
       </View>
     </Modal>
   );
@@ -29,136 +83,263 @@ function FullScreenImage({ uri, onClose }: { uri: string; onClose: () => void })
 const fsStyles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.95)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.92)',
     alignItems: 'center',
+    paddingBottom: 40,
   },
-  closeBtn: {
+  ambientBlur: {
     position: 'absolute',
-    top: 48,
-    right: 16,
-    zIndex: 10,
+    width: SCREEN_W,
+    height: SCREEN_H,
+    opacity: 0.35,
   },
-  fullImage: {
+  ambientOverlay: {
+    position: 'absolute',
+    width: SCREEN_W,
+    height: SCREEN_H,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 16,
+    paddingTop: 52,
+    paddingBottom: 16,
+    gap: 8,
+    zIndex: 1,
+  },
+  closeBtn: { padding: 4 },
+  headerText: { flex: 1 },
+  headerTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: 'SpaceGrotesk',
+  },
+  headerSub: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+    fontFamily: 'SpaceGrotesk',
+    marginTop: 2,
+  },
+  qrContainer: {
     width: SCREEN_W - 32,
-    height: SCREEN_H * 0.7,
+    aspectRatio: 1,
+    maxHeight: SCREEN_H * 0.62,
+    borderRadius: 20,
+    overflow: 'hidden',
+    zIndex: 1,
+  },
+  qrImage: {
+    width: '100%',
+    height: '100%',
+  },
+  hint: {
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 12,
+    fontFamily: 'SpaceGrotesk',
+    textAlign: 'center',
+    marginTop: 16,
+    marginHorizontal: 32,
+    lineHeight: 18,
+    zIndex: 1,
+  },
+  upiButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#C9F158',
+    borderRadius: 50,
+    paddingVertical: 10,
+    paddingHorizontal: 22,
+    marginTop: 16,
+    gap: 4,
+    zIndex: 1,
+  },
+  upiButtonText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '800',
+    fontFamily: 'SpaceGrotesk',
   },
 });
 
-// ── MerchantRow ───────────────────────────────────────────────
-function MerchantRow({
-  merchant,
-  onDelete,
-}: {
-  merchant: MerchantQR;
-  onDelete: () => void;
-}) {
+// ── UPI pay helper ────────────────────────────────────────────
+async function openUPIPayment(upiId: string, name: string) {
+  const url = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&cu=INR`;
+  const canOpen = await Linking.canOpenURL(url);
+  if (canOpen) {
+    await Linking.openURL(url);
+  } else {
+    Alert.alert('No UPI App Found', 'Please install a UPI payment app (GPay, PhonePe, Paytm, etc.) to make payments.');
+  }
+}
+
+// ── MerchantCard ──────────────────────────────────────────────
+function MerchantCard({ merchant }: { merchant: MerchantQR }) {
   const [expanded, setExpanded] = useState(false);
-  const [fullScreen, setFullScreen] = useState(false);
+  const [showQRViewer, setShowQRViewer] = useState(false);
   const animValue = useRef(new Animated.Value(0)).current;
   const theme = useTheme();
-
   const isDark = theme.dark;
+
+  const cardBg = theme.colors.surface;
   const textColor = theme.colors.onSurface;
   const subColor = theme.colors.onSurfaceVariant;
-  const surfaceBg = theme.colors.surface;
+  const borderColor = isDark ? theme.colors.outlineVariant : theme.colors.outline;
   const accentColor = '#C9F158';
+  // In light mode buttons always use dark ink; in dark mode use accent
+  const qrActiveColor = isDark ? accentColor : '#1a1a1a';
 
   const toggle = () => {
     Animated.timing(animValue, {
       toValue: expanded ? 0 : 1,
-      duration: 300,
+      duration: 260,
       useNativeDriver: false,
     }).start();
-    setExpanded(!expanded);
+    setExpanded(v => !v);
   };
 
-  const copyUpi = () => {
-    if (merchant.upiId) Clipboard.setStringAsync(merchant.upiId);
-  };
-
-  // Fixed expand height — always consistent regardless of image
-  const maxExpandHeight = 160;
-  const expandedHeight = animValue.interpolate({
+  const expandHeight = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, maxExpandHeight],
+    outputRange: [0, 56], // height of the button row
   });
-  const expandedOpacity = animValue;
+  const expandOpacity = animValue;
+
+  const handlePayUPI = () => {
+    if (merchant.upiId) {
+      openUPIPayment(merchant.upiId, merchant.name);
+    } else {
+      Alert.alert('No UPI ID', 'This merchant does not have a UPI ID saved. Edit from Settings → Merchant QRs.');
+    }
+  };
+
+  const handlePayQR = () => {
+    if (merchant.imageUri) {
+      setShowQRViewer(true);
+    } else {
+      Alert.alert('No QR Image', 'This merchant does not have a QR code image saved.');
+    }
+  };
+
+  const copyUpi = async () => {
+    if (merchant.upiId) await Clipboard.setStringAsync(merchant.upiId);
+  };
+
+  const hasUPI = !!merchant.upiId;
+  const hasQR = !!merchant.imageUri;
 
   return (
-    <View style={[styles.rowCard, { backgroundColor: surfaceBg }]}>
-      {/* Header tap row */}
-      <TouchableOpacity activeOpacity={0.8} onPress={toggle} style={styles.rowHeader}>
-        <View style={[styles.categoryBadge, { backgroundColor: isDark ? '#2A2A2A' : '#F2F3F5' }]}>
-          <Avatar.Icon
-            size={36}
-            icon="qrcode"
-            style={{ backgroundColor: 'transparent' }}
-            color={subColor}
-          />
-        </View>
-        <View style={styles.rowMeta}>
-          <Text style={[styles.merchantName, { color: textColor }]}>{merchant.name}</Text>
-          {merchant.category ? (
-            <Text style={[styles.merchantCategory, { color: subColor }]}>{merchant.category}</Text>
-          ) : null}
-        </View>
-        <View style={styles.rowActions}>
-          <Animated.View style={{
-            transform: [{ rotate: animValue.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] }) }]
-          }}>
-            <IconButton icon="chevron-down" size={20} iconColor={subColor} style={{ margin: 0 }} />
-          </Animated.View>
-        </View>
-      </TouchableOpacity>
+    <>
+      <TouchableOpacity
+        activeOpacity={0.88}
+        onPress={toggle}
+        style={[styles.card, { backgroundColor: cardBg, borderColor }]}
+      >
+        {/* ── Header row: thumb + name + category chip + chevron ── */}
+        <View style={styles.cardHeader}>
+          {/* QR thumbnail or placeholder */}
+          <View style={[styles.thumbBox, { backgroundColor: isDark ? '#2A2A2A' : '#F2F3F5', borderColor }]}>
+            {hasQR ? (
+              <Image source={{ uri: merchant.imageUri }} style={styles.thumbImage} resizeMode="cover" />
+            ) : (
+              <Avatar.Icon
+                size={40}
+                icon="qrcode"
+                style={{ backgroundColor: 'transparent' }}
+                color={subColor}
+              />
+            )}
+          </View>
 
-      {/* Expanded: compact info row */}
-      <Animated.View style={{ height: expandedHeight, opacity: expandedOpacity, overflow: 'hidden' }}>
-        <View style={styles.expandedContent}>
-          <View style={[styles.divider, { backgroundColor: theme.colors.surfaceVariant }]} />
-
-          <View style={styles.expandedRow}>
-            {/* Compact QR thumbnail */}
-            {merchant.imageUri ? (
-              <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={() => setFullScreen(true)}
-                style={styles.thumbnailWrapper}
-              >
-                <Image source={{ uri: merchant.imageUri }} style={styles.thumbnail} resizeMode="cover" />
-                <View style={styles.thumbnailOverlay}>
-                  <IconButton icon="fullscreen" size={16} iconColor="#fff" style={{ margin: 0 }} />
+          <View style={styles.nameMeta}>
+            {/* Name + category chip inline */}
+            <View style={styles.nameRow}>
+              <Text style={[styles.merchantName, { color: textColor }]} numberOfLines={1}>
+                {merchant.name}
+              </Text>
+              {merchant.category ? (
+                <View style={[styles.catChip, { backgroundColor: isDark ? '#2A2A2A' : '#EAEAEA' }]}>
+                  <Text style={[styles.catChipText, { color: subColor }]}>{merchant.category}</Text>
                 </View>
+              ) : null}
+            </View>
+
+            {/* UPI ID — tap to copy */}
+            {hasUPI ? (
+              <TouchableOpacity
+                onPress={e => { e.stopPropagation?.(); copyUpi(); }}
+                activeOpacity={0.7}
+                style={styles.upiRow}
+              >
+                <Text style={[styles.upiText, { color: subColor }]} numberOfLines={1}>
+                  {merchant.upiId}
+                </Text>
+                <IconButton icon="content-copy" size={11} iconColor={subColor} style={styles.copyIcon} />
               </TouchableOpacity>
             ) : null}
 
-            {/* Details column */}
-            <View style={styles.detailsColumn}>
-              {merchant.upiId ? (
-                <TouchableOpacity onPress={copyUpi} activeOpacity={0.7} style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: subColor }]}>UPI ID  •  tap to copy</Text>
-                  <Text style={[styles.detailValue, { color: textColor }]} numberOfLines={1}>{merchant.upiId}</Text>
-                </TouchableOpacity>
-              ) : null}
-              {merchant.notes ? (
-                <View style={styles.detailRow}>
-                  <Text style={[styles.detailLabel, { color: subColor }]}>Notes</Text>
-                  <Text style={[styles.detailValue, { color: textColor }]} numberOfLines={2}>{merchant.notes}</Text>
-                </View>
-              ) : null}
-              {!merchant.upiId && !merchant.notes ? (
-                <Text style={[styles.detailLabel, { color: subColor }]}>No details added</Text>
-              ) : null}
-            </View>
+            {/* Notes */}
+            {merchant.notes ? (
+              <Text style={[styles.notesText, { color: subColor }]} numberOfLines={1}>
+                {merchant.notes}
+              </Text>
+            ) : null}
           </View>
-        </View>
-      </Animated.View>
 
-      {/* Full-screen viewer */}
-      {fullScreen && merchant.imageUri ? (
-        <FullScreenImage uri={merchant.imageUri} onClose={() => setFullScreen(false)} />
+          {/* Chevron */}
+          <Animated.View style={{
+            transform: [{ rotate: animValue.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] }) }],
+          }}>
+            <IconButton icon="chevron-down" size={18} iconColor={subColor} style={{ margin: 0 }} />
+          </Animated.View>
+        </View>
+
+        {/* ── Expandable pay buttons ── */}
+        <Animated.View style={[styles.expandWrap, { height: expandHeight, opacity: expandOpacity, borderTopColor: borderColor }]}>
+          <View style={styles.payActions}>
+            {/* Scan QR — LEFT */}
+            <TouchableOpacity
+              onPress={e => { e.stopPropagation?.(); handlePayQR(); }}
+              style={[
+                styles.payBtn,
+                styles.payBtnOutline,
+                { borderColor: hasQR ? qrActiveColor : borderColor },
+              ]}
+              activeOpacity={0.8}
+            >
+              <IconButton icon="qrcode-scan" size={13} iconColor={hasQR ? qrActiveColor : subColor} style={{ margin: 0 }} />
+              <Text style={[styles.payBtnText, { color: hasQR ? qrActiveColor : subColor }]}>Scan QR</Text>
+            </TouchableOpacity>
+
+            {/* Pay UPI — RIGHT */}
+            <TouchableOpacity
+              onPress={e => { e.stopPropagation?.(); handlePayUPI(); }}
+              style={[
+                styles.payBtn,
+                hasUPI
+                  ? { backgroundColor: accentColor }
+                  : { backgroundColor: isDark ? '#2A2A2A' : theme.colors.surfaceVariant },
+              ]}
+              activeOpacity={0.8}
+            >
+              <IconButton icon="send" size={13} iconColor={hasUPI ? '#1a1a1a' : subColor} style={{ margin: 0 }} />
+              <Text style={[styles.payBtnText, { color: hasUPI ? '#1a1a1a' : subColor }]}>Pay UPI</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </TouchableOpacity>
+
+      {/* Full-screen QR viewer */}
+      {showQRViewer && hasQR ? (
+        <QRPayViewer
+          uri={merchant.imageUri}
+          merchantName={merchant.name}
+          upiId={merchant.upiId}
+          onClose={() => setShowQRViewer(false)}
+        />
       ) : null}
-    </View>
+    </>
   );
 }
 
@@ -169,19 +350,16 @@ export default function MerchantQRSection() {
   const userName = useUiStore(s => s.userName);
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
   const merchants = useWalletStore(s => s.merchantQRs);
-  const deleteMerchantQR = useWalletStore(s => s.deleteMerchantQR);
-
-  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
-      {/* Header */}
+      {/* Header — same pattern as other sections */}
       <View style={styles.sectionIntro}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <View style={{ flex: 1, marginRight: 16 }}>
             <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Merchant QRs</Text>
             <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
-              Frequently used payment QR codes, always at hand.
+              Tap a merchant to pay instantly via UPI or QR.
             </Text>
           </View>
           <Avatar.Text
@@ -198,7 +376,7 @@ export default function MerchantQRSection() {
         {merchants.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Avatar.Icon
-              size={72}
+              size={64}
               icon="store-outline"
               style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }}
               color={theme.colors.onSurfaceVariant}
@@ -209,32 +387,9 @@ export default function MerchantQRSection() {
             </Text>
           </View>
         ) : (
-          merchants.map(m => (
-            <MerchantRow
-              key={m.id}
-              merchant={m}
-              onDelete={() => setDeleteId(m.id)}
-            />
-          ))
+          merchants.map(m => <MerchantCard key={m.id} merchant={m} />)
         )}
       </ScrollView>
-
-      {/* Delete confirmation */}
-      <Portal>
-        <Dialog visible={!!deleteId} onDismiss={() => setDeleteId(null)} style={{ backgroundColor: theme.colors.surface }}>
-          <Dialog.Title style={{ color: theme.colors.onSurface }}>Remove Merchant QR?</Dialog.Title>
-          <Dialog.Content>
-            <Text style={{ color: theme.colors.onSurfaceVariant }}>This will permanently remove this merchant QR code.</Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setDeleteId(null)}>Cancel</Button>
-            <Button textColor={theme.colors.error} onPress={() => {
-              if (deleteId) deleteMerchantQR(deleteId);
-              setDeleteId(null);
-            }}>Remove</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
     </View>
   );
 }
@@ -246,39 +401,110 @@ const styles = StyleSheet.create({
   introText: { fontSize: 14, fontFamily: 'SpaceGrotesk', lineHeight: 20 },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 96 },
 
-  rowCard: { borderRadius: 20, marginBottom: 12, overflow: 'hidden' },
-  rowHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
-  categoryBadge: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  categoryEmoji: { fontSize: 22 },
-  rowMeta: { flex: 1 },
-  merchantName: { fontSize: 16, fontWeight: '700', fontFamily: 'SpaceGrotesk' },
-  merchantCategory: { fontSize: 13, fontFamily: 'SpaceGrotesk', marginTop: 2 },
-  rowActions: { flexDirection: 'row', alignItems: 'center' },
-  expandedContent: { paddingHorizontal: 16, paddingBottom: 16 },
-  divider: { height: 1, marginBottom: 12 },
-  expandedRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  thumbnailWrapper: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
+  // ── Card ──────────────────────────────────────────────────────
+  card: {
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 12,
     overflow: 'hidden',
-    position: 'relative',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  thumbBox: {
+    width: 46,
+    height: 46,
+    borderRadius: 10,
+    borderWidth: 1,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
     flexShrink: 0,
   },
-  thumbnail: { width: 80, height: 80 },
-  thumbnailOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    borderTopLeftRadius: 8,
+  thumbImage: { width: 46, height: 46 },
+  nameMeta: { flex: 1, gap: 1 },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'nowrap',
   },
-  detailsColumn: { flex: 1, justifyContent: 'center' },
-  detailRow: { marginBottom: 8 },
-  detailLabel: { fontSize: 11, fontWeight: '600', fontFamily: 'SpaceGrotesk', letterSpacing: 0.4, marginBottom: 2 },
-  detailValue: { fontSize: 14, fontWeight: '600', fontFamily: 'SpaceGrotesk' },
+  merchantName: {
+    fontSize: 14,
+    fontWeight: '700',
+    fontFamily: 'SpaceGrotesk',
+    flexShrink: 1,
+  },
+  catChip: {
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    flexShrink: 0,
+  },
+  catChipText: {
+    fontSize: 10,
+    fontWeight: '600',
+    fontFamily: 'SpaceGrotesk',
+  },
+  upiRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  upiText: {
+    fontSize: 11,
+    fontFamily: 'SpaceGrotesk',
+    flex: 1,
+  },
+  copyIcon: { margin: 0, marginLeft: -2 },
+  notesText: {
+    fontSize: 11,
+    fontFamily: 'SpaceGrotesk',
+    opacity: 0.7,
+  },
+
+  // ── Expand / pay buttons ──────────────────────────────────────
+  expandWrap: {
+    overflow: 'hidden',
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  payActions: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  payBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    gap: 0,
+  },
+  payBtnOutline: {
+    borderWidth: 1.5,
+    backgroundColor: 'transparent',
+  },
+  payBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'SpaceGrotesk',
+  },
+
+  // ── Empty state ───────────────────────────────────────────────
   emptyContainer: { flex: 1, alignItems: 'center', paddingTop: 80 },
-  emptyEmoji: { fontSize: 48, marginBottom: 12 },
   emptyTitle: { fontSize: 20, fontWeight: '700', fontFamily: 'SpaceGrotesk', opacity: 0.4 },
-  emptySubText: { fontSize: 14, fontFamily: 'SpaceGrotesk', marginTop: 8, textAlign: 'center' },
+  emptySubText: {
+    fontSize: 14,
+    fontFamily: 'SpaceGrotesk',
+    marginTop: 8,
+    textAlign: 'center',
+    paddingHorizontal: 40,
+  },
 });

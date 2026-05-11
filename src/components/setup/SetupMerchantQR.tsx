@@ -13,7 +13,7 @@ interface Props {
   onBack: () => void;
 }
 
-const EMPTY_FORM = { name: '', category: '', upiId: '', notes: '', imageUri: '' };
+const EMPTY_FORM = { name: '', category: '', upiId: '', imageUri: '' };
 
 export default function SetupMerchantQR({ onBack }: Props) {
   const theme = useTheme();
@@ -41,7 +41,7 @@ export default function SetupMerchantQR({ onBack }: Props) {
 
   const openEdit = (m: MerchantQR) => {
     setEditingId(m.id);
-    setForm({ name: m.name, category: m.category || '', upiId: m.upiId || '', notes: m.notes || '', imageUri: m.imageUri });
+    setForm({ name: m.name, category: m.category || '', upiId: m.upiId || '', imageUri: m.imageUri });
     setShowForm(true);
   };
 
@@ -71,7 +71,6 @@ export default function SetupMerchantQR({ onBack }: Props) {
       category: form.category.trim() || undefined,
       upiId: form.upiId.trim() || undefined,
       imageUri: form.imageUri,
-      notes: form.notes.trim() || undefined,
     };
     if (editingId) {
       updateMerchantQR(editingId, payload);
@@ -149,15 +148,7 @@ export default function SetupMerchantQR({ onBack }: Props) {
               autoCapitalize="none"
               keyboardType="email-address"
             />
-            <PaperInput
-              mode="outlined"
-              label="Notes (optional)"
-              value={form.notes}
-              onChangeText={v => setForm(f => ({ ...f, notes: v }))}
-              style={styles.input}
-              multiline
-              numberOfLines={2}
-            />
+
 
             <Button
               mode="contained"

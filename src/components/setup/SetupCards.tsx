@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
 import { 
   Appbar, 
   TextInput, 
@@ -19,10 +19,31 @@ import BankPicker from '../BankPicker';
 import ColorPicker from '../ColorPicker';
 import { CARD_COLORS } from '../../constants/cardColors';
 
+const VISA_PNG       = require('../../../assets/Visa.png');
+const MASTERCARD_PNG = require('../../../assets/mastercard.png');
+const RUPAY_PNG      = require('../../../assets/rupay.png');
+
+type Network = 'Visa' | 'Mastercard' | 'RuPay';
+
+const NETWORKS: { key: Network; label: string; logo: any }[] = [
+  { key: 'Visa',       label: 'Visa',       logo: VISA_PNG },
+  { key: 'Mastercard', label: 'Mastercard', logo: MASTERCARD_PNG },
+  { key: 'RuPay',      label: 'RuPay',      logo: RUPAY_PNG },
+];
+
+interface SetupCardsProps {
+  cards: CardEntry[];
+  onAdd: (entry: Omit<CardEntry, 'id'>) => void;
+  onUpdate: (id: string, entry: Omit<CardEntry, 'id'>) => void;
+  onDelete: (id: string) => void;
+  onBack: () => void;
+}
+
 const FIRST_COLOR = CARD_COLORS[0].key;
 
 const emptyForm = (): Omit<CardEntry, 'id'> => ({
   type: 'Debit',
+  network: 'Visa',
   bankName: '',
   holderName: '',
   cardNumber: '',
@@ -146,6 +167,31 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
                   { value: 'Credit', label: 'Credit' },
                 ]}
               />
+            </View>
+
+            {/* Network picker */}
+            <Text style={[styles.networkLabel, { color: theme.colors.onSurfaceVariant }]}>Card Network</Text>
+            <View style={styles.networkRow}>
+              {NETWORKS.map(n => {
+                const isSelected = (form.network ?? 'Visa') === n.key;
+                return (
+                  <TouchableOpacity
+                    key={n.key}
+                    onPress={() => setForm(p => ({ ...p, network: n.key }))}
+                    style={[
+                      styles.networkBtn,
+                      { borderColor: isSelected ? '#C9F158' : theme.colors.outline },
+                      isSelected && { backgroundColor: theme.dark ? '#1a1a1a' : '#f5f5f5' },
+                    ]}
+                    activeOpacity={0.8}
+                  >
+                    <Image source={n.logo} style={styles.networkLogo} resizeMode="contain" />
+                    <Text style={[styles.networkBtnLabel, { color: isSelected ? theme.colors.onSurface : theme.colors.onSurfaceVariant }]}>
+                      {n.label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             <TextInput
@@ -345,6 +391,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 2,
     borderColor: '#000000',
+  },
+  networkLabel: {
+    fontSize: 12,
+    fontFamily: 'SpaceGrotesk',
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    marginBottom: 8,
+  },
+  networkRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 14,
+  },
+  networkBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    gap: 6,
+  },
+  networkLogo: {
+    width: 52,
+    height: 24,
+  },
+  networkBtnLabel: {
+    fontSize: 10,
+    fontFamily: 'SpaceGrotesk',
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });
 
