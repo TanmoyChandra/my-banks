@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Image, Animated } from 'react-native';
 
 // Use the new asset as requested
-const ICON_PNG = require('../../../assets/app icon.png');
+const ICON_PNG = require('../../../assets/app-icon.png');
 
 interface Props {
   onNext: () => void;

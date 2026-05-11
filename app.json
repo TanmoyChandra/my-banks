@@ -4,11 +4,11 @@
     "slug": "my-banks",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/app icon.png",
+    "icon": "./assets/app-icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/app icon.png",
+      "image": "./assets/app-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#111111"
     },
@@ -18,7 +18,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/app icon.png",
+        "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#111111"
       },
       "edgeToEdgeEnabled": true,

@@ -5,7 +5,7 @@ import { useUiStore } from '../../store/useUiStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const APP_ICON_PNG = require('../../../assets/app icon.png');
+const APP_ICON_PNG = require('../../../assets/app-icon.png');
 
 export default function UserEntryScreen() {
   const [name, setName] = useState('');
