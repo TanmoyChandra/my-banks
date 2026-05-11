@@ -169,124 +169,155 @@ const BankCard: React.FC<{ card: CardEntry; cardWidth: number; onPress: () => vo
     ? formatCardNumber(card.cardNumber)
     : maskCardNumber(card.cardNumber);
 
+  const copy = async (val: string) => {
+    await Clipboard.setStringAsync(val.replace(/\s/g, ''));
+  };
+
   return (
-    <TouchableOpacity activeOpacity={0.92} onPress={onPress} style={styles.cardBlock}>
+    <View style={styles.cardBlock}>
       {/* ── Card face ── */}
-      <LinearGradient
-        colors={[palette.from, palette.via, palette.to]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+      <TouchableOpacity
+        activeOpacity={0.92}
+        onPress={() => setShowFull(v => !v)}
         style={[styles.cardFace, { width: cardWidth, height: cardHeight, borderRadius: 20 }]}
       >
-        {/* Circuit grid pattern (subtle) */}
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
-            {/* Horizontal faint lines */}
-            {[0.3, 0.5, 0.7].map((r, i) => (
-              <Path
-                key={`h${i}`}
-                d={`M0 ${cardHeight * r} L${cardWidth} ${cardHeight * r}`}
-                stroke="rgba(255,255,255,0.05)"
-                strokeWidth={1}
-              />
-            ))}
-            {[0.25, 0.5, 0.75].map((r, i) => (
-              <Path
-                key={`v${i}`}
-                d={`M${cardWidth * r} 0 L${cardWidth * r} ${cardHeight}`}
-                stroke="rgba(255,255,255,0.05)"
-                strokeWidth={1}
-              />
-            ))}
-          </Svg>
-        </View>
-
-        {/* Glow blobs */}
-        <View style={[styles.glow1, { backgroundColor: palette.glow1 }]} pointerEvents="none" />
-        <View style={[styles.glow2, { backgroundColor: palette.glow2 }]} pointerEvents="none" />
-
-        {/* Holographic shimmer overlay */}
         <LinearGradient
-          colors={['transparent', 'rgba(255,255,255,0.07)', 'rgba(255,255,255,0.12)', 'rgba(255,255,255,0.07)', 'transparent']}
-          start={{ x: 0.2, y: 0 }}
-          end={{ x: 0.8, y: 1 }}
+          colors={[palette.from, palette.via, palette.to]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-
-        {/* ── Card content ── */}
-        <View style={[styles.cardContent, { padding: Math.round(cardWidth * 0.06) }]}>
-
-          {/* TOP: bank logo + name + contactless */}
-          <View style={styles.cardTop}>
-            <View style={styles.bankLogoRow}>
-              {bank ? (
-                <Image source={bank.symbol} style={styles.bankLogoImg} resizeMode="contain" />
-              ) : null}
-              <Text style={[styles.bankName, { fontSize: Math.round(cardWidth * 0.038) }]}>
-                {card.bankName.toUpperCase()}
-              </Text>
-            </View>
-            <View style={[styles.contactless]}>
-              <ContactlessIcon />
-            </View>
+        >
+          {/* Circuit grid pattern (subtle) */}
+          <View style={StyleSheet.absoluteFill} pointerEvents="none">
+            <Svg width="100%" height="100%" style={StyleSheet.absoluteFill}>
+              {[0.3, 0.5, 0.7].map((r, i) => (
+                <Path
+                  key={`h${i}`}
+                  d={`M0 ${cardHeight * r} L${cardWidth} ${cardHeight * r}`}
+                  stroke="rgba(255,255,255,0.05)"
+                  strokeWidth={1}
+                />
+              ))}
+              {[0.25, 0.5, 0.75].map((r, i) => (
+                <Path
+                  key={`v${i}`}
+                  d={`M${cardWidth * r} 0 L${cardWidth * r} ${cardHeight}`}
+                  stroke="rgba(255,255,255,0.05)"
+                  strokeWidth={1}
+                />
+              ))}
+            </Svg>
           </View>
 
-          {/* MIDDLE: chip + card type label */}
-          <View style={styles.cardMiddle}>
-            <GoldChip />
-            <View style={styles.cardTypeLabel}>
-              <Text style={[styles.cardTypeLabelText, { fontSize: Math.round(cardWidth * 0.026) }]}>
-                {card.type?.toUpperCase() ?? 'DEBIT'} CARD
+          {/* Glow blobs */}
+          <View style={[styles.glow1, { backgroundColor: palette.glow1 }]} pointerEvents="none" />
+          <View style={[styles.glow2, { backgroundColor: palette.glow2 }]} pointerEvents="none" />
+
+          {/* Holographic shimmer overlay */}
+          <LinearGradient
+            colors={['transparent', 'rgba(255,255,255,0.07)', 'rgba(255,255,255,0.12)', 'rgba(255,255,255,0.07)', 'transparent']}
+            start={{ x: 0.2, y: 0 }}
+            end={{ x: 0.8, y: 1 }}
+            style={StyleSheet.absoluteFill}
+            pointerEvents="none"
+          />
+
+          {/* ── Card content ── */}
+          <View style={[styles.cardContent, { padding: Math.round(cardWidth * 0.06) }]}>
+
+            {/* TOP: bank logo + name + contactless */}
+            <View style={styles.cardTop}>
+              <View style={styles.bankLogoRow}>
+                {bank ? (
+                  <Image source={bank.symbol} style={styles.bankLogoImg} resizeMode="contain" />
+                ) : null}
+                <Text style={[styles.bankName, { fontSize: Math.round(cardWidth * 0.038) }]}>
+                  {card.bankName.toUpperCase()}
+                </Text>
+              </View>
+              <View style={[styles.contactless]}>
+                <ContactlessIcon />
+              </View>
+            </View>
+
+            {/* MIDDLE: chip + card type label */}
+            <View style={styles.cardMiddle}>
+              <GoldChip />
+              <View style={styles.cardTypeLabel}>
+                <Text style={[styles.cardTypeLabelText, { fontSize: Math.round(cardWidth * 0.026) }]}>
+                  {card.type?.toUpperCase() ?? 'DEBIT'} CARD
+                </Text>
+              </View>
+            </View>
+
+            {/* CARD NUMBER + COPY */}
+            <View style={styles.rowAlignCenter}>
+              <Text style={[styles.cardNumber, { fontSize: Math.round(cardWidth * 0.058), letterSpacing: Math.round(cardWidth * 0.012) }]}>
+                {displayNumber}
               </Text>
+              <TouchableOpacity onPress={() => copy(card.cardNumber)} style={styles.inlineCopy}>
+                <Avatar.Icon size={Math.round(cardWidth * 0.055)} icon="content-copy" color="rgba(255,255,255,0.6)" style={{ backgroundColor: 'transparent' }} />
+              </TouchableOpacity>
+            </View>
+
+            {/* BOTTOM: holder + expiry + network logo */}
+            <View style={styles.cardBottom}>
+              <View style={styles.holderBlock}>
+                <Text style={[styles.cardLabel, { fontSize: Math.round(cardWidth * 0.023) }]}>Card Holder</Text>
+                <View style={styles.rowAlignCenter}>
+                  <Text style={[styles.cardValue, { fontSize: Math.round(cardWidth * 0.034) }]} numberOfLines={1}>
+                    {(card.holderName || 'CARD HOLDER').toUpperCase()}
+                  </Text>
+                  <TouchableOpacity onPress={() => copy(card.holderName || '')} style={styles.inlineCopy}>
+                    <Avatar.Icon size={Math.round(cardWidth * 0.045)} icon="content-copy" color="rgba(255,255,255,0.4)" style={{ backgroundColor: 'transparent' }} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.expiryBlock}>
+                <Text style={[styles.cardLabel, { fontSize: Math.round(cardWidth * 0.023) }]}>Expires</Text>
+                <View style={styles.rowAlignCenter}>
+                  <Text style={[styles.cardValue, { fontSize: Math.round(cardWidth * 0.034) }]}>
+                    {card.expiry || 'MM/YY'}
+                  </Text>
+                  <TouchableOpacity onPress={() => copy(card.expiry || '')} style={styles.inlineCopy}>
+                    <Avatar.Icon size={Math.round(cardWidth * 0.045)} icon="content-copy" color="rgba(255,255,255,0.4)" style={{ backgroundColor: 'transparent' }} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.networkBlock}>
+                {network === 'Visa'       ? <VisaLogo       size={Math.round(cardWidth * 0.09)} /> : null}
+                {network === 'Mastercard' ? <MastercardLogo size={Math.round(cardWidth * 0.09)} /> : null}
+                {network === 'RuPay'      ? <RuPayLogo      size={Math.round(cardWidth * 0.09)} /> : null}
+              </View>
             </View>
           </View>
+        </LinearGradient>
+      </TouchableOpacity>
 
-          {/* CARD NUMBER */}
-          <TouchableOpacity onPress={e => { e.stopPropagation?.(); setShowFull(v => !v); }} activeOpacity={0.8}>
-            <Text style={[styles.cardNumber, { fontSize: Math.round(cardWidth * 0.058), letterSpacing: Math.round(cardWidth * 0.012) }]}>
-              {displayNumber}
-            </Text>
-          </TouchableOpacity>
-
-          {/* BOTTOM: holder + expiry + network logo */}
-          <View style={styles.cardBottom}>
-            <View style={styles.holderBlock}>
-              <Text style={[styles.cardLabel, { fontSize: Math.round(cardWidth * 0.023) }]}>Card Holder</Text>
-              <Text style={[styles.cardValue, { fontSize: Math.round(cardWidth * 0.034) }]} numberOfLines={1}>
-                {(card.holderName || 'CARD HOLDER').toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.expiryBlock}>
-              <Text style={[styles.cardLabel, { fontSize: Math.round(cardWidth * 0.023) }]}>Expires</Text>
-              <Text style={[styles.cardValue, { fontSize: Math.round(cardWidth * 0.034) }]}>
-                {card.expiry || 'MM/YY'}
-              </Text>
-            </View>
-            <View style={styles.networkBlock}>
-              {network === 'Visa'       ? <VisaLogo       size={Math.round(cardWidth * 0.09)} /> : null}
-              {network === 'Mastercard' ? <MastercardLogo size={Math.round(cardWidth * 0.09)} /> : null}
-              {network === 'RuPay'      ? <RuPayLogo      size={Math.round(cardWidth * 0.09)} /> : null}
-            </View>
-          </View>
-        </View>
-      </LinearGradient>
-
-      {/* Quick copy strip */}
-      <View style={styles.cardActions}>
-        <Button compact mode="text" textColor="rgba(255,255,255,0.6)" icon="content-copy" labelStyle={styles.copyLabel}
-          onPress={() => Clipboard.setStringAsync(card.holderName || '')}>Name</Button>
-        <Button compact mode="text" textColor="rgba(255,255,255,0.6)" icon="content-copy" labelStyle={styles.copyLabel}
-          onPress={() => Clipboard.setStringAsync(card.cardNumber.replace(/\D/g, ''))}>Number</Button>
-        <Button compact mode="text" textColor="rgba(255,255,255,0.6)" icon="content-copy" labelStyle={styles.copyLabel}
-          onPress={() => Clipboard.setStringAsync(card.expiry || '')}>Expiry</Button>
-        <Button compact mode="text" textColor="rgba(255,255,255,0.6)" icon="content-copy" labelStyle={styles.copyLabel}
-          onPress={() => Clipboard.setStringAsync(card.cvv || '')}>CVV</Button>
+      {/* Action Buttons Row */}
+      <View style={[styles.cardActionsRow, { width: cardWidth }]}>
+        <Button
+          mode="contained-tonal"
+          onPress={onPress}
+          style={styles.seeTransactionsBtn}
+          labelStyle={styles.actionBtnLabel}
+          icon="history"
+        >
+          Transactions
+        </Button>
+        <Button
+          mode="contained-tonal"
+          onPress={() => copy(card.cvv || '')}
+          style={styles.copyCvvBtn}
+          labelStyle={styles.actionBtnLabel}
+          icon="content-copy"
+        >
+          CVV
+        </Button>
       </View>
-
-      {/* Below-card label */}
-      <Text style={styles.cardTag}>{network}  ·  {card.type ?? 'Debit'} Card</Text>
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -306,7 +337,7 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
           <View style={{ flex: 1, marginRight: 16 }}>
             <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Payment cards</Text>
             <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
-              Tap number to reveal · tap card for transactions.
+              Manage your payment cards and view transactions.
             </Text>
           </View>
           <Avatar.Text
@@ -445,48 +476,27 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
   },
-  holderBlock: { flex: 1, marginRight: 8 },
-  expiryBlock: { alignItems: 'flex-start', marginRight: 35 },
-  networkBlock: { alignItems: 'flex-end', minWidth: 72 },
-  cardLabel: {
-    color: 'rgba(255,255,255,0.45)',
-    fontFamily: 'SpaceGrotesk',
-    fontWeight: '500',
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-    marginBottom: 2,
-  },
-  cardValue: {
-    color: '#FFFFFF',
-    fontFamily: 'SpaceGrotesk',
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
+  rowAlignCenter: { flexDirection: 'row', alignItems: 'center' },
+  inlineCopy: { marginLeft: 6, opacity: 0.8 },
 
-  // Network logos — rendered as PNG images, no extra styles needed
-
-  // Actions strip
-  cardActions: {
+  cardActionsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingTop: 6,
-    paddingHorizontal: 4,
-    width: '100%',
+    marginTop: 16,
+    gap: 8,
   },
-  copyLabel: { fontSize: 11, fontFamily: 'SpaceGrotesk' },
-  cardTag: {
-    marginTop: 4,
-    color: 'rgba(255,255,255,0.28)',
-    fontSize: 11,
+  seeTransactionsBtn: {
+    flex: 2,
+    borderRadius: 12,
+  },
+  copyCvvBtn: {
+    flex: 1,
+    borderRadius: 12,
+  },
+  actionBtnLabel: {
     fontFamily: 'SpaceGrotesk',
-    fontWeight: '500',
-    letterSpacing: 2.5,
-    textTransform: 'uppercase',
-    textAlign: 'center',
+    fontWeight: '700',
+    fontSize: 13,
+    paddingVertical: 2,
   },
 
   // Empty
