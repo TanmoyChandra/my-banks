@@ -42,7 +42,7 @@ function SetupCard({
         onPress={onPress}
         left={(props) => (
           <View style={[styles.cardIconBox, { backgroundColor: accentColor, marginLeft: 16, marginRight: 8, marginTop: 8 }]}>
-            <List.Icon icon={icon} color={textColor} style={{ margin: 0 }} />
+            <List.Icon icon={icon} color="#000000" style={{ margin: 0 }} />
           </View>
         )}
         right={(props) => <List.Icon {...props} icon="chevron-right" color={subColor} />}

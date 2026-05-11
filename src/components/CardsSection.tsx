@@ -14,6 +14,7 @@ import { useUiStore } from '../store/useUiStore';
 const VISA_PNG       = require('../../assets/Visa.png');
 const MASTERCARD_PNG = require('../../assets/mastercard.png');
 const RUPAY_PNG      = require('../../assets/rupay.png');
+const TAPTOPAY_PNG   = require('../../assets/taptopay.png');
 
 interface CardsSectionProps {
   cards: CardEntry[];
@@ -235,8 +236,8 @@ const BankCard: React.FC<{ card: CardEntry; cardWidth: number; onPress: () => vo
                   {card.bankName.toUpperCase()}
                 </Text>
               </View>
-              <View style={[styles.contactless]}>
-                <ContactlessIcon />
+              <View style={styles.contactless}>
+                <Image source={TAPTOPAY_PNG} style={styles.tapToPayImg} resizeMode="contain" />
               </View>
             </View>
 
@@ -300,21 +301,21 @@ const BankCard: React.FC<{ card: CardEntry; cardWidth: number; onPress: () => vo
       <View style={[styles.cardActionsRow, { width: cardWidth }]}>
         <Button
           mode="contained-tonal"
-          onPress={onPress}
-          style={styles.seeTransactionsBtn}
-          labelStyle={styles.actionBtnLabel}
-          icon="history"
-        >
-          Transactions
-        </Button>
-        <Button
-          mode="contained-tonal"
           onPress={() => copy(card.cvv || '')}
           style={styles.copyCvvBtn}
           labelStyle={styles.actionBtnLabel}
           icon="content-copy"
         >
           CVV
+        </Button>
+        <Button
+          mode="contained-tonal"
+          onPress={onPress}
+          style={styles.seeTransactionsBtn}
+          labelStyle={styles.actionBtnLabel}
+          icon="history"
+        >
+          Transactions
         </Button>
       </View>
     </View>
@@ -438,6 +439,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
   contactless: { opacity: 0.9 },
+  tapToPayImg: { width: 24, height: 24 },
 
   // MIDDLE row
   cardMiddle: {
