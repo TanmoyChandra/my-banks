@@ -424,7 +424,7 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
                 mode="contained" 
                 icon="image-plus" 
                 onPress={pickAndScan}
-                style={styles.scanBtn}
+                style={[styles.scanBtn, { backgroundColor: '#AAEF00' }]}
                 loading={loading}
                 disabled={loading}
                 labelStyle={styles.btnLabel}
@@ -432,11 +432,12 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
                 Scan from Gallery
               </Button>
               <Button 
-                mode="outlined" 
+                mode="contained" 
                 icon="pencil" 
                 onPress={() => setShowForm(true)}
-                style={styles.manualBtn}
+                style={[styles.manualBtn, { backgroundColor: '#AAEF00' }]}
                 disabled={loading}
+                labelStyle={styles.btnLabel}
               >
                 Manual Entry
               </Button>
@@ -518,16 +519,16 @@ const styles = StyleSheet.create({
   sheetTitle: { fontSize: 24, fontWeight: '900' },
   scrollContent: { padding: 16 },
   mainActions: { gap: 12, marginBottom: 20 },
-  scanBtn: { paddingVertical: 8, borderRadius: 12 },
+  scanBtn: { paddingVertical: 4, borderRadius: 12 },
   manualBtn: { paddingVertical: 4, borderRadius: 12 },
-  btnLabel: { fontSize: 16, fontWeight: '700' },
+  btnLabel: { fontSize: 14, fontWeight: '700', color: '#000', fontFamily: 'SpaceGrotesk' },
   formCard: { padding: 20, borderRadius: 16, marginBottom: 20 },
   formTitle: { marginBottom: 16, fontWeight: '700' },
   input: { marginBottom: 12 },
   buttonRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
   flexBtn: { flex: 1 },
   listItem: { borderRadius: 12, marginBottom: 12, overflow: 'hidden' },
-  itemActions: { flexDirection: 'row' },
+  itemActions: { flexDirection: 'row', marginRight: -8, gap: -4 },
   empty: { alignItems: 'center', paddingTop: 60 },
   emptyText: { marginTop: 12 },
   loadingBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },

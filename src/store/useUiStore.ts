@@ -17,7 +17,7 @@ export const useUiStore = create<UiState>()(
     (set) => ({
       hasCompletedOnboarding: false,
       userName: '',
-      isDark: false,
+      isDark: true,
 
       completeOnboarding: (name) =>
         set({ hasCompletedOnboarding: true, userName: name }),

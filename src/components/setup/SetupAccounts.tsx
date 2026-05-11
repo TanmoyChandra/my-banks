@@ -198,7 +198,8 @@ const SetupAccounts: React.FC<SetupAccountsProps> = ({ accounts, onAdd, onUpdate
               mode="contained" 
               icon="plus" 
               onPress={() => setShowForm(true)}
-              style={styles.addBtn}
+              style={[styles.addBtn, { backgroundColor: '#AAEF00' }]}
+              labelStyle={styles.addBtnLabel}
             >
               Add Bank Account
             </Button>
@@ -295,6 +296,13 @@ const styles = StyleSheet.create({
   addBtn: {
     marginBottom: 20,
     paddingVertical: 4,
+    borderRadius: 12,
+  },
+  addBtnLabel: {
+    color: '#000',
+    fontFamily: 'SpaceGrotesk',
+    fontWeight: '700',
+    fontSize: 14,
   },
   listItem: {
     borderRadius: 12,
@@ -303,6 +311,8 @@ const styles = StyleSheet.create({
   },
   itemActions: {
     flexDirection: 'row',
+    marginRight: -8,
+    gap: -4,
   },
   empty: { alignItems: 'center', paddingTop: 60 },
   emptyText: { marginTop: 12 },

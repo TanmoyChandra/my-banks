@@ -128,7 +128,6 @@ const QRPayCard = ({ entry, width }: { entry: QREntry; width: number }) => {
 };
 
 const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
-  const [activeIndex, setActiveIndex] = useState(0);
   const { width: screenWidth } = useWindowDimensions();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -136,11 +135,6 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
   const cardWidth = Math.min(screenWidth - PAGE_SIDE_PADDING * 2.5, 450);
   const snapWidth = cardWidth + PAGE_GAP;
-
-  const handleMomentumEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / snapWidth);
-    setActiveIndex(Math.max(0, Math.min(entries.length - 1, index)));
-  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
@@ -163,7 +157,8 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
 
       {entries.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Add new</Text>
+          <Avatar.Icon size={64} icon="qrcode" style={{ backgroundColor: theme.colors.surfaceVariant, opacity: 0.5 }} color={theme.colors.onSurfaceVariant} />
+          <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Go to settings to add a new QR code</Text>
         </View>
       ) : (
         <View style={styles.carouselWrapper}>
@@ -176,21 +171,8 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
             snapToInterval={snapWidth}
             decelerationRate="fast"
             contentContainerStyle={styles.carouselContent}
-            onMomentumScrollEnd={handleMomentumEnd}
             style={{ flexGrow: 0 }}
           />
-
-          <View style={styles.dots}>
-            {entries.map((entry, index) => (
-              <View
-                key={entry.id}
-                style={[
-                  styles.dot,
-                  index === activeIndex ? [styles.activeDot, { backgroundColor: theme.colors.onSurface }] : styles.inactiveDot,
-                ]}
-              />
-            ))}
-          </View>
         </View>
       )}
     </View>
@@ -294,26 +276,6 @@ const styles = StyleSheet.create({
     margin: 0,
     marginLeft: 4,
   },
-  dots: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    paddingBottom: 18,
-    paddingTop: 4,
-  },
-  dot: {
-    borderRadius: 999,
-    height: 8,
-    marginHorizontal: 4,
-  },
-  activeDot: {
-    backgroundColor: '#09090b',
-    width: 22,
-  },
-  inactiveDot: {
-    backgroundColor: '#d4d4d8',
-    width: 8,
-  },
   shareButton: {
     marginTop: 16,
     borderRadius: 24,
@@ -329,9 +291,13 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   emptyText: {
-    fontSize: 24,
-    fontWeight: '900',
-    opacity: 0.3,
+    fontSize: 16,
+    fontWeight: '600',
+    marginTop: 16,
+    fontFamily: 'SpaceGrotesk',
+    textAlign: 'center',
+    paddingHorizontal: 40,
+    opacity: 0.6,
   },
 });
 

@@ -3,7 +3,7 @@ import {
   View, StyleSheet, ScrollView, TouchableOpacity,
   Image, Alert,
 } from 'react-native';
-import { Text, useTheme, IconButton, TextInput as PaperInput, Button, Surface, Portal, Dialog, List, Avatar } from 'react-native-paper';
+import { Text, useTheme, IconButton, TextInput as PaperInput, Button, Surface, Portal, Dialog, List, Avatar, Appbar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { MerchantQR } from '../../types';
@@ -31,7 +31,7 @@ export default function SetupMerchantQR({ onBack }: Props) {
   const textColor = theme.colors.onSurface;
   const subColor = theme.colors.onSurfaceVariant;
   const surfaceBg = theme.colors.surface;
-  const accentColor = '#C9F158';
+  const accentColor = '#AAEF00';
 
   const openAdd = () => {
     setEditingId(null);
@@ -81,19 +81,15 @@ export default function SetupMerchantQR({ onBack }: Props) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <IconButton icon="arrow-left" size={24} iconColor={textColor} onPress={showForm ? resetForm : onBack} style={{ margin: 0 }} />
-        <Text style={[styles.headerTitle, { color: textColor }]}>
-          {showForm ? (editingId ? 'Edit Merchant QR' : 'Add Merchant QR') : 'Merchant QR Codes'}
-        </Text>
-        {!showForm ? (
-          <IconButton icon="plus" size={24} iconColor={textColor} onPress={openAdd} style={{ margin: 0 }} />
-        ) : (
-          <View style={{ width: 40 }} />
-        )}
-      </View>
+      <Appbar.Header style={{ backgroundColor: theme.colors.surface }}>
+        <Appbar.Content
+          title={showForm ? (editingId ? 'Edit Merchant QR' : 'Add Merchant QR') : 'Merchant QR Codes'}
+          titleStyle={{ fontWeight: '900' }}
+        />
+        <Appbar.Action icon="close" onPress={showForm ? resetForm : onBack} />
+      </Appbar.Header>
 
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
@@ -164,6 +160,16 @@ export default function SetupMerchantQR({ onBack }: Props) {
         {/* ── Existing list ── */}
         {!showForm && (
           <>
+            <Button
+              mode="contained"
+              icon="plus"
+              onPress={openAdd}
+              style={[styles.mainAddBtn, { backgroundColor: accentColor }]}
+              labelStyle={styles.mainAddBtnLabel}
+            >
+              Add New Merchant QR
+            </Button>
+
             {merchants.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Avatar.Icon
@@ -246,8 +252,6 @@ export default function SetupMerchantQR({ onBack }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 8 },
-  headerTitle: { flex: 1, fontSize: 18, fontWeight: '700', fontFamily: 'SpaceGrotesk', textAlign: 'center' },
   scrollContent: { paddingHorizontal: 16, paddingTop: 8 },
 
   formCard: { borderRadius: 20, padding: 20, marginBottom: 16 },
@@ -276,9 +280,21 @@ const styles = StyleSheet.create({
   saveBtn: { borderRadius: 14, marginTop: 4 },
 
   listItem: { borderRadius: 12, marginBottom: 12, overflow: 'hidden' },
-  itemActions: { flexDirection: 'row' },
+  itemActions: { flexDirection: 'row', marginRight: -8, gap: -4 },
 
-  emptyContainer: { alignItems: 'center', paddingTop: 80 },
+  mainAddBtn: {
+    marginBottom: 20,
+    borderRadius: 12,
+    paddingVertical: 4,
+  },
+  mainAddBtnLabel: {
+    color: '#000',
+    fontFamily: 'SpaceGrotesk',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+
+  emptyContainer: { alignItems: 'center', paddingTop: 60 },
   emptyEmoji: { fontSize: 48, marginBottom: 12 },
   emptyTitle: { fontSize: 20, fontWeight: '700', fontFamily: 'SpaceGrotesk' },
   emptySubText: { fontSize: 14, fontFamily: 'SpaceGrotesk', marginTop: 8 },
