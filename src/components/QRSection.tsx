@@ -19,6 +19,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { QREntry } from '../types';
 import { findBankByName } from '../constants/banks';
 import { useUiStore } from '../store/useUiStore';
+import EmptyState from './EmptyState';
 
 interface QRSectionProps {
   entries: QREntry[];
@@ -156,10 +157,7 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
       </View>
 
       {entries.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Avatar.Icon size={64} icon="qrcode" style={{ backgroundColor: theme.colors.surfaceVariant, opacity: 0.5 }} color={theme.colors.onSurfaceVariant} />
-          <Text style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}>Go to settings to add a new QR code</Text>
-        </View>
+        <EmptyState icon="qrcode" message="Go to settings to add a new QR code" />
       ) : (
         <View style={styles.carouselWrapper}>
           <FlatList
@@ -285,19 +283,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 100,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 16,
-    fontFamily: 'SpaceGrotesk',
-    textAlign: 'center',
-    paddingHorizontal: 40,
-    opacity: 0.6,
+    paddingBottom: 40,
   },
 });
 

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { MerchantQR } from '../types';
 import { useUiStore } from '../store/useUiStore';
+import EmptyState from './EmptyState';
 import { useWalletStore } from '../store/useWalletStore';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -387,24 +388,13 @@ export default function MerchantQRSection() {
       </View>
 
       {/* List */}
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {merchants.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Avatar.Icon
-              size={64}
-              icon="store-outline"
-              style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }}
-              color={theme.colors.onSurfaceVariant}
-            />
-            <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>No merchant QR codes</Text>
-            <Text style={[styles.emptySubText, { color: theme.colors.onSurfaceVariant }]}>
-              Add them from Settings → Merchant QR Codes
-            </Text>
-          </View>
-        ) : (
-          merchants.map(m => <MerchantCard key={m.id} merchant={m} />)
-        )}
-      </ScrollView>
+      {merchants.length === 0 ? (
+        <EmptyState icon="store" message="Go to settings to add a new merchant QR code" />
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {merchants.map(m => <MerchantCard key={m.id} merchant={m} />)}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -523,13 +513,5 @@ const styles = StyleSheet.create({
   },
 
   // ── Empty state ───────────────────────────────────────────────
-  emptyContainer: { flex: 1, alignItems: 'center', paddingTop: 80 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', fontFamily: 'SpaceGrotesk', opacity: 0.4 },
-  emptySubText: {
-    fontSize: 14,
-    fontFamily: 'SpaceGrotesk',
-    marginTop: 8,
-    textAlign: 'center',
-    paddingHorizontal: 40,
-  },
+  // Empty handled by component
 });

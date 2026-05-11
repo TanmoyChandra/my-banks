@@ -7,6 +7,7 @@ import { BankAccount } from '../types';
 import { findBankByName } from '../constants/banks';
 import { useUiStore } from '../store/useUiStore';
 import { getCardColors } from '../constants/cardColors';
+import EmptyState from './EmptyState';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -172,19 +173,13 @@ const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) =
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {accounts.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Avatar.Icon size={64} icon="bank-outline" style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }} color={theme.colors.primary} />
-            <Text style={[styles.emptyText, { color: theme.colors.onSurface }]}>No bank accounts</Text>
-            <Text style={[styles.emptySubText, { color: theme.colors.onSurfaceVariant }]}>
-              Add accounts from Settings to view them here
-            </Text>
-          </View>
-        ) : (
-          accounts.map(acc => <AccountItem key={acc.id} account={acc} />)
-        )}
-      </ScrollView>
+      {accounts.length === 0 ? (
+        <EmptyState icon="bank-outline" message="Go to settings to add a new bank account" />
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {accounts.map(acc => <AccountItem key={acc.id} account={acc} />)}
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -299,24 +294,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: 'SpaceGrotesk',
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: 100,
-  },
-  emptyText: {
-    fontSize: 24,
-    fontWeight: '900',
-    opacity: 0.3,
-  },
-  emptySubText: {
-    fontSize: 14,
-    fontFamily: 'SpaceGrotesk',
-    marginTop: 8,
-    textAlign: 'center',
-    paddingHorizontal: 40,
-  },
+  // Empty handled by component
 });
 
 export default BankAccountsSection;

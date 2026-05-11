@@ -9,6 +9,7 @@ import { findBankByName } from '../constants/banks';
 import { CardEntry } from '../types';
 import { getCardColors } from '../constants/cardColors';
 import { useUiStore } from '../store/useUiStore';
+import EmptyState from './EmptyState';
 
 // Network logo PNGs
 const VISA_PNG       = require('../../assets/Visa.png');
@@ -350,29 +351,20 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {cards.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Avatar.Icon size={64} icon="credit-card-outline"
-              style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }}
-              color={theme.colors.onSurfaceVariant}
-            />
-            <Text style={[styles.emptyText, { color: theme.colors.onSurface }]}>No cards yet</Text>
-            <Text style={[styles.emptySubText, { color: theme.colors.onSurfaceVariant }]}>
-              Open the menu to add your first card
-            </Text>
-          </View>
-        ) : (
-          cards.map(card => (
+      {cards.length === 0 ? (
+        <EmptyState icon="credit-card-outline" message="Go to settings to add a new card" />
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {cards.map(card => (
             <BankCard
               key={card.id}
               card={card}
               cardWidth={cardWidth}
               onPress={() => onCardPress(card)}
             />
-          ))
-        )}
-      </ScrollView>
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -501,10 +493,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
 
-  // Empty
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 100 },
-  emptyText: { fontSize: 22, fontWeight: '900', fontFamily: 'SpaceGrotesk', marginBottom: 8 },
-  emptySubText: { fontSize: 14, fontFamily: 'SpaceGrotesk', textAlign: 'center', paddingHorizontal: 40 },
+  // Empty handled by component
 });
 
 export default CardsSection;
