@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Image, ScrollView, StyleSheet, View, TouchableOpacity, useWindowDimensions } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button, Text, useTheme, Avatar } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle } from 'react-native-svg';
@@ -327,6 +328,7 @@ const BankCard: React.FC<{ card: CardEntry; cardWidth: number; onPress: () => vo
 const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => {} }) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const { width: screenW } = useWindowDimensions();
   const userName = useUiStore(s => s.userName);
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
@@ -342,12 +344,14 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
               Manage your payment cards and view transactions.
             </Text>
           </View>
-          <Avatar.Text
-            size={40}
-            label={initials}
-            style={{ backgroundColor: theme.colors.primaryContainer }}
-            labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
-          />
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+            <Avatar.Text
+              size={40}
+              label={initials}
+              style={{ backgroundColor: theme.colors.primaryContainer }}
+              labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 

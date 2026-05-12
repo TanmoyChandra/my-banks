@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ScrollView, StyleSheet, View, TouchableOpacity, Share, Image, Animated, Platform, UIManager } from 'react-native';
 import { Text, useTheme, IconButton, Avatar } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { BankAccount } from '../types';
@@ -151,6 +152,7 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
 const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const userName = useUiStore(s => s.userName);
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
 
@@ -164,12 +166,14 @@ const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) =
               Keep IFSC and account details easy to find while masking sensitive numbers.
             </Text>
           </View>
-          <Avatar.Text
-            size={40}
-            label={initials}
-            style={{ backgroundColor: theme.colors.primaryContainer }}
-            labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
-          />
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+            <Avatar.Text
+              size={40}
+              label={initials}
+              style={{ backgroundColor: theme.colors.primaryContainer }}
+              labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 

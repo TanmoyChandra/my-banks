@@ -4,6 +4,7 @@ import {
   Image, Modal, Dimensions, Linking, Alert, Animated,
 } from 'react-native';
 import { Text, useTheme, Avatar, IconButton, Chip } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { captureRef } from 'react-native-view-shot';
@@ -375,6 +376,7 @@ function MerchantCard({ merchant }: { merchant: MerchantQR }) {
 export default function MerchantQRSection() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const userName = useUiStore(s => s.userName);
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
   const merchants = useWalletStore(s => s.merchantQRs);
@@ -390,12 +392,14 @@ export default function MerchantQRSection() {
               Tap a merchant to pay instantly via UPI or QR.
             </Text>
           </View>
-          <Avatar.Text
-            size={40}
-            label={initials}
-            style={{ backgroundColor: theme.colors.primaryContainer }}
-            labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
-          />
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+            <Avatar.Text
+              size={40}
+              label={initials}
+              style={{ backgroundColor: theme.colors.primaryContainer }}
+              labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 

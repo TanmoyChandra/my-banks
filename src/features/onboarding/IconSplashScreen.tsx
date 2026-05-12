@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#111111', // Match main app dark theme
+    backgroundColor: '#000000', // Match main app dark theme
   },
   icon: {
     width: 140,

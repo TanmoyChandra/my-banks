@@ -13,6 +13,7 @@ import {
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import { captureRef } from 'react-native-view-shot';
+import { useNavigation } from '@react-navigation/native';
 import { Button, IconButton, Text, useTheme, Avatar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
@@ -132,6 +133,7 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
   const { width: screenWidth } = useWindowDimensions();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const userName = useUiStore(s => s.userName);
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
   const cardWidth = Math.min(screenWidth - PAGE_SIDE_PADDING * 2.5, 450);
@@ -147,12 +149,14 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
               Easily share your QR codes to receive payments from any UPI app.
             </Text>
           </View>
-          <Avatar.Text 
-            size={40} 
-            label={initials} 
-            style={{ backgroundColor: theme.colors.primaryContainer }} 
-            labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
-          />
+          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+            <Avatar.Text 
+              size={40} 
+              label={initials} 
+              style={{ backgroundColor: theme.colors.primaryContainer }} 
+              labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 
