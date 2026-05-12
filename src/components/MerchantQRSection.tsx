@@ -6,6 +6,8 @@ import {
 import { Text, useTheme, Avatar, IconButton, Chip } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
+import { captureRef } from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 import { MerchantQR } from '../types';
 import { useUiStore } from '../store/useUiStore';
 import EmptyState from './EmptyState';
@@ -26,56 +28,60 @@ function QRPayViewer({
   onClose: () => void;
 }) {
   const theme = useTheme();
+  const viewRef = useRef<View>(null);
 
-  const handlePayUPI = async () => {
-    if (!upiId) return;
-    const url = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(merchantName)}&cu=INR`;
-    const canOpen = await Linking.canOpenURL(url);
-    if (canOpen) {
-      await Linking.openURL(url);
-    } else {
-      Alert.alert('No UPI App Found', 'Please install a UPI payment app (GPay, PhonePe, Paytm, etc.)');
+  const handleShare = async () => {
+    try {
+      const result = await captureRef(viewRef, {
+        format: 'png',
+        quality: 0.9,
+      });
+      await Sharing.shareAsync(result);
+    } catch (error) {
+      console.error('Failed to capture and share:', error);
+      Alert.alert('Error', 'Failed to share the QR code.');
     }
   };
 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
       <View style={fsStyles.backdrop}>
-        {/* Ambient blurred glow behind the QR image */}
-        <Image
-          source={{ uri }}
-          style={fsStyles.ambientBlur}
-          resizeMode="cover"
-          blurRadius={28}
-        />
-        <View style={fsStyles.ambientOverlay} />
+        {/* We wrap the content we want to screenshot in this View */}
+        <View ref={viewRef} style={fsStyles.captureContainer}>
+          {/* Ambient blurred glow behind the QR image */}
+          <Image
+            source={{ uri }}
+            style={fsStyles.ambientBlur}
+            resizeMode="cover"
+            blurRadius={28}
+          />
+          <View style={fsStyles.ambientOverlay} />
 
-        {/* Header */}
-        <View style={fsStyles.header}>
-          <TouchableOpacity onPress={onClose} style={fsStyles.closeBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <IconButton icon="close" size={22} iconColor="#fff" style={{ margin: 0 }} />
-          </TouchableOpacity>
-          <View style={fsStyles.headerText}>
-            <Text style={fsStyles.headerTitle}>{merchantName}</Text>
-            {upiId ? <Text style={fsStyles.headerSub}>{upiId}</Text> : null}
+          {/* Header */}
+          <View style={fsStyles.header}>
+            <TouchableOpacity onPress={onClose} style={fsStyles.closeBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+              <IconButton icon="close" size={22} iconColor="#fff" style={{ margin: 0 }} />
+            </TouchableOpacity>
+            <View style={fsStyles.headerText}>
+              <Text style={fsStyles.headerTitle}>{merchantName}</Text>
+              {upiId ? <Text style={fsStyles.headerSub}>{upiId}</Text> : null}
+            </View>
           </View>
+
+          {/* QR image — large, fills most of the screen */}
+          <View style={fsStyles.qrContainer}>
+            <Image source={{ uri }} style={fsStyles.qrImage} resizeMode="contain" />
+          </View>
+
+          <Text style={fsStyles.hint}>
+            Open your payment app scanner and point it at this QR code
+          </Text>
         </View>
 
-        {/* QR image — large, fills most of the screen */}
-        <View style={fsStyles.qrContainer}>
-          <Image source={{ uri }} style={fsStyles.qrImage} resizeMode="contain" />
-        </View>
-
-        <Text style={fsStyles.hint}>
-          Open your payment app scanner and point it at this QR code
-        </Text>
-
-        {upiId ? (
-          <TouchableOpacity onPress={handlePayUPI} style={fsStyles.upiButton} activeOpacity={0.85}>
-            <IconButton icon="send" size={16} iconColor="#000" style={{ margin: 0 }} />
-            <Text style={fsStyles.upiButtonText}>Pay via UPI ID instead</Text>
-          </TouchableOpacity>
-        ) : null}
+        <TouchableOpacity onPress={handleShare} style={fsStyles.upiButton} activeOpacity={0.85}>
+          <IconButton icon="share-variant" size={16} iconColor="#000" style={{ margin: 0 }} />
+          <Text style={fsStyles.upiButtonText}>Share QR Code</Text>
+        </TouchableOpacity>
       </View>
     </Modal>
   );
@@ -162,6 +168,12 @@ const fsStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     fontFamily: 'SpaceGrotesk',
+  },
+  captureContainer: {
+    width: '100%',
+    alignItems: 'center',
+    backgroundColor: '#000',
+    paddingBottom: 24,
   },
 });
 
