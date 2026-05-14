@@ -19,7 +19,6 @@ interface BankAccountsSectionProps {
 }
 
 const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
-  const [hidden, setHidden] = useState(true);
   const [expanded, setExpanded] = useState(false);
   const animValue = useRef(new Animated.Value(0)).current;
   const theme = useTheme();
@@ -49,10 +48,7 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
   const mutedColor = 'rgba(255,255,255,0.55)';
   const accentColor = '#C9F158';
 
-  const maskedNumber = account.accountNumber
-    ? account.accountNumber.slice(-4).padStart(account.accountNumber.length, '•')
-    : '••••';
-  const displayNumber = hidden ? maskedNumber : account.accountNumber;
+
 
   const handleCopy = async (text: string) => {
     if (!text) return;
@@ -86,7 +82,9 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
           </View>
           <View style={styles.headerText}>
             <Text style={[styles.bankTitle, { color: textColor }]}>{account.bankName}</Text>
-            <Text style={[styles.accountTypeLabel, { color: mutedColor }]}>{account.accountType} Account</Text>
+            <View style={styles.accountTypeBadge}>
+              <Text style={styles.accountTypeBadgeText}>{account.accountType.toUpperCase()} ACCOUNT</Text>
+            </View>
           </View>
           <IconButton icon="share-variant" size={18} iconColor={mutedColor} onPress={handleShare} style={{ margin: 0 }} />
         </View>
@@ -99,7 +97,7 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
           overflow: 'hidden',
         }}>
           <Text style={[styles.infoLabel, { color: mutedColor }]}>Account Number</Text>
-          <Text style={[styles.accountNumber, { color: textColor }]} numberOfLines={1}>{displayNumber}</Text>
+          <Text style={[styles.accountNumber, { color: textColor }]} numberOfLines={1}>{account.accountNumber}</Text>
         </Animated.View>
 
         {/* Expanded: all details */}
@@ -123,12 +121,7 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
               <Text style={[styles.infoLabel, { color: mutedColor }]}>ACCOUNT NUMBER</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <TouchableOpacity onPress={() => handleCopy(account.accountNumber)} style={{ flex: 1 }}>
-                  <Text style={[styles.infoValue, { color: textColor }]}>{displayNumber}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setHidden(!hidden)} style={{ marginLeft: 10 }}>
-                  <Text style={{ color: accentColor, fontFamily: 'SpaceGrotesk', fontSize: 12, fontWeight: '700' }}>
-                    {hidden ? 'SHOW' : 'HIDE'}
-                  </Text>
+                  <Text style={[styles.infoValue, { color: textColor }]}>{account.accountNumber}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -163,7 +156,7 @@ const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) =
           <View style={{ flex: 1, marginRight: 16 }}>
             <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Bank accounts</Text>
             <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
-              Keep IFSC and account details easy to find while masking sensitive numbers.
+              Keep IFSC and account details easy to find.
             </Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
@@ -252,10 +245,29 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontFamily: 'SpaceGrotesk',
   },
-  accountTypeLabel: {
-    fontSize: 12,
+  accountTypeBadge: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    alignSelf: 'flex-start',
+    marginTop: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  accountTypeBadgeText: {
+    color: '#FFFFFF',
     fontFamily: 'SpaceGrotesk',
-    marginTop: 2,
+    fontWeight: '800',
+    fontSize: 10,
+    letterSpacing: 1.5,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   infoLabel: {
     fontSize: 11,

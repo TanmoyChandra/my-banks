@@ -166,6 +166,7 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
                   { value: 'Debit', label: 'Debit' },
                   { value: 'Credit', label: 'Credit' },
                 ]}
+                theme={{ colors: { secondaryContainer: '#AAEF00', onSecondaryContainer: '#000000' } }}
               />
             </View>
 

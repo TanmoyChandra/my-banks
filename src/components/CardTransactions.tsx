@@ -267,11 +267,11 @@ function TransactionRow({
   const textColor = isDark ? '#FFFFFF' : '#202020';
   const subColor = isDark ? '#A1A1A1' : '#7A7A7A';
   const isDebit = tx.type === 'debit';
-  const amountColor = isDebit ? textColor : '#4F7922';
+  const amountColor = isDebit ? textColor : (isDark ? '#A1D99B' : '#4F7922');
 
   const iconName = isDebit ? 'arrow-top-right' : 'arrow-bottom-left';
-  const iconColor = isDebit ? theme.colors.error : '#4F7922';
-  const iconBg = isDebit ? theme.colors.errorContainer : '#E8F5E9';
+  const iconColor = isDebit ? (isDark ? '#FF6B6B' : '#D32F2F') : (isDark ? '#A1D99B' : '#4F7922');
+  const iconBg = isDebit ? (isDark ? '#3D1515' : '#FFEBEE') : (isDark ? '#1C3118' : '#E8F5E9');
 
   const handleEditTap = () => {
     swipeableRef.current?.close();

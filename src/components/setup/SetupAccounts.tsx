@@ -52,9 +52,21 @@ function AccountRow({
   return (
     <Surface style={styles.listItem} elevation={1}>
       <List.Item
-        title={account.bankName}
-        titleStyle={{ fontWeight: '700' }}
-        description={`${account.accountType} • ${account.accountNumber.slice(-4)}`}
+        title={
+          <View style={{ paddingVertical: 2 }}>
+            <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: 4 }}>{account.bankName}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14 }}>
+                •••• {account.accountNumber.slice(-4)}
+              </Text>
+              <View style={{ backgroundColor: '#AAEF00', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
+                <Text style={{ color: '#000000', fontSize: 9, fontWeight: '800', fontFamily: 'SpaceGrotesk', letterSpacing: 0.5 }}>
+                  {account.accountType.toUpperCase()}
+                </Text>
+              </View>
+            </View>
+          </View>
+        }
         left={props => <List.Icon {...props} icon="bank" />}
         right={() => (
           <View style={styles.itemActions}>
@@ -125,14 +137,15 @@ const SetupAccounts: React.FC<SetupAccountsProps> = ({ accounts, onAdd, onUpdate
             </Text>
 
             <View style={styles.inputGroup}>
-              <Text variant="labelSmall" style={[styles.label, { color: theme.colors.primary }]}>ACCOUNT TYPE</Text>
               <SegmentedButtons
                 value={form.accountType}
-                onValueChange={v => setForm(p => ({ ...p, accountType: v as 'Savings' | 'Current' }))}
+                onValueChange={v => setForm(p => ({ ...p, accountType: v as 'Savings' | 'Current' | 'Loan' }))}
                 buttons={[
                   { value: 'Savings', label: 'Savings' },
                   { value: 'Current', label: 'Current' },
+                  { value: 'Loan', label: 'Loan' },
                 ]}
+                theme={{ colors: { secondaryContainer: '#AAEF00', onSecondaryContainer: '#000000' } }}
               />
             </View>
 

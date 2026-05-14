@@ -28,7 +28,7 @@ export interface BankAccount {
   accountHolder: string;
   accountNumber: string;
   ifsc: string;
-  accountType: 'Savings' | 'Current';
+  accountType: 'Savings' | 'Current' | 'Loan';
   branchName: string;
   color?: string;
 }
