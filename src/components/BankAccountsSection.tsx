@@ -89,7 +89,7 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
           <IconButton icon="share-variant" size={18} iconColor={mutedColor} onPress={handleShare} style={{ margin: 0 }} />
         </View>
 
-        {/* Collapsed: masked account number */}
+        {/* Collapsed: full account number */}
         <Animated.View style={{
           opacity: collapsedOpacity,
           maxHeight: animValue.interpolate({ inputRange: [0, 1], outputRange: [60, 0] }),
@@ -97,7 +97,9 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
           overflow: 'hidden',
         }}>
           <Text style={[styles.infoLabel, { color: mutedColor }]}>Account Number</Text>
-          <Text style={[styles.accountNumber, { color: textColor }]} numberOfLines={1}>{account.accountNumber}</Text>
+          <Text style={[styles.accountNumber, { color: textColor }]} numberOfLines={1}>
+            {account.accountNumber.replace(/(.{4})/g, '$1 ').trim()}
+          </Text>
         </Animated.View>
 
         {/* Expanded: all details */}
@@ -121,7 +123,9 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
               <Text style={[styles.infoLabel, { color: mutedColor }]}>ACCOUNT NUMBER</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <TouchableOpacity onPress={() => handleCopy(account.accountNumber)} style={{ flex: 1 }}>
-                  <Text style={[styles.infoValue, { color: textColor }]}>{account.accountNumber}</Text>
+                  <Text style={[styles.infoValue, { color: textColor, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }]}>
+                    {account.accountNumber.replace(/(.{4})/g, '$1 ').trim()}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -277,9 +281,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   accountNumber: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '700',
-    fontFamily: 'SpaceGrotesk',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     letterSpacing: 2,
   },
   cardStyleNumber: {

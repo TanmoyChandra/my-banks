@@ -56,7 +56,8 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    justifyContent: 'center',
+    gap: 24,
     marginBottom: 16,
   },
   swatchContainer: {

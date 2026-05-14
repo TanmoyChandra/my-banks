@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { Modal, Portal, Searchbar, List, Avatar, Text, useTheme, Surface } from 'react-native-paper';
+import { View, StyleSheet, FlatList } from 'react-native';
+import { Modal, Portal, Searchbar, List, Avatar, Text, useTheme, Button, TextInput } from 'react-native-paper';
 import { BANKS } from '../constants/banks';
 
 interface BankPickerProps {
@@ -11,54 +11,97 @@ interface BankPickerProps {
 
 const BankPicker: React.FC<BankPickerProps> = ({ visible, onDismiss, onSelect }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCustom, setIsCustom] = useState(false);
+  const [customName, setCustomName] = useState('');
   const theme = useTheme();
 
   const filteredBanks = BANKS.filter(bank =>
     bank.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const listData = [...filteredBanks, { name: 'Others (Enter Manually)', symbol: null, isOther: true }];
+
+  const handleDismiss = () => {
+    setIsCustom(false);
+    setCustomName('');
+    setSearchQuery('');
+    onDismiss();
+  };
+
   return (
     <Portal>
       <Modal
         visible={visible}
-        onDismiss={onDismiss}
+        onDismiss={handleDismiss}
         contentContainerStyle={[styles.modal, { backgroundColor: theme.colors.surface }]}
       >
-        <Text variant="titleMedium" style={styles.title}>Select Bank</Text>
-        <Searchbar
-          placeholder="Search bank name..."
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.search}
-          mode="view"
-        />
-        <FlatList
-          data={filteredBanks}
-          keyExtractor={(item) => item.name}
-          renderItem={({ item }) => (
-            <List.Item
-              title={item.name}
-              left={(props) => (
-                <Avatar.Image
-                  {...props}
-                  size={32}
-                  source={item.symbol}
-                  style={{ backgroundColor: 'white' }}
+        {isCustom ? (
+          <View style={{ flex: 1 }}>
+            <Text variant="titleMedium" style={styles.title}>Enter Bank Name</Text>
+            <TextInput
+              mode="outlined"
+              label="Custom Bank Name"
+              value={customName}
+              onChangeText={setCustomName}
+              autoFocus
+              style={{ marginBottom: 20 }}
+            />
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Button mode="outlined" style={{ flex: 1 }} onPress={() => setIsCustom(false)}>Back</Button>
+              <Button mode="contained" style={{ flex: 1 }} onPress={() => {
+                if (customName.trim()) {
+                  onSelect(customName.trim());
+                  handleDismiss();
+                }
+              }}>Confirm</Button>
+            </View>
+          </View>
+        ) : (
+          <View style={{ flex: 1 }}>
+            <Text variant="titleMedium" style={styles.title}>Select Bank</Text>
+            <Searchbar
+              placeholder="Search bank name..."
+              onChangeText={setSearchQuery}
+              value={searchQuery}
+              style={styles.search}
+              mode="view"
+            />
+            <FlatList
+              data={listData}
+              keyExtractor={(item, index) => item.name + index}
+              renderItem={({ item }) => (
+                <List.Item
+                  title={item.name}
+                  left={(props) => item.isOther ? (
+                    <Avatar.Icon
+                      {...props}
+                      size={32}
+                      icon="bank-plus"
+                      style={{ backgroundColor: theme.colors.surfaceVariant }}
+                    />
+                  ) : (
+                    <Avatar.Image
+                      {...props}
+                      size={32}
+                      source={item.symbol}
+                      style={{ backgroundColor: 'white' }}
+                    />
+                  )}
+                  onPress={() => {
+                    if (item.isOther) {
+                      setIsCustom(true);
+                    } else {
+                      onSelect(item.name);
+                      handleDismiss();
+                    }
+                  }}
                 />
               )}
-              onPress={() => {
-                onSelect(item.name);
-                onDismiss();
-                setSearchQuery('');
-              }}
+              style={styles.list}
+              ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: theme.colors.surfaceVariant }]} />}
             />
-          )}
-          style={styles.list}
-          ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: theme.colors.surfaceVariant }]} />}
-          ListEmptyComponent={
-            <Text style={styles.empty}>No banks found. Try another search.</Text>
-          }
-        />
+          </View>
+        )}
       </Modal>
     </Portal>
   );
@@ -75,6 +118,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     fontWeight: '700',
     textAlign: 'center',
+    fontFamily: 'SpaceGrotesk',
   },
   search: {
     marginBottom: 8,
@@ -86,11 +130,6 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-  },
-  empty: {
-    textAlign: 'center',
-    padding: 20,
-    color: '#79747E',
   },
 });
 
