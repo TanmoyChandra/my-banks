@@ -135,6 +135,7 @@ export default function BackupRestoreSettings() {
   // UI store
   const userName = useUiStore(s => s.userName);
   const isDarkPref = useUiStore(s => s.isDark);
+  const isAppLockEnabled = useUiStore(s => s.isAppLockEnabled);
 
   const [exportStatus, setExportStatus] = useState<Status>('idle');
   const [importStatus, setImportStatus] = useState<Status>('idle');
@@ -151,7 +152,7 @@ export default function BackupRestoreSettings() {
       version: BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
       wallet: { upis, cards, accounts, transactions, merchantQRs },
-      preferences: { userName, isDark: isDarkPref },
+      preferences: { userName, isDark: isDarkPref, isAppLockEnabled },
     };
 
     const result = await exportBackup(payload);
@@ -207,6 +208,13 @@ export default function BackupRestoreSettings() {
       accounts: pendingPayload.wallet.accounts,
       transactions: pendingPayload.wallet.transactions,
       merchantQRs: pendingPayload.wallet.merchantQRs,
+    });
+
+    // Restore UI preferences
+    useUiStore.setState({
+      userName: pendingPayload.preferences.userName,
+      isDark: pendingPayload.preferences.isDark,
+      isAppLockEnabled: pendingPayload.preferences.isAppLockEnabled ?? false,
     });
 
     setImportStatus('success');

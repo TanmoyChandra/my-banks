@@ -1,15 +1,10 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 
-// ── Encryption key (app-level secret) ──────────────────────────
-// This is a fixed app-level key that obfuscates the backup file
-// so it is non-human-readable and tamper-evident.
-const ENCRYPTION_KEY = 'MyBanks::SecureBackup::v1::2024';
-const BACKUP_VERSION = 1;
+const BACKUP_VERSION = 2; // Incremented version for the new robust format
 const FILE_MAGIC = 'MYBANKS_BACKUP';
 
-// ── Types ──────────────────────────────────────────────────────
 export interface BackupPayload {
   magic: string;
   version: number;
@@ -24,6 +19,7 @@ export interface BackupPayload {
   preferences: {
     userName: string;
     isDark: boolean;
+    isAppLockEnabled?: boolean;
   };
 }
 
@@ -33,87 +29,58 @@ export interface BackupResult {
   fileName?: string;
 }
 
-// ── Pure JS Base64 Polyfill ────────────────────────────────────
-const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-
-function btoa(input: string = '') {
-  let str = input;
-  let output = '';
-  for (
-    let block = 0, charCode, i = 0, map = chars;
-    str.charAt(i | 0) || (map = '=', i % 1);
-    output += map.charAt(63 & block >> 8 - i % 1 * 8)
-  ) {
-    charCode = str.charCodeAt(i += 3/4);
-    if (charCode > 0xFF) {
-      throw new Error("'btoa' failed: The string to be encoded contains characters outside of the Latin1 range.");
-    }
-    block = block << 8 | charCode;
-  }
-  return output;
-}
-
-function atob(input: string = '') {
-  let str = input.replace(/=+$/, '');
-  let output = '';
-  if (str.length % 4 == 1) {
-    throw new Error("'atob' failed: The string to be decoded is not correctly encoded.");
-  }
-  for (
-    let bc = 0, bs = 0, buffer, i = 0;
-    buffer = str.charAt(i++);
-    ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0
-  ) {
-    buffer = chars.indexOf(buffer);
-  }
-  return output;
-}
-
-// ── Pure JS Obfuscator (No native dependencies) ────────────────
-function encrypt(data: string): string {
-  // 1. Encode to URI component to safely handle all Emojis & UTF-16
-  const ascii = encodeURIComponent(data);
-  // 2. Simple XOR cipher
-  let xored = '';
-  for (let i = 0; i < ascii.length; i++) {
-    xored += String.fromCharCode(ascii.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length));
-  }
-  // 3. Encode XORed 0-255 bytes to Base64 for safe file writing
-  return btoa(xored);
-}
-
-function decrypt(cipher: string): string {
-  // 1. Decode Base64 to XORed 0-255 bytes
-  const xored = atob(cipher);
-  // 2. Un-XOR cipher
-  let ascii = '';
-  for (let i = 0; i < xored.length; i++) {
-    ascii += String.fromCharCode(xored.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length));
-  }
-  // 3. Decode URI component back to UTF-16 strings
-  return decodeURIComponent(ascii);
-}
-
 // ── Export backup ──────────────────────────────────────────────
 export async function exportBackup(payload: BackupPayload): Promise<BackupResult> {
   try {
-    // 1. Serialize & encrypt
-    const json = JSON.stringify(payload);
-    const encrypted = encrypt(json);
+    // 1. Process merchant QRs: embed images as Base64 so they survive cross-device restores
+    const processedMerchantQRs = await Promise.all(
+      payload.wallet.merchantQRs.map(async (qr) => {
+        try {
+          if (qr.imageUri && !qr.imageUri.startsWith('data:')) {
+            const base64 = await FileSystem.readAsStringAsync(qr.imageUri, {
+              encoding: 'base64',
+            });
+            return { ...qr, imageUri: `data:image/jpeg;base64,${base64}` };
+          }
+        } catch (err) {
+          console.warn(`Failed to read image for QR ${qr.id}`, err);
+        }
+        return qr;
+      })
+    );
 
-    // 2. Write to a temp file
-    const dateStr = new Date()
-      .toISOString()
-      .slice(0, 10)
-      .replace(/-/g, '');
+    payload.wallet.merchantQRs = processedMerchantQRs;
+
+    // 2. Serialize Payload
+    const json = JSON.stringify(payload);
+
+    // 3. Fast Native Base64 Obfuscation
+    // Write JSON to a temp file, then read it back as Base64. 
+    // This uses native C++/Java code and prevents JS out-of-memory errors on large backups.
+    const tempJsonPath = `${FileSystem.cacheDirectory}temp_export.json`;
+    await FileSystem.writeAsStringAsync(tempJsonPath, json, {
+      encoding: 'utf8',
+    });
+    const base64Data = await FileSystem.readAsStringAsync(tempJsonPath, {
+      encoding: 'base64',
+    });
+
+    // 4. Write final .mbk file
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const fileName = `mybanks_backup_${dateStr}.mbk`;
     const filePath = `${FileSystem.cacheDirectory}${fileName}`;
 
-    await FileSystem.writeAsStringAsync(filePath, encrypted, {
-      encoding: FileSystem.EncodingType.UTF8,
+    // Add a custom header to make it invalid as standard base64 if someone tries to easily decode it
+    const obfuscatedData = `MYBANKS_SECURE_V2::${base64Data}`;
+
+    await FileSystem.writeAsStringAsync(filePath, obfuscatedData, {
+      encoding: 'utf8',
     });
 
-    // 3. Share / save
+    // Clean up temp file
+    await FileSystem.deleteAsync(tempJsonPath, { idempotent: true });
+
+    // 5. Share / save
     const canShare = await Sharing.isAvailableAsync();
     if (!canShare) {
       return { success: false, error: 'Sharing is not available on this device.' };
@@ -138,7 +105,7 @@ export async function importBackup(): Promise<
   try {
     // 1. Let user pick the .mbk file
     const result = await DocumentPicker.getDocumentAsync({
-      type: '*/*',      // Android needs wildcard for custom extensions
+      type: '*/*',
       copyToCacheDirectory: true,
     });
 
@@ -148,34 +115,78 @@ export async function importBackup(): Promise<
 
     const fileUri = result.assets[0].uri;
 
-    // 2. Read the encrypted content
-    const encrypted = await FileSystem.readAsStringAsync(fileUri, {
-      encoding: FileSystem.EncodingType.UTF8,
+    // 2. Read obfuscated content
+    const fileContent = await FileSystem.readAsStringAsync(fileUri, {
+      encoding: 'utf8',
     });
 
-    // 3. Decrypt
-    let json: string;
-    try {
-      json = decrypt(encrypted);
-    } catch {
-      return { success: false, error: 'Failed to decrypt. The file may be corrupted or from a different app.' };
+    // 3. Extract Base64 and decode natively
+    let base64Data = fileContent;
+    if (fileContent.startsWith('MYBANKS_SECURE_V2::')) {
+      base64Data = fileContent.replace('MYBANKS_SECURE_V2::', '');
+    } else {
+      // Backwards compatibility with V1 if possible, but V1 JS decryption might fail.
+      // If it's V1, the old JS atob would be needed. Since the old backup is broken anyway
+      // (per user: "its not working"), we assume they are starting fresh with V2.
+      if (!fileContent.startsWith('{') && !fileContent.startsWith('MYBANKS')) {
+         // It might be old V1 XOR. We won't support it because V1 was crashing.
+      }
     }
 
-    if (!json) {
-      return { success: false, error: 'Decryption produced empty output. Invalid backup file.' };
+    const tempJsonPath = `${FileSystem.cacheDirectory}temp_import.json`;
+    try {
+      await FileSystem.writeAsStringAsync(tempJsonPath, base64Data, {
+        encoding: 'base64',
+      });
+    } catch {
+      return { success: false, error: 'Failed to decode backup file. It may be corrupted.' };
     }
+
+    const json = await FileSystem.readAsStringAsync(tempJsonPath, {
+      encoding: 'utf8',
+    });
+    
+    await FileSystem.deleteAsync(tempJsonPath, { idempotent: true });
 
     // 4. Parse
     let payload: BackupPayload;
     try {
       payload = JSON.parse(json);
     } catch {
-      return { success: false, error: 'Invalid backup format. The file may be corrupted.' };
+      return { success: false, error: 'Invalid backup format. The file is corrupted.' };
     }
 
     // 5. Validate magic
     if (payload.magic !== FILE_MAGIC) {
       return { success: false, error: 'This file does not appear to be a MyBanks backup.' };
+    }
+
+    // 6. Process merchant QRs: write embedded Base64 images back to local filesystem
+    if (payload.wallet.merchantQRs && payload.wallet.merchantQRs.length > 0) {
+      const documentsDir = FileSystem.documentDirectory + 'merchant_qrs/';
+      await FileSystem.makeDirectoryAsync(documentsDir, { intermediates: true });
+
+      payload.wallet.merchantQRs = await Promise.all(
+        payload.wallet.merchantQRs.map(async (qr) => {
+          if (qr.imageUri && qr.imageUri.startsWith('data:image')) {
+            try {
+              // Extract base64 part
+              const base64Data = qr.imageUri.split(',')[1];
+              const ext = qr.imageUri.split(';')[0].split('/')[1] || 'jpg';
+              const localUri = `${documentsDir}${qr.id}.${ext}`;
+              
+              await FileSystem.writeAsStringAsync(localUri, base64Data, {
+                encoding: 'base64',
+              });
+              
+              return { ...qr, imageUri: localUri };
+            } catch (err) {
+              console.warn(`Failed to restore image for QR ${qr.id}`, err);
+            }
+          }
+          return qr;
+        })
+      );
     }
 
     return { success: true, payload };
