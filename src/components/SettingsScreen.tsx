@@ -103,10 +103,6 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
                 iconColor={isDark ? '#000000' : '#FFFFFF'}
                 style={{ backgroundColor: isDark ? '#AAEF00' : '#1c1c1c', margin: 0 }}
                 onPress={() => {
-                  LayoutAnimation.configureNext({
-                    duration: 300,
-                    update: { type: 'easeInEaseOut' },
-                  });
                   toggleTheme();
                 }}
               />

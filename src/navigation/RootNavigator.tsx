@@ -20,6 +20,7 @@ import SetupAccounts from '../components/setup/SetupAccounts';
 import SetupMerchantQR from '../components/setup/SetupMerchantQR';
 import SettingsScreen from '../components/SettingsScreen';
 import OnboardingFlow from '../features/onboarding/OnboardingFlow';
+import GlobalFAB from '../components/GlobalFAB';
 
 const Stack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
@@ -107,6 +108,7 @@ function MainScreen({ navigation }: any) {
           {() => <SettingsTab navigation={navigation} />}
         </BottomTab.Screen>
       </BottomTab.Navigator>
+      <GlobalFAB />
     </View>
   );
 }
