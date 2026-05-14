@@ -315,9 +315,24 @@ function TransactionRow({
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ color: textColor, fontWeight: '700', fontSize: 16, fontFamily: 'SpaceGrotesk' }}>{tx.description}</Text>
-          <Text style={{ color: subColor, fontSize: 13, fontFamily: 'SpaceGrotesk', marginTop: 2 }}>
-            {tx.payee || 'General'} • {formattedTime}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
+            {(!tx.payee || tx.payee.toLowerCase() === 'me' || tx.payee.toLowerCase() === 'general') ? (
+              <Text style={{ color: subColor, fontSize: 13, fontFamily: 'SpaceGrotesk' }}>
+                {tx.payee || 'General'} • {formattedTime}
+              </Text>
+            ) : (
+              <>
+                <View style={{ backgroundColor: isDark ? '#3D1515' : '#FFEBEE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginRight: 6 }}>
+                  <Text style={{ color: isDark ? '#FF6B6B' : '#D32F2F', fontSize: 11, fontWeight: '800', fontFamily: 'SpaceGrotesk', letterSpacing: 0.5 }}>
+                    {tx.payee}
+                  </Text>
+                </View>
+                <Text style={{ color: subColor, fontSize: 13, fontFamily: 'SpaceGrotesk' }}>
+                  • {formattedTime}
+                </Text>
+              </>
+            )}
+          </View>
         </View>
         <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
           <Text style={{ fontWeight: '700', fontSize: 16, color: amountColor, fontFamily: 'SpaceGrotesk' }}>

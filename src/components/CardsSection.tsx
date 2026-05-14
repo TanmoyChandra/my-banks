@@ -10,6 +10,7 @@ import { findBankByName } from '../constants/banks';
 import { CardEntry } from '../types';
 import { getCardColors } from '../constants/cardColors';
 import { useUiStore } from '../store/useUiStore';
+import { useWalletStore } from '../store/useWalletStore';
 import EmptyState from './EmptyState';
 
 // Network logo PNGs
@@ -161,7 +162,7 @@ function RuPayLogo({ size }: { size: number }) {
 }
 
 // ── BankCard ─────────────────────────────────────────────────
-const BankCard: React.FC<{ card: CardEntry; cardWidth: number; onPress: () => void }> = ({ card, cardWidth, onPress }) => {
+const BankCard: React.FC<{ card: CardEntry; cardWidth: number; totalDue: number; onPress: () => void }> = ({ card, cardWidth, totalDue, onPress }) => {
   const [showFull, setShowFull] = useState(false);
   const palette = getCardColors(card.color);
   const network = getNetwork(card);
@@ -243,12 +244,21 @@ const BankCard: React.FC<{ card: CardEntry; cardWidth: number; onPress: () => vo
               </View>
             </View>
 
-            {/* MIDDLE: chip + card type label */}
+            {/* MIDDLE: chip + due amount */}
             <View style={styles.cardMiddle}>
-              <GoldChip />
-              <View style={styles.cardTypeLabel}>
-                <Text style={[styles.cardTypeLabelText, { fontSize: Math.round(cardWidth * 0.026) }]}>
-                  {card.type?.toUpperCase() ?? 'DEBIT'} CARD
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <GoldChip />
+                <View style={styles.cardTypeLabel}>
+                  <Text style={[styles.cardTypeLabelText, { fontSize: Math.round(cardWidth * 0.026) }]}>
+                    {card.type?.toUpperCase() ?? 'DEBIT'} CARD
+                  </Text>
+                </View>
+              </View>
+
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={[styles.cardLabel, { fontSize: Math.round(cardWidth * 0.02), marginBottom: -2 }]}>DUE AMOUNT</Text>
+                <Text style={{ color: '#FFFFFF', fontSize: Math.round(cardWidth * 0.045), fontWeight: '900', fontFamily: 'SpaceGrotesk', letterSpacing: 0.5, textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }}>
+                  ₹ {totalDue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Text>
               </View>
             </View>
@@ -331,6 +341,7 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
   const navigation = useNavigation<any>();
   const { width: screenW } = useWindowDimensions();
   const userName = useUiStore(s => s.userName);
+  const transactions = useWalletStore(s => s.transactions);
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
   const cardWidth = Math.min(screenW - 32, 420);
 
@@ -359,14 +370,19 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
         <EmptyState icon="credit-card-outline" message="Go to settings to add a new card" />
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {cards.map(card => (
-            <BankCard
-              key={card.id}
-              card={card}
-              cardWidth={cardWidth}
-              onPress={() => onCardPress(card)}
-            />
-          ))}
+          {cards.map(card => {
+            const cardTxs = transactions.filter((t) => t.cardId === card.id);
+            const totalDue = cardTxs.reduce((sum, t) => t.type === 'debit' ? sum + t.amount : sum - t.amount, 0);
+            return (
+              <BankCard
+                key={card.id}
+                card={card}
+                cardWidth={cardWidth}
+                totalDue={totalDue}
+                onPress={() => onCardPress(card)}
+              />
+            );
+          })}
         </ScrollView>
       )}
     </View>

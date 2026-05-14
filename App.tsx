@@ -15,6 +15,8 @@ import { useUiStore } from './src/store/useUiStore';
 import RootNavigator from './src/navigation/RootNavigator';
 import { enGB, registerTranslation } from 'react-native-paper-dates';
 
+import AppLockGuard from './src/components/AppLockGuard';
+
 registerTranslation('en', enGB);
 
 export default function App() {
@@ -43,9 +45,11 @@ export default function App() {
         <PaperProvider theme={theme}>
           <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={theme.colors.background} />
           <NavigationContainer theme={navTheme}>
-            <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-              <RootNavigator />
-            </View>
+            <AppLockGuard>
+              <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+                <RootNavigator />
+              </View>
+            </AppLockGuard>
           </NavigationContainer>
         </PaperProvider>
       </SafeAreaProvider>

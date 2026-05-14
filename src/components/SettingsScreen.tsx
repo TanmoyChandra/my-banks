@@ -8,7 +8,8 @@ import {
   LayoutAnimation,
   Animated,
 } from 'react-native';
-import { Text, useTheme, List, Surface, IconButton, Avatar, Icon } from 'react-native-paper';
+import { Text, useTheme, List, Surface, IconButton, Avatar, Icon, Switch } from 'react-native-paper';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUiStore } from '../store/useUiStore';
 import { useEffect, useRef } from 'react';
@@ -66,6 +67,30 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
   const subColor = theme.colors.onSurfaceVariant;
   const borderColor = theme.colors.outlineVariant;
   const toggleTheme = useUiStore(s => s.toggleTheme);
+  const isAppLockEnabled = useUiStore(s => s.isAppLockEnabled);
+  const setAppLockEnabled = useUiStore(s => s.setAppLockEnabled);
+
+  const toggleAppLock = async () => {
+    if (isAppLockEnabled) {
+      setAppLockEnabled(false);
+    } else {
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
+      const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      if (!hasHardware || !isEnrolled) {
+        alert("Your device doesn't support or have biometrics/PIN setup.");
+        return;
+      }
+      
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Authenticate to enable App Lock',
+      });
+      if (result.success) {
+        setAppLockEnabled(true);
+      } else {
+        alert(`Authentication failed: ${result.error || 'Unknown error'}`);
+      }
+    }
+  };
 
   const rotateAnim = useRef(new Animated.Value(isDark ? 1 : 0)).current;
 
@@ -189,6 +214,28 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           textColor={textColor}
           subColor={subColor}
         />
+
+        <Text style={[styles.sectionLabel, { color: subColor, marginTop: 8 }]}>SECURITY</Text>
+
+        <Surface elevation={0} style={{ borderRadius: 16, marginBottom: 12, overflow: 'hidden', backgroundColor: surfaceColor }}>
+          <List.Item
+            title="App Lock"
+            description="Require fingerprint or PIN to open"
+            left={(props) => (
+              <View style={[styles.cardIconBox, { backgroundColor: '#AAEF00', marginLeft: 16, marginRight: 8, marginTop: 8 }]}>
+                <List.Icon icon="fingerprint" color="#000000" style={{ margin: 0 }} />
+              </View>
+            )}
+            right={() => (
+              <View style={{ justifyContent: 'center', paddingRight: 16 }}>
+                <Switch value={isAppLockEnabled} onValueChange={toggleAppLock} color="#AAEF00" />
+              </View>
+            )}
+            titleStyle={[styles.cardTitle, { color: textColor }]}
+            descriptionStyle={[styles.cardSubtitle, { color: subColor }]}
+            style={{ backgroundColor: 'transparent' }}
+          />
+        </Surface>
 
         {/* App info */}
         <View style={[styles.infoBox, { backgroundColor: surfaceColor, borderColor }]}>
