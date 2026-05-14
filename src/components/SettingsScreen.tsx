@@ -14,7 +14,7 @@ import { useUiStore } from '../store/useUiStore';
 import { useEffect, useRef } from 'react';
 
 interface SettingsScreenProps {
-  onNavigate: (screen: 'setup-qr' | 'setup-cards' | 'setup-accounts' | 'setup-merchant-qr') => void;
+  onNavigate: (screen: 'setup-qr' | 'setup-cards' | 'setup-accounts' | 'setup-merchant-qr' | 'setup-backup') => void;
 }
 
 interface SetupCardProps {
@@ -168,6 +168,21 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           subtitle="Store IFSC, account number and branch details"
           accentColor="#AAEF00"
           onPress={() => onNavigate('setup-accounts')}
+          isDark={isDark}
+          bgColor={surfaceColor}
+          borderColor={borderColor}
+          textColor={textColor}
+          subColor={subColor}
+        />
+
+        <Text style={[styles.sectionLabel, { color: subColor, marginTop: 8 }]}>BACKUP & RESTORE</Text>
+
+        <SetupCard
+          icon="database-export"
+          title="Export / Import Data"
+          subtitle="Save an encrypted backup or restore all your data"
+          accentColor="#AAEF00"
+          onPress={() => onNavigate('setup-backup')}
           isDark={isDark}
           bgColor={surfaceColor}
           borderColor={borderColor}
