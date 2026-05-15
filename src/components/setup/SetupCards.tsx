@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Swipeable } from 'react-native-gesture-handler';
 import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Image } from 'react-native';
 import { 
   Appbar, 
@@ -63,22 +64,51 @@ function CardRow({
   onDelete: () => void; 
 }) {
   const theme = useTheme();
+  const isDark = theme.dark;
+  const swipeableRef = useRef<any>(null);
+
+  const handleEditTap = () => {
+    swipeableRef.current?.close();
+    onEdit();
+  };
+
+  const renderLeftActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: isDark ? '#1C3118' : '#E8F5E9', justifyContent: 'center', alignItems: 'center' }}
+      onPress={handleEditTap}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="pencil" iconColor={isDark ? '#A1D99B' : '#4F7922'} />
+    </TouchableOpacity>
+  );
+
+  const renderRightActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center' }}
+      onPress={onDelete}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="delete" iconColor={theme.colors.onErrorContainer} />
+    </TouchableOpacity>
+  );
 
   return (
     <Surface style={styles.listItem} elevation={1}>
-      <List.Item
-        title={card.bankName}
-        titleStyle={{ fontWeight: '700' }}
-        description={`${card.type} • ${card.cardNumber.slice(-4)}`}
-        left={props => <List.Icon {...props} icon="credit-card" />}
-        right={() => (
-          <View style={styles.itemActions}>
-            <IconButton icon="pencil-outline" size={20} iconColor={theme.colors.onSurfaceVariant} onPress={onEdit} />
-            <IconButton icon="delete-outline" size={20} iconColor={theme.colors.error} onPress={onDelete} />
-          </View>
-        )}
-        style={{ backgroundColor: theme.colors.surface }}
-      />
+      <Swipeable
+        ref={swipeableRef}
+        renderLeftActions={renderLeftActions}
+        renderRightActions={renderRightActions}
+        overshootLeft={false}
+        overshootRight={false}
+      >
+        <List.Item
+          title={card.bankName}
+          titleStyle={{ fontWeight: '700' }}
+          description={`${card.type} • ${card.cardNumber.slice(-4)}`}
+          left={props => <List.Icon {...props} icon="credit-card" />}
+          style={{ backgroundColor: theme.colors.surface }}
+        />
+      </Swipeable>
     </Surface>
   );
 }
@@ -267,16 +297,6 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
           </Surface>
         ) : (
           <View>
-            <Button 
-              mode="contained" 
-              icon="plus" 
-              onPress={() => setShowForm(true)}
-              style={[styles.addBtn, { backgroundColor: '#AAEF00' }]}
-              labelStyle={styles.addBtnLabel}
-            >
-              Add New Card
-            </Button>
-
             {cards.length === 0 ? (
               <View style={styles.empty}>
                 <Avatar.Icon size={64} icon="card-bulleted" style={{ backgroundColor: theme.colors.surfaceVariant }} color={theme.colors.primary} />
@@ -292,6 +312,24 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
                 />
               ))
             )}
+            
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setShowForm(true)}
+              style={{
+                backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF',
+                borderRadius: 12,
+                padding: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 80,
+                marginTop: cards.length === 0 ? 20 : 0,
+                marginBottom: 20
+              }}
+            >
+              <Avatar.Icon size={36} icon="plus" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
+              <Text style={{ marginTop: 4, color: theme.colors.onSurfaceVariant, fontFamily: 'SpaceGrotesk', fontWeight: '600' }}>Add New Card</Text>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>

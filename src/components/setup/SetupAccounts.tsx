@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { Swipeable } from 'react-native-gesture-handler';
 import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { 
   Appbar, 
@@ -48,34 +49,63 @@ function AccountRow({
   onDelete: () => void; 
 }) {
   const theme = useTheme();
+  const isDark = theme.dark;
+  const swipeableRef = useRef<any>(null);
+
+  const handleEditTap = () => {
+    swipeableRef.current?.close();
+    onEdit();
+  };
+
+  const renderLeftActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: isDark ? '#1C3118' : '#E8F5E9', justifyContent: 'center', alignItems: 'center' }}
+      onPress={handleEditTap}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="pencil" iconColor={isDark ? '#A1D99B' : '#4F7922'} />
+    </TouchableOpacity>
+  );
+
+  const renderRightActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center' }}
+      onPress={onDelete}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="delete" iconColor={theme.colors.onErrorContainer} />
+    </TouchableOpacity>
+  );
 
   return (
     <Surface style={styles.listItem} elevation={1}>
-      <List.Item
-        title={
-          <View style={{ paddingVertical: 2 }}>
-            <Text style={{ fontWeight: '700', fontSize: 16, marginBottom: 4 }}>{account.bankName}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14 }}>
-                •••• {account.accountNumber.slice(-4)}
-              </Text>
-              <View style={{ backgroundColor: '#AAEF00', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
-                <Text style={{ color: '#000000', fontSize: 9, fontWeight: '800', fontFamily: 'SpaceGrotesk', letterSpacing: 0.5 }}>
-                  {account.accountType.toUpperCase()}
-                </Text>
+      <Swipeable
+        ref={swipeableRef}
+        renderLeftActions={renderLeftActions}
+        renderRightActions={renderRightActions}
+        overshootLeft={false}
+        overshootRight={false}
+      >
+        <List.Item
+          title={
+            <View style={{ paddingVertical: 2 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <Text style={{ fontWeight: '700', fontSize: 16 }}>{account.bankName}</Text>
+                <View style={{ backgroundColor: '#AAEF00', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
+                  <Text style={{ color: '#000000', fontSize: 9, fontWeight: '800', fontFamily: 'SpaceGrotesk', letterSpacing: 0.5 }}>
+                    {account.accountType.toUpperCase()}
+                  </Text>
+                </View>
               </View>
+              <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14, fontFamily: 'SpaceGrotesk' }}>
+                {account.accountNumber}
+              </Text>
             </View>
-          </View>
-        }
-        left={props => <List.Icon {...props} icon="bank" />}
-        right={() => (
-          <View style={styles.itemActions}>
-            <IconButton icon="pencil-outline" size={20} iconColor={theme.colors.onSurfaceVariant} onPress={onEdit} />
-            <IconButton icon="delete-outline" size={20} iconColor={theme.colors.error} onPress={onDelete} />
-          </View>
-        )}
-        style={{ backgroundColor: theme.colors.surface }}
-      />
+          }
+          left={props => <List.Icon {...props} icon="bank" />}
+          style={{ backgroundColor: theme.colors.surface }}
+        />
+      </Swipeable>
     </Surface>
   );
 }
@@ -207,16 +237,6 @@ const SetupAccounts: React.FC<SetupAccountsProps> = ({ accounts, onAdd, onUpdate
           </Surface>
         ) : (
           <View>
-            <Button 
-              mode="contained" 
-              icon="plus" 
-              onPress={() => setShowForm(true)}
-              style={[styles.addBtn, { backgroundColor: '#AAEF00' }]}
-              labelStyle={styles.addBtnLabel}
-            >
-              Add Bank Account
-            </Button>
-
             {accounts.length === 0 ? (
               <View style={styles.empty}>
                 <Avatar.Icon size={64} icon="bank" style={{ backgroundColor: theme.colors.surfaceVariant }} color={theme.colors.primary} />
@@ -232,6 +252,24 @@ const SetupAccounts: React.FC<SetupAccountsProps> = ({ accounts, onAdd, onUpdate
                 />
               ))
             )}
+            
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => setShowForm(true)}
+              style={{
+                backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF',
+                borderRadius: 12,
+                padding: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 80,
+                marginTop: accounts.length === 0 ? 20 : 0,
+                marginBottom: 20
+              }}
+            >
+              <Avatar.Icon size={36} icon="plus" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
+              <Text style={{ marginTop: 4, color: theme.colors.onSurfaceVariant, fontFamily: 'SpaceGrotesk', fontWeight: '600' }}>Add Bank Account</Text>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>

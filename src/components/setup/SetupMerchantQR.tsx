@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { Swipeable } from 'react-native-gesture-handler';
 import {
   View, StyleSheet, ScrollView, TouchableOpacity,
   Image, Alert,
@@ -14,6 +15,81 @@ interface Props {
 }
 
 const EMPTY_FORM = { name: '', category: '', upiId: '', imageUri: '' };
+
+function MerchantRow({ 
+  m, 
+  onEdit, 
+  onDelete 
+}: { 
+  m: MerchantQR; 
+  onEdit: () => void; 
+  onDelete: () => void; 
+}) {
+  const theme = useTheme();
+  const isDark = theme.dark;
+  const swipeableRef = useRef<any>(null);
+
+  const handleEditTap = () => {
+    swipeableRef.current?.close();
+    onEdit();
+  };
+
+  const renderLeftActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: isDark ? '#1C3118' : '#E8F5E9', justifyContent: 'center', alignItems: 'center' }}
+      onPress={handleEditTap}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="pencil" iconColor={isDark ? '#A1D99B' : '#4F7922'} />
+    </TouchableOpacity>
+  );
+
+  const renderRightActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center' }}
+      onPress={onDelete}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="delete" iconColor={theme.colors.onErrorContainer} />
+    </TouchableOpacity>
+  );
+
+  return (
+    <Surface style={styles.listItem} elevation={1}>
+      <Swipeable
+        ref={swipeableRef}
+        renderLeftActions={renderLeftActions}
+        renderRightActions={renderRightActions}
+        overshootLeft={false}
+        overshootRight={false}
+      >
+        <List.Item
+          title={m.name}
+          titleStyle={{ fontWeight: '700' }}
+          description={m.category || m.upiId || 'No details'}
+          left={props => (
+            m.imageUri ? (
+              <Avatar.Image 
+                {...props} 
+                source={{ uri: m.imageUri }} 
+                size={40} 
+                style={[props.style, { backgroundColor: 'transparent' }]} 
+              />
+            ) : (
+              <Avatar.Icon 
+                {...props} 
+                icon="qrcode" 
+                size={40} 
+                style={[props.style, { backgroundColor: theme.colors.surfaceVariant }]} 
+              />
+            )
+          )}
+          style={{ backgroundColor: theme.colors.surface }}
+        />
+      </Swipeable>
+    </Surface>
+  );
+}
 
 export default function SetupMerchantQR({ onBack }: Props) {
   const theme = useTheme();
@@ -159,17 +235,7 @@ export default function SetupMerchantQR({ onBack }: Props) {
 
         {/* ── Existing list ── */}
         {!showForm && (
-          <>
-            <Button
-              mode="contained"
-              icon="plus"
-              onPress={openAdd}
-              style={[styles.mainAddBtn, { backgroundColor: accentColor }]}
-              labelStyle={styles.mainAddBtnLabel}
-            >
-              Add New Merchant QR
-            </Button>
-
+          <View>
             {merchants.length === 0 ? (
               <View style={styles.emptyContainer}>
                 <Avatar.Icon
@@ -183,50 +249,33 @@ export default function SetupMerchantQR({ onBack }: Props) {
               </View>
             ) : (
               merchants.map(m => (
-                <Surface key={m.id} style={styles.listItem} elevation={1}>
-                  <List.Item
-                    title={m.name}
-                    titleStyle={{ fontWeight: '700' }}
-                    description={m.category || m.upiId || 'No details'}
-                    left={props => (
-                      m.imageUri ? (
-                        <Avatar.Image 
-                          {...props} 
-                          source={{ uri: m.imageUri }} 
-                          size={40} 
-                          style={[props.style, { backgroundColor: 'transparent' }]} 
-                        />
-                      ) : (
-                        <Avatar.Icon 
-                          {...props} 
-                          icon="qrcode" 
-                          size={40} 
-                          style={[props.style, { backgroundColor: theme.colors.surfaceVariant }]} 
-                        />
-                      )
-                    )}
-                    right={() => (
-                      <View style={styles.itemActions}>
-                        <IconButton
-                          icon="pencil-outline"
-                          size={20}
-                          iconColor={subColor}
-                          onPress={() => openEdit(m)}
-                        />
-                        <IconButton
-                          icon="delete-outline"
-                          size={20}
-                          iconColor={theme.colors.error}
-                          onPress={() => setDeleteId(m.id)}
-                        />
-                      </View>
-                    )}
-                    style={{ backgroundColor: surfaceBg }}
-                  />
-                </Surface>
+                <MerchantRow
+                  key={m.id}
+                  m={m}
+                  onEdit={() => openEdit(m)}
+                  onDelete={() => setDeleteId(m.id)}
+                />
               ))
             )}
-          </>
+
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={openAdd}
+              style={{
+                backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF',
+                borderRadius: 12,
+                padding: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 80,
+                marginTop: merchants.length === 0 ? 20 : 0,
+                marginBottom: 20
+              }}
+            >
+              <Avatar.Icon size={36} icon="plus" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
+              <Text style={{ marginTop: 4, color: theme.colors.onSurfaceVariant, fontFamily: 'SpaceGrotesk', fontWeight: '600' }}>Add Merchant QR</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </ScrollView>
 

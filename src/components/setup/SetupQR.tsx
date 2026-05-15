@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Swipeable } from 'react-native-gesture-handler';
 import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { 
   Appbar, 
@@ -54,27 +55,57 @@ function QRRow({
   onDelete: () => void; 
 }) {
   const theme = useTheme();
+  const isDark = theme.dark;
+  const swipeableRef = useRef<any>(null);
+
+  const handleEditTap = () => {
+    swipeableRef.current?.close();
+    onEdit();
+  };
+
+  const renderLeftActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: isDark ? '#1C3118' : '#E8F5E9', justifyContent: 'center', alignItems: 'center' }}
+      onPress={handleEditTap}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="pencil" iconColor={isDark ? '#A1D99B' : '#4F7922'} />
+    </TouchableOpacity>
+  );
+
+  const renderRightActions = () => (
+    <TouchableOpacity 
+      style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center' }}
+      onPress={onDelete}
+      activeOpacity={0.8}
+    >
+      <IconButton icon="delete" iconColor={theme.colors.onErrorContainer} />
+    </TouchableOpacity>
+  );
+
   return (
     <Surface style={styles.listItem} elevation={1}>
-      <List.Item
-        title={entry.name || entry.bankName || entry.upiId || 'QR Entry'}
-        titleStyle={{ fontWeight: '700' }}
-        description={entry.upiId || entry.qrValue}
-        left={props => {
-          const bank = findBankByName(entry.bankName);
-          if (bank) {
-            return <Avatar.Image {...props} source={bank.symbol} size={40} style={[props.style, { backgroundColor: 'transparent' }]} />;
-          }
-          return <List.Icon {...props} icon="qrcode" />;
-        }}
-        right={() => (
-          <View style={styles.itemActions}>
-            <IconButton icon="pencil-outline" size={20} iconColor={theme.colors.onSurfaceVariant} onPress={onEdit} />
-            <IconButton icon="delete-outline" size={20} iconColor={theme.colors.error} onPress={onDelete} />
-          </View>
-        )}
-        style={{ backgroundColor: theme.colors.surface }}
-      />
+      <Swipeable
+        ref={swipeableRef}
+        renderLeftActions={renderLeftActions}
+        renderRightActions={renderRightActions}
+        overshootLeft={false}
+        overshootRight={false}
+      >
+        <List.Item
+          title={entry.name || entry.bankName || entry.upiId || 'QR Entry'}
+          titleStyle={{ fontWeight: '700' }}
+          description={entry.upiId || entry.qrValue}
+          left={props => {
+            const bank = findBankByName(entry.bankName);
+            if (bank) {
+              return <Avatar.Image {...props} source={bank.symbol} size={40} style={[props.style, { backgroundColor: 'transparent' }]} />;
+            }
+            return <List.Icon {...props} icon="qrcode" />;
+          }}
+          style={{ backgroundColor: theme.colors.surface }}
+        />
+      </Swipeable>
     </Surface>
   );
 }
@@ -419,30 +450,6 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
           </Surface>
         ) : (
           <View>
-            <View style={styles.mainActions}>
-              <Button 
-                mode="contained" 
-                icon="image-plus" 
-                onPress={pickAndScan}
-                style={[styles.scanBtn, { backgroundColor: '#AAEF00' }]}
-                loading={loading}
-                disabled={loading}
-                labelStyle={styles.btnLabel}
-              >
-                Scan from Gallery
-              </Button>
-              <Button 
-                mode="contained" 
-                icon="pencil" 
-                onPress={() => setShowForm(true)}
-                style={[styles.manualBtn, { backgroundColor: '#AAEF00' }]}
-                disabled={loading}
-                labelStyle={styles.btnLabel}
-              >
-                Manual Entry
-              </Button>
-            </View>
-
             {loading && (
               <View style={styles.loadingBox}>
                 <ActivityIndicator animating={true} color={theme.colors.primary} />
@@ -465,6 +472,46 @@ const SetupQR: React.FC<SetupQRProps> = ({ entries, onAdd, onUpdate, onDelete, o
                 />
               ))
             )}
+
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: entries.length === 0 ? 20 : 0, marginBottom: 20 }}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={pickAndScan}
+                disabled={loading}
+                style={{
+                  flex: 1,
+                  backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF',
+                  borderRadius: 12,
+                  padding: 16,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: 80,
+                  opacity: loading ? 0.5 : 1
+                }}
+              >
+                <Avatar.Icon size={36} icon="image-plus" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
+                <Text style={{ marginTop: 4, color: theme.colors.onSurfaceVariant, fontFamily: 'SpaceGrotesk', fontWeight: '600', textAlign: 'center' }}>Scan from Gallery</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setShowForm(true)}
+                disabled={loading}
+                style={{
+                  flex: 1,
+                  backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF',
+                  borderRadius: 12,
+                  padding: 16,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: 80,
+                  opacity: loading ? 0.5 : 1
+                }}
+              >
+                <Avatar.Icon size={36} icon="pencil" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
+                <Text style={{ marginTop: 4, color: theme.colors.onSurfaceVariant, fontFamily: 'SpaceGrotesk', fontWeight: '600', textAlign: 'center' }}>Manual Entry</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </ScrollView>
