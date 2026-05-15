@@ -11,7 +11,6 @@ import { CardEntry } from '../types';
 import { getCardColors } from '../constants/cardColors';
 import { useUiStore } from '../store/useUiStore';
 import { useWalletStore } from '../store/useWalletStore';
-import EmptyState from './EmptyState';
 
 // Network logo PNGs
 const VISA_PNG       = require('../../assets/Visa.png');
@@ -366,25 +365,42 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
         </View>
       </View>
 
-      {cards.length === 0 ? (
-        <EmptyState icon="credit-card-outline" message="Go to settings to add a new card" />
-      ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {cards.map(card => {
-            const cardTxs = transactions.filter((t) => t.cardId === card.id);
-            const totalDue = cardTxs.reduce((sum, t) => t.type === 'debit' ? sum + t.amount : sum - t.amount, 0);
-            return (
-              <BankCard
-                key={card.id}
-                card={card}
-                cardWidth={cardWidth}
-                totalDue={totalDue}
-                onPress={() => onCardPress(card)}
-              />
-            );
-          })}
-        </ScrollView>
-      )}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {cards.map(card => {
+          const cardTxs = transactions.filter((t) => t.cardId === card.id);
+          const totalDue = cardTxs.reduce((sum, t) => t.type === 'debit' ? sum + t.amount : sum - t.amount, 0);
+          return (
+            <BankCard
+              key={card.id}
+              card={card}
+              cardWidth={cardWidth}
+              totalDue={totalDue}
+              onPress={() => onCardPress(card)}
+            />
+          );
+        })}
+        <View style={styles.cardBlock}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('SetupCards')}
+            style={[styles.cardFace, { 
+              width: cardWidth, 
+              height: Math.round(cardWidth * (240 / 380)), 
+              borderRadius: 20, 
+              backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              shadowOpacity: 0,
+              elevation: 0,
+              borderTopWidth: 0,
+              borderLeftWidth: 0
+            }]}
+          >
+            <Avatar.Icon size={64} icon="plus" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
+            <Text style={{ marginTop: 8, color: theme.colors.onSurfaceVariant, fontFamily: 'SpaceGrotesk', fontWeight: '600' }}>Add new card</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 };

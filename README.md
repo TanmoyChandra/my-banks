@@ -28,3 +28,6 @@ If it still fails, use LAN mode while your phone and computer are on the same Wi
 ```bash
 npm run lan
 ```
+
+apk build
+npx eas-cli build -p android --profile preview

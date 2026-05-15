@@ -8,7 +8,6 @@ import { BankAccount } from '../types';
 import { findBankByName } from '../constants/banks';
 import { useUiStore } from '../store/useUiStore';
 import { getCardColors } from '../constants/cardColors';
-import EmptyState from './EmptyState';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -174,13 +173,24 @@ const BankAccountsSection: React.FC<BankAccountsSectionProps> = ({ accounts }) =
         </View>
       </View>
 
-      {accounts.length === 0 ? (
-        <EmptyState icon="bank-outline" message="Go to settings to add a new bank account" />
-      ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {accounts.map(acc => <AccountItem key={acc.id} account={acc} />)}
-        </ScrollView>
-      )}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {accounts.map(acc => <AccountItem key={acc.id} account={acc} />)}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('SetupAccounts')}
+          style={[styles.cardWrapper, { marginBottom: 16 }]}
+        >
+          <View style={[styles.accountCard, { 
+            backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            minHeight: 120 
+          }]} >
+            <Avatar.Icon size={48} icon="plus" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
+            <Text style={{ marginTop: 8, color: theme.colors.onSurfaceVariant, fontFamily: 'SpaceGrotesk', fontWeight: '600' }}>Add bank account</Text>
+          </View>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 };

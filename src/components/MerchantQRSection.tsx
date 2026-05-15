@@ -11,7 +11,6 @@ import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { MerchantQR } from '../types';
 import { useUiStore } from '../store/useUiStore';
-import EmptyState from './EmptyState';
 import { useWalletStore } from '../store/useWalletStore';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
@@ -404,13 +403,26 @@ export default function MerchantQRSection() {
       </View>
 
       {/* List */}
-      {merchants.length === 0 ? (
-        <EmptyState icon="store" message="Go to settings to add a new merchant QR code" />
-      ) : (
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {merchants.map(m => <MerchantCard key={m.id} merchant={m} />)}
-        </ScrollView>
-      )}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {merchants.map(m => <MerchantCard key={m.id} merchant={m} />)}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('SetupMerchantQR')}
+          style={[styles.card, { 
+            backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF', 
+            padding: 14, 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            minHeight: 86,
+            borderWidth: 0,
+            shadowOpacity: 0,
+            elevation: 0
+          }]}
+        >
+          <Avatar.Icon size={44} icon="plus" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
+          <Text style={{ color: theme.colors.onSurfaceVariant, fontFamily: 'SpaceGrotesk', fontWeight: '600' }}>Add merchant</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 }

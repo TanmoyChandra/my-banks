@@ -20,7 +20,6 @@ import QRCode from 'react-native-qrcode-svg';
 import { QREntry } from '../types';
 import { findBankByName } from '../constants/banks';
 import { useUiStore } from '../store/useUiStore';
-import EmptyState from './EmptyState';
 
 interface QRSectionProps {
   entries: QREntry[];
@@ -160,23 +159,41 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
         </View>
       </View>
 
-      {entries.length === 0 ? (
-        <EmptyState icon="qrcode" message="Go to settings to add a new QR code" />
-      ) : (
-        <View style={styles.carouselWrapper}>
-          <FlatList
-            data={entries}
-            horizontal
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <QRPayCard entry={item} width={cardWidth} />}
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={snapWidth}
-            decelerationRate="fast"
-            contentContainerStyle={styles.carouselContent}
-            style={{ flexGrow: 0 }}
-          />
-        </View>
-      )}
+      <View style={styles.carouselWrapper}>
+        <FlatList
+          data={[...entries, { id: 'add-placeholder', isAdd: true } as any]}
+          horizontal
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => {
+            if (item.isAdd) {
+              return (
+                <View style={[styles.page, { width: cardWidth + PAGE_GAP }]}>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => navigation.navigate('SetupQR')}
+                    style={[styles.payCard, { 
+                      width: cardWidth, 
+                      backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF', 
+                      justifyContent: 'center', 
+                      height: Math.min(cardWidth - 92, 180) + 190,
+                      borderWidth: 0
+                    }]}
+                  >
+                    <Avatar.Icon size={64} icon="plus" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
+                    <Text style={{ marginTop: 16, color: theme.colors.onSurfaceVariant, fontFamily: 'SpaceGrotesk', fontWeight: '600' }}>Add new QR code</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            }
+            return <QRPayCard entry={item as QREntry} width={cardWidth} />;
+          }}
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={snapWidth}
+          decelerationRate="fast"
+          contentContainerStyle={styles.carouselContent}
+          style={{ flexGrow: 0 }}
+        />
+      </View>
     </View>
   );
 };
