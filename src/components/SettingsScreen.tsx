@@ -8,11 +8,13 @@ import {
   LayoutAnimation,
   Animated,
 } from 'react-native';
-import { Text, useTheme, List, Surface, IconButton, Avatar, Icon, Switch } from 'react-native-paper';
+import { Text, useTheme, List, Surface, IconButton, Avatar, Icon, Switch, Portal, Dialog, TextInput, Button } from 'react-native-paper';
 import * as LocalAuthentication from 'expo-local-authentication';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUiStore } from '../store/useUiStore';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface SettingsScreenProps {
   onNavigate: (screen: 'setup-qr' | 'setup-cards' | 'setup-accounts' | 'setup-merchant-qr' | 'setup-backup') => void;
@@ -60,6 +62,12 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
   const isDark = theme.dark;
   const insets = useSafeAreaInsets();
   const userName = useUiStore(s => s.userName);
+  const userImage = useUiStore(s => s.userImage);
+  const setUserName = useUiStore(s => s.setUserName);
+  const setUserImage = useUiStore(s => s.setUserImage);
+
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [tempName, setTempName] = useState(userName);
 
   const bgColor = theme.colors.background;
   const surfaceColor = theme.colors.surfaceVariant;
@@ -69,6 +77,27 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
   const toggleTheme = useUiStore(s => s.toggleTheme);
   const isAppLockEnabled = useUiStore(s => s.isAppLockEnabled);
   const setAppLockEnabled = useUiStore(s => s.setAppLockEnabled);
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      setUserImage(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    }
+  };
+
+  const handleSaveProfile = () => {
+    if (tempName.trim()) {
+      setUserName(tempName.trim());
+      setProfileModalVisible(false);
+    }
+  };
 
   const toggleAppLock = async () => {
     if (isAppLockEnabled) {
@@ -132,12 +161,18 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
                 }}
               />
             </Animated.View>
-            <Avatar.Text 
-              size={40} 
-              label={userName ? userName.charAt(0).toUpperCase() : '?'} 
-              style={{ backgroundColor: theme.colors.primaryContainer }} 
-              labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
-            />
+            <TouchableOpacity onPress={() => { setTempName(userName); setProfileModalVisible(true); }}>
+              {userImage ? (
+                <Avatar.Image size={40} source={{ uri: userImage }} />
+              ) : (
+                <Avatar.Text 
+                  size={40} 
+                  label={userName ? userName.charAt(0).toUpperCase() : '?'} 
+                  style={{ backgroundColor: theme.colors.primaryContainer }} 
+                  labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+                />
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -146,6 +181,20 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
+        <Text style={[styles.sectionLabel, { color: subColor }]}>PROFILE</Text>
+        <SetupCard
+          icon="account-edit"
+          title="Profile"
+          subtitle="Update your name and profile picture"
+          accentColor="#AAEF00"
+          onPress={() => { setTempName(userName); setProfileModalVisible(true); }}
+          isDark={isDark}
+          bgColor={surfaceColor}
+          borderColor={borderColor}
+          textColor={textColor}
+          subColor={subColor}
+        />
+
         <Text style={[styles.sectionLabel, { color: subColor }]}>DATA SETUP</Text>
 
         <SetupCard
@@ -250,6 +299,41 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           Made with ❤️ by Tanmoy Chandra
         </Text>
       </ScrollView>
+
+      {/* Profile Modal */}
+      <Portal>
+        <Dialog visible={profileModalVisible} onDismiss={() => setProfileModalVisible(false)} style={{ backgroundColor: theme.colors.surface }}>
+          <Dialog.Title style={{ color: textColor }}>Edit Profile</Dialog.Title>
+          <Dialog.Content>
+            <View style={{ alignItems: 'center', marginBottom: 20 }}>
+              <TouchableOpacity onPress={pickImage}>
+                {userImage ? (
+                  <Avatar.Image size={100} source={{ uri: userImage }} />
+                ) : (
+                  <Avatar.Icon size={100} icon="account" style={{ backgroundColor: theme.colors.primaryContainer }} color={theme.colors.onPrimaryContainer} />
+                )}
+                <View style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: '#AAEF00', borderRadius: 15, padding: 4 }}>
+                  <Icon source="camera" size={20} color="#000" />
+                </View>
+              </TouchableOpacity>
+              <Text style={{ marginTop: 8, color: subColor, fontSize: 12 }}>Tap to change picture</Text>
+            </View>
+
+            <TextInput
+              label="Your Name"
+              value={tempName}
+              onChangeText={setTempName}
+              mode="outlined"
+              style={{ backgroundColor: 'transparent' }}
+              textColor={textColor}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setProfileModalVisible(false)} textColor={subColor}>Cancel</Button>
+            <Button onPress={handleSaveProfile} textColor="#AAEF00">Save</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 }

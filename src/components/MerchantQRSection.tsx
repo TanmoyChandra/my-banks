@@ -377,6 +377,7 @@ export default function MerchantQRSection() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const userName = useUiStore(s => s.userName);
+  const userImage = useUiStore(s => s.userImage);
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
   const merchants = useWalletStore(s => s.merchantQRs);
 
@@ -392,12 +393,16 @@ export default function MerchantQRSection() {
             </Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-            <Avatar.Text
-              size={40}
-              label={initials}
-              style={{ backgroundColor: theme.colors.primaryContainer }}
-              labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
-            />
+            {userImage ? (
+              <Avatar.Image size={40} source={{ uri: userImage }} />
+            ) : (
+              <Avatar.Text
+                size={40}
+                label={initials}
+                style={{ backgroundColor: theme.colors.primaryContainer }}
+                labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+              />
+            )}
           </TouchableOpacity>
         </View>
       </View>

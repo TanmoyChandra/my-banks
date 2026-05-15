@@ -122,8 +122,7 @@ function TransactionModal({
         onSwipeComplete={onClose}
         swipeDirection={['down']}
         style={{ margin: 0, justifyContent: 'flex-end' }}
-        
-        avoidKeyboard={true}
+        propagateSwipe
         useNativeDriver={true}
         useNativeDriverForBackdrop={true}
         hideModalContentWhileAnimating={true}
@@ -146,6 +145,16 @@ function TransactionModal({
                     { value: 'credit', label: '↓ Payment Made' },
                   ]}
                   style={{ marginBottom: 20 }}
+                  theme={{
+                    colors: {
+                      secondaryContainer: txType === 'debit'
+                        ? (isDark ? '#3D1515' : '#FFEBEE')
+                        : (isDark ? '#1C3118' : '#E8F5E9'),
+                      onSecondaryContainer: txType === 'debit'
+                        ? (isDark ? '#FF6B6B' : '#D32F2F')
+                        : (isDark ? '#A1D99B' : '#4F7922'),
+                    }
+                  }}
                 />
               )}
 
@@ -451,8 +460,11 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
       </Appbar.Header>
 
       <Surface style={[styles.totalCard, { backgroundColor: theme.colors.surface }]} elevation={0}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={[styles.totalLabel, { color: subColor }]}>Total due</Text>
+        <Text style={[styles.totalLabel, { color: subColor }]}>Total due</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+          <Text style={[styles.totalAmount, { color: textColor }]}>
+            ₹ {fmt(Math.abs(totalDue))}
+          </Text>
           {daysUntilBilling !== null && (
             <View style={{
               backgroundColor: daysUntilBilling <= 3 ? (isDark ? '#3D1515' : '#FFEBEE') : (isDark ? '#1C2A1C' : '#E8F5E9'),
@@ -462,6 +474,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
               flexDirection: 'row',
               alignItems: 'center',
               gap: 4,
+              marginLeft: 12,
             }}>
               <IconButton
                 icon="calendar-clock"
@@ -480,9 +493,6 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
             </View>
           )}
         </View>
-        <Text style={[styles.totalAmount, { color: textColor, marginBottom: 8 }]}>
-          ₹ {fmt(Math.abs(totalDue))}
-        </Text>
         <View style={styles.statsRowNew}>
           <View>
             <Text style={[styles.statLabelNew, { color: subColor }]}>Spent amount</Text>

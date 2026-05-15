@@ -21,6 +21,8 @@ import { QREntry } from '../types';
 import { findBankByName } from '../constants/banks';
 import { useUiStore } from '../store/useUiStore';
 
+const initials = (name: string) => name ? name.charAt(0).toUpperCase() : '?';
+
 interface QRSectionProps {
   entries: QREntry[];
 }
@@ -134,6 +136,7 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const userName = useUiStore(s => s.userName);
+  const userImage = useUiStore(s => s.userImage);
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
   const cardWidth = Math.min(screenWidth - PAGE_SIDE_PADDING * 2.5, 450);
   const snapWidth = cardWidth + PAGE_GAP;
@@ -149,12 +152,16 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
             </Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-            <Avatar.Text 
-              size={40} 
-              label={initials} 
-              style={{ backgroundColor: theme.colors.primaryContainer }} 
-              labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
-            />
+            {userImage ? (
+              <Avatar.Image size={40} source={{ uri: userImage }} />
+            ) : (
+              <Avatar.Text 
+                size={40} 
+                label={initials} 
+                style={{ backgroundColor: theme.colors.primaryContainer }} 
+                labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+              />
+            )}
           </TouchableOpacity>
         </View>
       </View>
