@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { QREntry, CardEntry, BankAccount, CardTransaction, MerchantQR } from '../types';
+import { encryptLocal, decryptLocal } from '../utils/crypto';
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -95,7 +96,18 @@ export const useWalletStore = create<WalletState>()(
     }),
     {
       name: 'mybanks-wallet',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => ({
+        getItem: async (name: string) => {
+          const value = await AsyncStorage.getItem(name);
+          return value ? decryptLocal(value) : null;
+        },
+        setItem: async (name: string, value: string) => {
+          await AsyncStorage.setItem(name, encryptLocal(value));
+        },
+        removeItem: async (name: string) => {
+          await AsyncStorage.removeItem(name);
+        },
+      })),
     }
   )
 );

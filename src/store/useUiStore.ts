@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { encryptLocal, decryptLocal } from '../utils/crypto';
 
 interface UiState {
   hasCompletedOnboarding: boolean;
@@ -33,7 +34,18 @@ export const useUiStore = create<UiState>()(
     }),
     {
       name: 'mybanks-ui',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => ({
+        getItem: async (name: string) => {
+          const value = await AsyncStorage.getItem(name);
+          return value ? decryptLocal(value) : null;
+        },
+        setItem: async (name: string, value: string) => {
+          await AsyncStorage.setItem(name, encryptLocal(value));
+        },
+        removeItem: async (name: string) => {
+          await AsyncStorage.removeItem(name);
+        },
+      })),
     }
   )
 );
