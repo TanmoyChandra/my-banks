@@ -52,6 +52,7 @@ const emptyForm = (): Omit<CardEntry, 'id'> => ({
   cvv: '',
   nickname: '',
   color: FIRST_COLOR,
+  billingDate: undefined,
 });
 
 function CardRow({ 
@@ -280,6 +281,22 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
               mode="outlined"
               style={styles.input}
             />
+
+            {form.type === 'Credit' && (
+              <TextInput
+                label="Billing Date (optional, 1–31)"
+                value={form.billingDate !== undefined ? String(form.billingDate) : ''}
+                onChangeText={v => {
+                  const n = parseInt(v.replace(/\D/g, ''));
+                  setForm(p => ({ ...p, billingDate: (!v || isNaN(n)) ? undefined : Math.min(31, Math.max(1, n)) }));
+                }}
+                mode="outlined"
+                style={styles.input}
+                keyboardType="numeric"
+                maxLength={2}
+                placeholder="e.g. 5 for the 5th of every month"
+              />
+            )}
 
             <ColorPicker
               selected={form.color}

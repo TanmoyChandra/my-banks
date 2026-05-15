@@ -267,7 +267,7 @@ function TransactionRow({
   const textColor = isDark ? '#FFFFFF' : '#202020';
   const subColor = isDark ? '#A1A1A1' : '#7A7A7A';
   const isDebit = tx.type === 'debit';
-  const amountColor = isDebit ? textColor : (isDark ? '#A1D99B' : '#4F7922');
+  const amountColor = isDebit ? (isDark ? '#FF6B6B' : '#D32F2F') : (isDark ? '#A1D99B' : '#4F7922');
 
   const iconName = isDebit ? 'arrow-top-right' : 'arrow-bottom-left';
   const iconColor = isDebit ? (isDark ? '#FF6B6B' : '#D32F2F') : (isDark ? '#A1D99B' : '#4F7922');
@@ -338,13 +338,21 @@ function TransactionRow({
           <Text style={{ fontWeight: '700', fontSize: 16, color: amountColor, fontFamily: 'SpaceGrotesk' }}>
             {displayAmount}
           </Text>
-          <IconButton 
-            icon={tx.isFlagged ? "flag" : "flag-outline"} 
-            iconColor={tx.isFlagged ? theme.colors.error : subColor} 
-            size={18} 
+          <TouchableOpacity
             onPress={onToggleFlag}
-            style={{ margin: 0, marginTop: 4, width: 24, height: 24 }} 
-          />
+            style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}
+            activeOpacity={0.7}
+          >
+            <IconButton 
+              icon={tx.isFlagged ? "flag" : "flag-outline"} 
+              iconColor={tx.isFlagged ? theme.colors.error : subColor} 
+              size={18} 
+              style={{ margin: 0, width: 20, height: 20 }} 
+            />
+            <Text style={{ fontSize: 11, fontWeight: '700', fontFamily: 'SpaceGrotesk', color: tx.isFlagged ? theme.colors.error : subColor, marginLeft: 2 }}>
+              Due
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Swipeable>
@@ -373,6 +381,21 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
       return t.type === 'debit' ? sum + t.amount : sum - t.amount;
     }, 0);
   }, [cardTxs]);
+
+  const daysUntilBilling = useMemo(() => {
+    if (!card.billingDate) return null;
+    const today = new Date();
+    const todayDate = today.getDate();
+    const billingDay = card.billingDate;
+    if (todayDate === billingDay) return 0;
+    // Next billing date
+    const next = new Date(today.getFullYear(), today.getMonth(), billingDay);
+    if (next <= today) {
+      next.setMonth(next.getMonth() + 1);
+    }
+    const diffMs = next.getTime() - today.getTime();
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  }, [card.billingDate]);
 
   const groupedTxs = useMemo(() => {
     const groups: { [key: string]: CardTransaction[] } = {};
@@ -428,7 +451,35 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
       </Appbar.Header>
 
       <Surface style={[styles.totalCard, { backgroundColor: theme.colors.surface }]} elevation={0}>
-        <Text style={[styles.totalLabel, { color: subColor }]}>Total due</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={[styles.totalLabel, { color: subColor }]}>Total due</Text>
+          {daysUntilBilling !== null && (
+            <View style={{
+              backgroundColor: daysUntilBilling <= 3 ? (isDark ? '#3D1515' : '#FFEBEE') : (isDark ? '#1C2A1C' : '#E8F5E9'),
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              borderRadius: 20,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+            }}>
+              <IconButton
+                icon="calendar-clock"
+                size={14}
+                iconColor={daysUntilBilling <= 3 ? (isDark ? '#FF6B6B' : '#D32F2F') : (isDark ? '#A1D99B' : '#4F7922')}
+                style={{ margin: 0, width: 16, height: 16 }}
+              />
+              <Text style={{
+                fontSize: 11,
+                fontWeight: '800',
+                fontFamily: 'SpaceGrotesk',
+                color: daysUntilBilling <= 3 ? (isDark ? '#FF6B6B' : '#D32F2F') : (isDark ? '#A1D99B' : '#4F7922'),
+              }}>
+                {daysUntilBilling === 0 ? 'Bill today!' : `${daysUntilBilling}d to bill`}
+              </Text>
+            </View>
+          )}
+        </View>
         <Text style={[styles.totalAmount, { color: textColor, marginBottom: 8 }]}>
           ₹ {fmt(Math.abs(totalDue))}
         </Text>

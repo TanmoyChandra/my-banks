@@ -20,6 +20,7 @@ export interface CardEntry {
   cvv: string;
   nickname: string;
   color?: string;
+  billingDate?: number; // Day of month (1–31) when bill generates
 }
 
 export interface BankAccount {
