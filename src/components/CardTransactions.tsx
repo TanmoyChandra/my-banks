@@ -358,9 +358,11 @@ function TransactionRow({
               size={18} 
               style={{ margin: 0, width: 20, height: 20 }} 
             />
-            <Text style={{ fontSize: 11, fontWeight: '700', fontFamily: 'SpaceGrotesk', color: tx.isFlagged ? theme.colors.error : subColor, marginLeft: 2 }}>
-              Due
-            </Text>
+            {tx.isFlagged && (
+              <Text style={{ fontSize: 11, fontWeight: '700', fontFamily: 'SpaceGrotesk', color: theme.colors.error, marginLeft: 2 }}>
+                Due
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>

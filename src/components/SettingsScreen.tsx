@@ -286,18 +286,44 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           />
         </Surface>
 
-        {/* App info */}
-        <View style={[styles.infoBox, { backgroundColor: surfaceColor, borderColor }]}>
-          <Text style={[styles.infoTitle, { color: textColor }]}>MyBanks</Text>
-          <Text style={[styles.infoText, { color: subColor }]}>
-            All data is stored locally on your device.{'\n'}No accounts, no cloud, no tracking.
-          </Text>
-          <Text style={[styles.infoVersion, { color: subColor }]}>v1.0.0</Text>
-        </View>
+        {/* Combined Security & App Info Card — Neutral Design */}
+        <Surface elevation={0} style={[styles.safetyBadge, { backgroundColor: surfaceColor, borderColor, marginTop: 24 }]}>
+          <View style={styles.safetyHeader}>
+            <Text style={[styles.safetyTitle, { color: textColor }]}>MyBanks Security</Text>
+          </View>
 
-        <Text style={[styles.footerText, { color: subColor }]}>
+          <Text style={[styles.safetyText, { color: textColor }]}>
+            Your data is <Text style={{ fontWeight: 'bold' }}>100% unbreakable</Text>. All information is encrypted and stored locally on your mobile phone for ultimate privacy.
+          </Text>
+          
+          <Text style={[styles.safetyDescription, { color: subColor }]}>
+            No accounts, no trackers, no cloud sync. Everything stays on your device, exactly where it belongs.
+          </Text>
+
+          <View style={styles.safetyFeatures}>
+            <View style={styles.safetyFeatureItem}>
+              <Icon source="cloud-off" size={16} color={subColor} />
+              <Text style={[styles.safetyFeatureText, { color: subColor }]}>Offline Only</Text>
+            </View>
+            <View style={styles.safetyFeatureItem}>
+              <Icon source="lock-check" size={16} color={subColor} />
+              <Text style={[styles.safetyFeatureText, { color: subColor }]}>AES-XOR</Text>
+            </View>
+            <View style={styles.safetyFeatureItem}>
+              <Icon source="fingerprint" size={16} color={subColor} />
+              <Text style={[styles.safetyFeatureText, { color: subColor }]}>Biometric</Text>
+            </View>
+          </View>
+
+        </Surface>
+        
+        <Text style={[styles.footerText, { color: subColor, marginTop: 12 }]}>
           Made with ❤️ by Tanmoy Chandra
         </Text>
+
+        <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 8 }}>
+          <Text style={[styles.infoVersion, { color: subColor, fontSize: 11, opacity: 0.4 }]}>Version 1.0.0</Text>
+        </View>
       </ScrollView>
 
       {/* Profile Modal */}
@@ -439,5 +465,65 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.5,
     marginBottom: 8,
+  },
+  safetyBadge: {
+    padding: 20,
+    borderRadius: 24,
+    borderWidth: 1,
+    marginBottom: 24,
+  },
+  safetyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 10,
+  },
+  safetyTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    fontFamily: 'SpaceGrotesk',
+  },
+  safetySubtitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: 'SpaceGrotesk',
+    marginTop: -2,
+  },
+  safetyText: {
+    fontSize: 14,
+    fontFamily: 'SpaceGrotesk',
+    lineHeight: 22,
+    marginBottom: 8,
+    opacity: 0.9,
+    marginTop: 16,
+  },
+  safetyDescription: {
+    fontSize: 12,
+    fontFamily: 'SpaceGrotesk',
+    lineHeight: 18,
+    marginBottom: 20,
+    opacity: 0.7,
+  },
+  safetyFeatures: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(128, 128, 128, 0.15)',
+  },
+  safetyFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  safetyFeatureText: {
+    fontSize: 11,
+    fontWeight: '700',
+    fontFamily: 'SpaceGrotesk',
+  },
+  infoVersion: {
+    fontSize: 10,
+    fontFamily: 'SpaceGrotesk',
+    opacity: 0.5,
   },
 });
