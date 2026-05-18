@@ -14,6 +14,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUiStore } from '../store/useUiStore';
+import { useWalletStore } from '../store/useWalletStore';
 import { useEffect, useRef, useState } from 'react';
 
 interface SettingsScreenProps {
@@ -68,6 +69,12 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
 
   const [profileModalVisible, setProfileModalVisible] = useState(false);
   const [tempName, setTempName] = useState(userName);
+
+  const [payeesModalVisible, setPayeesModalVisible] = useState(false);
+  const [newPayee, setNewPayee] = useState('');
+  const payees = useWalletStore(s => s.payees);
+  const addPayee = useWalletStore(s => s.addPayee);
+  const removePayee = useWalletStore(s => s.removePayee);
 
   const bgColor = theme.colors.background;
   const surfaceColor = theme.colors.surfaceVariant;
@@ -196,6 +203,19 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
         />
 
         <Text style={[styles.sectionLabel, { color: subColor }]}>DATA SETUP</Text>
+
+        <SetupCard
+          icon="account-group"
+          title="Payees Master List"
+          subtitle="Manage people you share expenses with"
+          accentColor="#AAEF00"
+          onPress={() => setPayeesModalVisible(true)}
+          isDark={isDark}
+          bgColor={surfaceColor}
+          borderColor={borderColor}
+          textColor={textColor}
+          subColor={subColor}
+        />
 
         <SetupCard
           icon="qrcode"
@@ -357,6 +377,89 @@ export default function SettingsScreen({ onNavigate }: SettingsScreenProps) {
           <Dialog.Actions>
             <Button onPress={() => setProfileModalVisible(false)} textColor={subColor}>Cancel</Button>
             <Button onPress={handleSaveProfile} textColor="#AAEF00">Save</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+      {/* Payees Modal */}
+      <Portal>
+        <Dialog visible={payeesModalVisible} onDismiss={() => setPayeesModalVisible(false)} style={{ backgroundColor: theme.colors.surface, borderRadius: 28 }}>
+          <Dialog.Title style={{ color: textColor, fontFamily: 'SpaceGrotesk', fontWeight: '900', fontSize: 24, marginBottom: 8 }}>Payees Master List</Dialog.Title>
+          <Dialog.Content>
+            <Text style={{ color: subColor, fontFamily: 'SpaceGrotesk', fontSize: 14, marginBottom: 20 }}>
+              Add people you frequently share expenses with. They will appear in your transaction drop-downs.
+            </Text>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+              <TextInput
+                label="New Payee Name"
+                value={newPayee}
+                onChangeText={setNewPayee}
+                mode="outlined"
+                style={{ flex: 1, backgroundColor: 'transparent' }}
+                textColor={textColor}
+                outlineStyle={{ borderRadius: 12 }}
+                right={
+                  <TextInput.Icon 
+                    icon="plus-circle" 
+                    color={newPayee.trim() ? "#AAEF00" : subColor}
+                    onPress={() => {
+                      if (newPayee.trim() && !payees.includes(newPayee.trim())) {
+                        addPayee(newPayee.trim());
+                        setNewPayee('');
+                      }
+                    }}
+                  />
+                }
+              />
+            </View>
+            
+            <View style={{ backgroundColor: theme.colors.surfaceVariant, borderRadius: 16, overflow: 'hidden' }}>
+              <ScrollView style={{ maxHeight: 240 }}>
+                {payees.map((p, i) => (
+                  <View key={p} style={{ 
+                    flexDirection: 'row', 
+                    alignItems: 'center', 
+                    paddingVertical: 12, 
+                    paddingHorizontal: 16,
+                    borderBottomWidth: i === payees.length - 1 ? 0 : 1,
+                    borderBottomColor: theme.colors.outlineVariant,
+                  }}>
+                    <Avatar.Text 
+                      size={36} 
+                      label={p.charAt(0).toUpperCase()} 
+                      style={{ backgroundColor: p === 'Me' ? '#AAEF00' : theme.colors.primaryContainer, marginRight: 12 }}
+                      labelStyle={{ color: p === 'Me' ? '#000000' : theme.colors.onPrimaryContainer, fontWeight: '700', fontSize: 14 }}
+                    />
+                    <Text style={{ flex: 1, color: textColor, fontFamily: 'SpaceGrotesk', fontWeight: p === 'Me' ? '800' : '600', fontSize: 16 }}>{p}</Text>
+                    
+                    {p !== 'Me' ? (
+                      <IconButton 
+                        icon="minus-circle-outline" 
+                        iconColor={theme.colors.error} 
+                        size={22}
+                        onPress={() => removePayee(p)} 
+                        style={{ margin: 0 }}
+                      />
+                    ) : (
+                      <View style={{ backgroundColor: 'rgba(170, 239, 0, 0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
+                        <Text style={{ color: '#AAEF00', fontFamily: 'SpaceGrotesk', fontSize: 11, fontWeight: '800' }}>DEFAULT</Text>
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          </Dialog.Content>
+          <Dialog.Actions style={{ paddingBottom: 12, paddingRight: 16 }}>
+            <Button 
+              onPress={() => setPayeesModalVisible(false)} 
+              textColor="#000000"
+              buttonColor="#AAEF00"
+              labelStyle={{ fontFamily: 'SpaceGrotesk', fontWeight: '800', letterSpacing: 0.5 }}
+              style={{ borderRadius: 12, paddingHorizontal: 8 }}
+            >
+              Done
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>

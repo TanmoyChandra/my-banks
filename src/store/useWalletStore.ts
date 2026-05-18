@@ -12,6 +12,7 @@ interface WalletState {
   accounts: BankAccount[];
   transactions: CardTransaction[];
   merchantQRs: MerchantQR[];
+  payees: string[];
 
   addUpi: (entry: Omit<QREntry, 'id'>) => void;
   updateUpi: (id: string, entry: Omit<QREntry, 'id'>) => void;
@@ -35,6 +36,10 @@ interface WalletState {
   addMerchantQR: (entry: Omit<MerchantQR, 'id'>) => void;
   updateMerchantQR: (id: string, entry: Omit<MerchantQR, 'id'>) => void;
   deleteMerchantQR: (id: string) => void;
+
+  // Payees
+  addPayee: (name: string) => void;
+  removePayee: (name: string) => void;
 }
 
 export const useWalletStore = create<WalletState>()(
@@ -45,6 +50,7 @@ export const useWalletStore = create<WalletState>()(
       accounts: [],
       transactions: [],
       merchantQRs: [],
+      payees: ['Me'],
 
       // UPI CRUD
       addUpi: (entry) =>
@@ -93,6 +99,12 @@ export const useWalletStore = create<WalletState>()(
         set((s) => ({ merchantQRs: s.merchantQRs.map((m) => (m.id === id ? { ...entry, id } : m)) })),
       deleteMerchantQR: (id) =>
         set((s) => ({ merchantQRs: s.merchantQRs.filter((m) => m.id !== id) })),
+
+      // Payees
+      addPayee: (name) =>
+        set((s) => ({ payees: s.payees.includes(name) ? s.payees : [...s.payees, name] })),
+      removePayee: (name) =>
+        set((s) => ({ payees: s.payees.filter((p) => p !== name) })),
     }),
     {
       name: 'mybanks-wallet',

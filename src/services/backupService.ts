@@ -2,7 +2,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 
-const BACKUP_VERSION = 3; // Version 3 adds full XOR encryption and user profile image support
+const BACKUP_VERSION = 4; // Version 4 adds hex-safe encryption and payees list
 const FILE_MAGIC = 'MYBANKS_BACKUP';
 
 export interface BackupPayload {
@@ -15,6 +15,7 @@ export interface BackupPayload {
     accounts: any[];
     transactions: any[];
     merchantQRs: any[];
+    payees?: string[];
   };
   preferences: {
     userName: string;
@@ -78,11 +79,12 @@ export async function exportBackup(payload: BackupPayload): Promise<BackupResult
     const SECRET_KEY = "MB_SECURE_STORAGE_KEY_2026";
     const encryptedArr = new Array(base64Data.length);
     for (let i = 0; i < base64Data.length; i++) {
-      encryptedArr[i] = String.fromCharCode(base64Data.charCodeAt(i) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length));
+      const xored = base64Data.charCodeAt(i) ^ SECRET_KEY.charCodeAt(i % SECRET_KEY.length);
+      encryptedArr[i] = xored.toString(16).padStart(2, '0');
     }
     const encrypted = encryptedArr.join('');
 
-    const finalData = `MYBANKS_ENCRYPTED_V3::${encrypted}`;
+    const finalData = `MYBANKS_ENCRYPTED_V4::${encrypted}`;
 
     await FileSystem.writeAsStringAsync(filePath, finalData, {
       encoding: 'utf8',
@@ -133,7 +135,17 @@ export async function importBackup(): Promise<
 
     // 3. Decrypt and decode
     let base64Data = "";
-    if (fileContent.startsWith('MYBANKS_ENCRYPTED_V3::')) {
+    if (fileContent.startsWith('MYBANKS_ENCRYPTED_V4::')) {
+      const encrypted = fileContent.replace('MYBANKS_ENCRYPTED_V4::', '');
+      const SECRET_KEY = "MB_SECURE_STORAGE_KEY_2026";
+      let decrypted = '';
+      for (let i = 0; i < encrypted.length; i += 2) {
+        const hexByte = parseInt(encrypted.substring(i, i + 2), 16);
+        decrypted += String.fromCharCode(hexByte ^ SECRET_KEY.charCodeAt((i / 2) % SECRET_KEY.length));
+      }
+      base64Data = decrypted;
+    } else if (fileContent.startsWith('MYBANKS_ENCRYPTED_V3::')) {
+      // V3 has corruption issues but try to decrypt if possible
       const encrypted = fileContent.replace('MYBANKS_ENCRYPTED_V3::', '');
       const SECRET_KEY = "MB_SECURE_STORAGE_KEY_2026";
       const decryptedArr = new Array(encrypted.length);

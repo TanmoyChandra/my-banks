@@ -131,6 +131,7 @@ export default function BackupRestoreSettings() {
   const accounts = useWalletStore(s => s.accounts);
   const transactions = useWalletStore(s => s.transactions);
   const merchantQRs = useWalletStore(s => s.merchantQRs);
+  const payees = useWalletStore(s => s.payees);
 
   // UI store
   const userName = useUiStore(s => s.userName);
@@ -152,7 +153,7 @@ export default function BackupRestoreSettings() {
       magic: FILE_MAGIC,
       version: BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
-      wallet: { upis, cards, accounts, transactions, merchantQRs },
+      wallet: { upis, cards, accounts, transactions, merchantQRs, payees },
       preferences: { userName, userImage, isDark: isDarkPref, isAppLockEnabled },
     };
 
@@ -209,6 +210,7 @@ export default function BackupRestoreSettings() {
       accounts: pendingPayload.wallet.accounts,
       transactions: pendingPayload.wallet.transactions,
       merchantQRs: pendingPayload.wallet.merchantQRs,
+      payees: pendingPayload.wallet.payees || ['Me'],
     });
 
     // Restore UI preferences

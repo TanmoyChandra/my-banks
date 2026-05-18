@@ -8,7 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Appbar, FAB, Avatar, List, Chip, Paragraph, Surface } from 'react-native-paper';
+import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Appbar, FAB, Avatar, List, Chip, Paragraph, Surface, Menu } from 'react-native-paper';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -45,26 +45,29 @@ function TransactionModal({
   const isDark = theme.dark;
   const addTransaction = useWalletStore((s) => s.addTransaction);
   const updateTransaction = useWalletStore((s) => s.updateTransaction);
+  const payees = useWalletStore((s) => s.payees);
 
   const [txType, setTxType] = useState<'debit' | 'credit'>('debit');
   const [amount, setAmount] = useState('');
+  const amountInputRef = useRef<any>(null);
   const [description, setDescription] = useState('');
-  const [payee, setPayee] = useState('me');
+  const [payee, setPayee] = useState('Me');
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
+  const [payeeMenuVisible, setPayeeMenuVisible] = useState(false);
 
   useEffect(() => {
     if (visible && initialData) {
       setTxType(initialData.type);
       setAmount(initialData.amount.toString());
       setDescription(initialData.description);
-      setPayee(initialData.payee || 'me');
+      setPayee(initialData.payee || 'Me');
       setDate(new Date(initialData.date));
     } else if (visible && !initialData) {
       setTxType('debit');
       setAmount('');
       setDescription('');
-      setPayee('me');
+      setPayee('Me');
       setDate(new Date());
     }
   }, [visible, initialData]);
@@ -126,6 +129,8 @@ function TransactionModal({
         useNativeDriver={true}
         useNativeDriverForBackdrop={true}
         hideModalContentWhileAnimating={true}
+        avoidKeyboard={true}
+        onModalShow={() => amountInputRef.current?.focus()}
       >
         <View style={[styles.modalSheet, { backgroundColor: bgColor, borderColor }]}>
           {/* Handle */}
@@ -139,7 +144,15 @@ function TransactionModal({
               {!initialData && (
                 <SegmentedButtons
                   value={txType}
-                  onValueChange={(val) => setTxType(val as 'debit' | 'credit')}
+                  onValueChange={(val) => {
+                    const newType = val as 'debit' | 'credit';
+                    setTxType(newType);
+                    if (newType === 'credit' && !description.trim()) {
+                      setDescription('to Bank');
+                    } else if (newType === 'debit' && description.trim() === 'to Bank') {
+                      setDescription('');
+                    }
+                  }}
                   buttons={[
                     { value: 'debit', label: '↑ Spent' },
                     { value: 'credit', label: '↓ Payment Made' },
@@ -165,6 +178,7 @@ function TransactionModal({
               >
                 {/* Amount */}
                 <PaperInput
+                  ref={amountInputRef}
                   mode="outlined"
                   label="Amount (₹)"
                   value={amount}
@@ -184,16 +198,38 @@ function TransactionModal({
                   style={{ marginBottom: 16 }}
                 />
 
-                {/* Payee (Hide if Payment Made) */}
-                {txType === 'debit' && (
-                  <PaperInput
-                    mode="outlined"
-                    label="For whom (Payee)"
-                    value={payee}
-                    onChangeText={setPayee}
-                    placeholder="e.g. me"
-                    style={{ marginBottom: 16 }}
-                  />
+                {/* Payee */}
+                <TouchableOpacity activeOpacity={0.8} onPress={() => setPayeeMenuVisible(!payeeMenuVisible)}>
+                  <View pointerEvents="none">
+                    <PaperInput
+                      mode="outlined"
+                      label="For whom (Payee)"
+                      value={payee}
+                      style={{ marginBottom: payeeMenuVisible ? 0 : 16 }}
+                      right={<PaperInput.Icon icon={payeeMenuVisible ? "menu-up" : "menu-down"} />}
+                    />
+                  </View>
+                </TouchableOpacity>
+                {payeeMenuVisible && (
+                  <View style={{ backgroundColor: theme.colors.surfaceVariant, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, marginBottom: 16, marginTop: -4, padding: 8, elevation: 4 }}>
+                    {payees.map((p, i) => (
+                      <TouchableOpacity 
+                        key={p} 
+                        onPress={() => { setPayee(p); setPayeeMenuVisible(false); }} 
+                        style={{ 
+                          paddingVertical: 12, 
+                          paddingHorizontal: 8, 
+                          borderBottomWidth: i === payees.length - 1 ? 0 : 1, 
+                          borderBottomColor: theme.colors.outlineVariant, 
+                          flexDirection: 'row', 
+                          alignItems: 'center' 
+                        }}
+                      >
+                        <Text style={{ color: textColor, fontWeight: payee === p ? '800' : '400', fontFamily: 'SpaceGrotesk', fontSize: 16 }}>{p}</Text>
+                        {payee === p && <IconButton icon="check" size={18} iconColor={theme.colors.primary} style={{ margin: 0, marginLeft: 'auto' }} />}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 )}
 
                 {/* Date */}
@@ -408,6 +444,20 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
     return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
   }, [card.billingDate]);
 
+  const payees = useWalletStore(s => s.payees);
+
+  const duesByPayee = useMemo(() => {
+    const dues: Record<string, number> = {};
+    payees.forEach(p => dues[p] = 0);
+    cardTxs.forEach(tx => {
+      let p = tx.payee || 'Me';
+      if (p.toLowerCase() === 'me' || p.toLowerCase() === 'general') p = 'Me';
+      if (dues[p] === undefined) dues[p] = 0;
+      dues[p] += tx.type === 'debit' ? tx.amount : -tx.amount;
+    });
+    return dues;
+  }, [cardTxs, payees]);
+
   const groupedTxs = useMemo(() => {
     const groups: { [key: string]: CardTransaction[] } = {};
     const sorted = [...cardTxs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -494,6 +544,14 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
               </Text>
             </View>
           )}
+        </View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+          {Object.entries(duesByPayee).filter(([_, amt]) => amt !== 0).map(([p, amt]) => (
+            <View key={p} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: p === 'Me' ? theme.colors.primary : subColor }} />
+              <Text style={{ fontSize: 11, fontFamily: 'SpaceGrotesk', color: subColor }}>{p}: <Text style={{ fontWeight: '700', color: textColor }}>₹ {fmt(Math.abs(amt))}</Text></Text>
+            </View>
+          ))}
         </View>
         <View style={styles.statsRowNew}>
           <View>
