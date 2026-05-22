@@ -13,8 +13,10 @@ import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
 import { DatePickerModal } from 'react-native-paper-dates';
+import { LinearGradient } from 'expo-linear-gradient';
 import { CardEntry, CardTransaction } from '../types';
 import { useWalletStore } from '../store/useWalletStore';
+import { getCardColors } from '../constants/cardColors';
 
 interface CardTransactionsProps {
   card: CardEntry;
@@ -344,7 +346,7 @@ function TransactionRow({
   );
 
   const formattedTime = new Date(tx.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  const displayAmount = isDebit ? `-₹${tx.amount.toFixed(2)}` : `+₹${tx.amount.toFixed(2)}`;
+  const displayAmount = isDebit ? `-₹${fmt(tx.amount)}` : `+₹${fmt(tx.amount)}`;
 
   return (
     <Swipeable
@@ -367,8 +369,8 @@ function TransactionRow({
               </Text>
             ) : (
               <>
-                <View style={{ backgroundColor: isDark ? '#3D1515' : '#FFEBEE', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginRight: 6 }}>
-                  <Text style={{ color: isDark ? '#FF6B6B' : '#D32F2F', fontSize: 11, fontWeight: '800', fontFamily: 'SpaceGrotesk', letterSpacing: 0.5 }}>
+                <View style={{ backgroundColor: isDebit ? (isDark ? '#3D1515' : '#FFEBEE') : (isDark ? '#1C3118' : '#E8F5E9'), paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, marginRight: 6 }}>
+                  <Text style={{ color: isDebit ? (isDark ? '#FF6B6B' : '#D32F2F') : (isDark ? '#A1D99B' : '#4F7922'), fontSize: 11, fontWeight: '800', fontFamily: 'SpaceGrotesk', letterSpacing: 0.5 }}>
                     {tx.payee}
                   </Text>
                 </View>
@@ -458,9 +460,54 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
     return dues;
   }, [cardTxs, payees]);
 
+  const [activeTab, setActiveTab] = useState<string>('All');
+
+  const otherPayees = useMemo(() => {
+    const payeesSet = new Set<string>();
+    cardTxs.forEach((tx) => {
+      if (tx.type === 'debit' && tx.payee) {
+        const name = tx.payee.trim();
+        const lowerName = name.toLowerCase();
+        if (lowerName !== 'me' && lowerName !== 'general') {
+          payeesSet.add(name);
+        }
+      }
+    });
+    return Array.from(payeesSet).sort();
+  }, [cardTxs]);
+
+  const tabs = useMemo(() => ['All', 'Me', ...otherPayees, 'Payment Made'], [otherPayees]);
+
+  useEffect(() => {
+    if (!tabs.includes(activeTab)) {
+      setActiveTab('All');
+    }
+  }, [tabs, activeTab]);
+
+  const filteredTxs = useMemo(() => {
+    if (activeTab === 'All') {
+      return cardTxs;
+    } else if (activeTab === 'Payment Made') {
+      return cardTxs.filter((tx) => tx.type === 'credit');
+    } else if (activeTab === 'Me') {
+      return cardTxs.filter((tx) => {
+        if (tx.type !== 'debit') return false;
+        if (!tx.payee) return true;
+        const lowerPayee = tx.payee.trim().toLowerCase();
+        return lowerPayee === 'me' || lowerPayee === 'general';
+      });
+    } else {
+      return cardTxs.filter((tx) => {
+        if (tx.type !== 'debit') return false;
+        if (!tx.payee) return false;
+        return tx.payee.trim().toLowerCase() === activeTab.trim().toLowerCase();
+      });
+    }
+  }, [cardTxs, activeTab]);
+
   const groupedTxs = useMemo(() => {
     const groups: { [key: string]: CardTransaction[] } = {};
-    const sorted = [...cardTxs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const sorted = [...filteredTxs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     sorted.forEach(tx => {
       const d = new Date(tx.date);
@@ -479,7 +526,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
       groups[key].push(tx);
     });
     return groups;
-  }, [cardTxs]);
+  }, [filteredTxs]);
 
   const bgColor = theme.colors.background;
   const textColor = isDark ? '#FFFFFF' : '#202020';
@@ -502,6 +549,8 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
     }
   };
 
+  const palette = getCardColors(card.color);
+
   return (
     <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: 0 }]}>
       {/* ── Header ── */}
@@ -511,15 +560,35 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
         <Appbar.Action icon="dots-vertical" onPress={() => {}} />
       </Appbar.Header>
 
-      <Surface style={[styles.totalCard, { backgroundColor: theme.colors.surface }]} elevation={0}>
-        <Text style={[styles.totalLabel, { color: subColor }]}>Total due</Text>
+      <View style={[styles.totalCard, { overflow: 'hidden' }]}>
+        <LinearGradient
+          colors={[palette.from, palette.via, palette.to]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+
+        {/* Holographic shimmer overlay matching BankCard */}
+        <LinearGradient
+          colors={['transparent', 'rgba(255,255,255,0.07)', 'rgba(255,255,255,0.12)', 'rgba(255,255,255,0.07)', 'transparent']}
+          start={{ x: 0.2, y: 0 }}
+          end={{ x: 0.8, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+
+        {/* Ambient glow effects matching BankCard */}
+        <View style={[styles.glow1, { backgroundColor: palette.glow1 }]} pointerEvents="none" />
+        <View style={[styles.glow2, { backgroundColor: palette.glow2 }]} pointerEvents="none" />
+
+        <Text style={[styles.totalLabel, { color: 'rgba(255,255,255,0.7)' }]}>Total due</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-          <Text style={[styles.totalAmount, { color: textColor }]}>
+          <Text style={[styles.totalAmount, { color: '#FFFFFF' }]}>
             ₹ {fmt(Math.abs(totalDue))}
           </Text>
           {daysUntilBilling !== null && (
             <View style={{
-              backgroundColor: daysUntilBilling <= 3 ? (isDark ? '#3D1515' : '#FFEBEE') : (isDark ? '#1C2A1C' : '#E8F5E9'),
+              backgroundColor: daysUntilBilling <= 3 ? 'rgba(255,107,107,0.2)' : 'rgba(161,217,155,0.2)',
               paddingHorizontal: 10,
               paddingVertical: 4,
               borderRadius: 20,
@@ -531,14 +600,14 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
               <IconButton
                 icon="calendar-clock"
                 size={14}
-                iconColor={daysUntilBilling <= 3 ? (isDark ? '#FF6B6B' : '#D32F2F') : (isDark ? '#A1D99B' : '#4F7922')}
+                iconColor={daysUntilBilling <= 3 ? '#FF8F8F' : '#A1D99B'}
                 style={{ margin: 0, width: 16, height: 16 }}
               />
               <Text style={{
                 fontSize: 11,
                 fontWeight: '800',
                 fontFamily: 'SpaceGrotesk',
-                color: daysUntilBilling <= 3 ? (isDark ? '#FF6B6B' : '#D32F2F') : (isDark ? '#A1D99B' : '#4F7922'),
+                color: daysUntilBilling <= 3 ? '#FF8F8F' : '#A1D99B',
               }}>
                 {daysUntilBilling === 0 ? 'Bill today!' : `${daysUntilBilling}d to bill`}
               </Text>
@@ -548,22 +617,67 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
           {Object.entries(duesByPayee).filter(([_, amt]) => amt !== 0).map(([p, amt]) => (
             <View key={p} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: p === 'Me' ? theme.colors.primary : subColor }} />
-              <Text style={{ fontSize: 11, fontFamily: 'SpaceGrotesk', color: subColor }}>{p}: <Text style={{ fontWeight: '700', color: textColor }}>₹ {fmt(Math.abs(amt))}</Text></Text>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: p === 'Me' ? '#FFFFFF' : 'rgba(255,255,255,0.5)' }} />
+              <Text style={{ fontSize: 11, fontFamily: 'SpaceGrotesk', color: 'rgba(255,255,255,0.7)' }}>{p}: <Text style={{ fontWeight: '700', color: '#FFFFFF' }}>₹ {fmt(Math.abs(amt))}</Text></Text>
             </View>
           ))}
         </View>
         <View style={styles.statsRowNew}>
           <View>
-            <Text style={[styles.statLabelNew, { color: subColor }]}>Spent amount</Text>
-            <Text style={[styles.statValueNew, { color: textColor }]}>₹ {fmt(cardTxs.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0))}</Text>
+            <Text style={[styles.statLabelNew, { color: 'rgba(255,255,255,0.7)' }]}>Spent amount</Text>
+            <Text style={[styles.statValueNew, { color: '#FFFFFF' }]}>₹ {fmt(cardTxs.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0))}</Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={[styles.statLabelNew, { color: subColor }]}>Amount Kept</Text>
-            <Text style={[styles.statValueNew, { color: theme.colors.primary }]}>₹ {fmt(cardTxs.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0))}</Text>
+            <Text style={[styles.statLabelNew, { color: 'rgba(255,255,255,0.7)' }]}>Amount Kept</Text>
+            <Text style={[styles.statValueNew, { color: '#FFFFFF' }]}>₹ {fmt(cardTxs.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0))}</Text>
           </View>
         </View>
-      </Surface>
+      </View>
+
+      {/* ── Dynamic Tabs ── */}
+      <View style={{ marginHorizontal: 16, marginBottom: 12, marginTop: 4 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 8, paddingRight: 16 }}
+        >
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab;
+            return (
+              <TouchableOpacity
+                key={tab}
+                onPress={() => setActiveTab(tab)}
+                activeOpacity={0.8}
+                style={{
+                  paddingHorizontal: 16,
+                  paddingVertical: 10,
+                  borderRadius: 20,
+                  backgroundColor: isActive
+                    ? theme.colors.primaryContainer
+                    : theme.colors.surface,
+                  borderWidth: isActive ? 0 : 1,
+                  borderColor: theme.colors.outlineVariant,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: isActive ? '700' : '500',
+                    fontFamily: 'SpaceGrotesk',
+                    color: isActive
+                      ? theme.colors.onPrimaryContainer
+                      : theme.colors.onSurfaceVariant,
+                  }}
+                >
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       <ScrollView
         style={{ flex: 1 }}
@@ -593,10 +707,20 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
           </View>
         ))}
 
-        {cardTxs.length === 0 && (
+        {filteredTxs.length === 0 && (
           <View style={styles.empty}>
             <Avatar.Icon size={64} icon="receipt" style={{ backgroundColor: theme.colors.surfaceVariant, marginBottom: 16 }} color={theme.colors.primary} />
-            <Text style={[styles.emptyTitle, { color: textColor }]}>No transactions yet</Text>
+            <Text style={[styles.emptyTitle, { color: textColor }]}>
+              {cardTxs.length === 0
+                ? 'No transactions yet'
+                : activeTab === 'All'
+                ? 'No transactions found'
+                : activeTab === 'Payment Made'
+                ? 'No payments made yet'
+                : activeTab === 'Me'
+                ? 'No transactions for Me yet'
+                : `No transactions for ${activeTab} yet`}
+            </Text>
             <Text style={[styles.emptySubtitle, { color: subColor }]}>
               Tap the + button to add your first entry
             </Text>
@@ -707,7 +831,34 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 24,
     borderRadius: 24,
-    marginBottom: 8,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.15)',
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(255,255,255,0.1)',
+  },
+  glow1: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    top: -80,
+    right: -50,
+    opacity: 0.18,
+  },
+  glow2: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    bottom: -70,
+    left: -40,
+    opacity: 0.12,
   },
   totalLabel: {
     fontSize: 14,
