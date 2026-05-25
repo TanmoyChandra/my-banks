@@ -45,7 +45,7 @@ const AccountItem: React.FC<{ account: BankAccount }> = ({ account }) => {
   const cardBg = palette.via;
   const textColor = '#FFFFFF';
   const mutedColor = 'rgba(255,255,255,0.55)';
-  const accentColor = '#C9F158';
+  const accentColor = '#AAEF00';
 
 
 

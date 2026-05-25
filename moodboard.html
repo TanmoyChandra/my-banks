@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>my-banks Application Moodboard</title>
+    <!-- Modern Typography: Space Grotesk -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* Branding Color */
+            --accent: #AAEF00;
+            --accent-glow: rgba(170, 239, 0, 0.4);
+            
+            /* Dark Theme (Default) */
+            --bg: #111111;
+            --surface: #1A1A1A;
+            --surface-variant: #202020;
+            --text: #FFFFFF;
+            --text-muted: #A1A1A1;
+            --border: #2A2A2A;
+            --border-variant: #303030;
+            
+            --success: #A1D99B;
+            --success-bg: #1C3118;
+            --error: #FF6B6B;
+            --error-bg: #3D1515;
+            
+            --shadow: rgba(0, 0, 0, 0.6);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="light"] {
+            /* Light Theme */
+            --bg: #F2F3F5;
+            --surface: #FFFFFF;
+            --surface-variant: #EBECEF;
+            --text: #202020;
+            --text-muted: #7A7A7A;
+            --border: #EAEAEA;
+            --border-variant: #EFEFEF;
+            
+            --success: #4F7922;
+            --success-bg: #E8F5E9;
+            --error: #D32F2F;
+            --error-bg: #FFEBEE;
+            
+            --shadow: rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            transition: var(--transition);
+            min-height: 100vh;
+            padding: 40px 24px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --- Header Styles --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 24px;
+            margin-bottom: 48px;
+        }
+
+        .logo-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-indicator {
+            width: 32px;
+            height: 32px;
+            background-color: var(--accent);
+            border-radius: 8px;
+            box-shadow: 0 0 16px var(--accent-glow);
+        }
+
+        .logo-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .theme-toggle-btn {
+            background-color: var(--surface);
+            border: 1.5px solid var(--border);
+            color: var(--text);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .theme-toggle-btn:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 12px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle-btn:active {
+            transform: translateY(0);
+        }
+
+        /* --- Section Common Styles --- */
+        section {
+            margin-bottom: 64px;
+        }
+
+        .section-header {
+            margin-bottom: 28px;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background-color: var(--border);
+        }
+
+        .section-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        /* --- Card Swatch Grid --- */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 24px;
+        }
+
+        .grid-colors {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        /* --- Color Card Styles --- */
+        .color-card {
+            background-color: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .color-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--text-muted);
+        }
+
+        .color-preview {
+            height: 120px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #000;
+            position: relative;
+        }
+
+        .color-details {
+            padding: 16px 20px;
+        }
+
+        .color-name {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .color-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .color-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            display: inline-block;
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Bank Card Graphic Preview --- */
+        .bank-card-preview {
+            aspect-ratio: 1.58 / 1; /* Standard card ratio */
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px;
+            color: #FFFFFF;
+            box-shadow: 0 16px 36px var(--shadow);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+        }
+
+        .bank-card-preview:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 24px 48px var(--shadow);
+        }
+
+        /* Glow effects for cards */
+        .glow-overlay-1 {
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            top: -60px;
+            right: -40px;
+            opacity: 0.22;
+            filter: blur(35px);
+            pointer-events: none;
+        }
+
+        .glow-overlay-2 {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            bottom: -50px;
+            left: -30px;
+            opacity: 0.15;
+            filter: blur(25px);
+            pointer-events: none;
+        }
+
+        /* Holographic shimmer */
+        .shimmer-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, transparent 30%, rgba(255, 255, 255, 0.08) 50%, transparent 70%);
+            background-size: 200% 200%;
+            background-position: 0% 0%;
+            pointer-events: none;
+            transition: background-position 0.6s ease;
+        }
+
+        .bank-card-preview:hover .shimmer-overlay {
+            background-position: 100% 100%;
+        }
+
+        .card-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 1;
+        }
+
+        .card-chip {
+            width: 36px;
+            height: 28px;
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            border-radius: 6px;
+            opacity: 0.85;
+        }
+
+        .card-bank-name {
+            font-size: 15px;
+            font-weight: 700;
+            opacity: 0.9;
+        }
+
+        .card-number {
+            font-size: 18px;
+            font-weight: 500;
+            letter-spacing: 2.5px;
+            font-family: monospace;
+            margin-top: auto;
+            margin-bottom: 12px;
+            z-index: 1;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            z-index: 1;
+        }
+
+        .card-holder {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .card-holder-name {
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .card-network {
+            font-weight: 900;
+            font-style: italic;
+            font-size: 16px;
+            letter-spacing: -0.5px;
+            opacity: 0.95;
+        }
+
+        /* --- Typography Table --- */
+        .typo-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .typo-table th, .typo-table td {
+            padding: 18px 24px;
+            text-align: left;
+            border-bottom: 1.5px solid var(--border);
+        }
+
+        .typo-table th {
+            background-color: var(--surface-variant);
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .typo-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .typo-spec {
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .typo-name {
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .typo-sample {
+            font-family: 'Space Grotesk', sans-serif;
+            outline: none;
+        }
+
+        /* --- Clipboard Toast Toast System --- */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: #000000;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 16px var(--accent-glow);
+            z-index: 9999;
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* --- Layout helper --- */
+        .interactive-prompt {
+            background-color: var(--surface-variant);
+            border: 1px dashed var(--border);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            display: inline-block;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 24px 16px;
+            }
+            header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: flex-start;
+            }
+            .grid-3, .grid-colors {
+                grid-template-columns: 1fr;
+            }
+            .typo-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toast" id="toast">Copied hex code to clipboard!</div>
+
+<div class="container">
+    <header>
+        <div class="logo-box">
+            <div class="logo-indicator"></div>
+            <h1 class="logo-title">my-banks</h1>
+        </div>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" id="theme-btn">
+            <!-- Icon placeholder -->
+            <span id="theme-icon">☀️</span> <span id="theme-text">LIGHT MODE</span>
+        </button>
+    </header>
+
+    <!-- UI Core Design Tokens -->
+    <section>
+        <div class="section-header">
+            <h2 class="section-title">Core Branding & Theme Tokens</h2>
+            <p class="section-desc">Standard interface tokens used for light and dark modes (Click any card to copy hex value).</p>
+        </div>
+        
+        <div class="grid-colors">
+            <!-- Accent Volt -->
+            <div class="color-card" onclick="copyHex('#AAEF00')">
+                <div class="color-preview" style="background-color: #AAEF00; color: #111111;">Volt / Lime Accent</div>
+                <div class="color-details">
+                    <div class="color-name">Primary Brand Accent</div>
+                    <div class="color-meta">#AAEF00</div>
+                    <span class="color-badge" style="background-color: rgba(170,239,0,0.15); color: #AAEF00;">Global Accent</span>
+                </div>
+            </div>
+
+            <!-- Dark Surface -->
+            <div class="color-card" onclick="copyHex('#111111')">
+                <div class="color-preview" style="background-color: #111111; color: #fff; border-bottom: 1px solid var(--border)">Midnight Black</div>
+                <div class="color-details">
+                    <div class="color-name">Dark Mode Background</div>
+                    <div class="color-meta">#111111</div>
+                    <span class="color-badge" style="background-color: rgba(255,255,255,0.08); color: var(--text-muted);">Dark bg</span>
+                </div>
+            </div>
+
+            <!-- Dark Surface 2 -->
+            <div class="color-card" onclick="copyHex('#1A1A1A')">
+                <div class="color-preview" style="background-color: #1A1A1A; color: #fff;">Dark Card Surface</div>
+                <div class="color-details">
+                    <div class="color-name">Dark Mode Surface</div>
+                    <div class="color-meta">#1A1A1A</div>
+                    <span class="color-badge" style="background-color: rgba(255,255,255,0.08); color: var(--text-muted);">Dark surface</span>
+                </div>
+            </div>
+
+            <!-- Light background -->
+            <div class="color-card" onclick="copyHex('#F2F3F5')">
+                <div class="color-preview" style="background-color: #F2F3F5; color: #111;">Light Grey</div>
+                <div class="color-details">
+                    <div class="color-name">Light Mode Background</div>
+                    <div class="color-meta">#F2F3F5</div>
+                    <span class="color-badge" style="background-color: rgba(0,0,0,0.05); color: var(--text-muted);">Light bg</span>
+                </div>
+            </div>
+
+            <!-- Light Surface -->
+            <div class="color-card" onclick="copyHex('#FFFFFF')">
+                <div class="color-preview" style="background-color: #FFFFFF; color: #111; border-bottom: 1px solid var(--border)">Pure White</div>
+                <div class="color-details">
+                    <div class="color-name">Light Mode Surface</div>
+                    <div class="color-meta">#FFFFFF</div>
+                    <span class="color-badge" style="background-color: rgba(0,0,0,0.05); color: var(--text-muted);">Light surface</span>
+                </div>
+            </div>
+
+            <!-- Primary Charcoal Text -->
+            <div class="color-card" onclick="copyHex('#202020')">
+                <div class="color-preview" style="background-color: #202020; color: #fff;">Charcoal Black</div>
+                <div class="color-details">
+                    <div class="color-name">General Primary Text</div>
+                    <div class="color-meta">#202020</div>
+                    <span class="color-badge" style="background-color: rgba(0,0,0,0.05); color: var(--text-muted);">Charcoal</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- State & Indicators -->
+    <section>
+        <div class="section-header">
+            <h2 class="section-title">Status Indicators</h2>
+            <p class="section-desc">Success (Credit), Error (Debit/Flagged), and Category Chips.</p>
+        </div>
+
+        <div class="grid-colors">
+            <!-- Light Credit Text -->
+            <div class="color-card" onclick="copyHex('#4F7922')">
+                <div class="color-preview" style="background-color: #E8F5E9; color: #4F7922;">#4F7922 / #E8F5E9</div>
+                <div class="color-details">
+                    <div class="color-name">Success / Credit (Light)</div>
+                    <div class="color-meta">Text: #4F7922 | Bg: #E8F5E9</div>
+                </div>
+            </div>
+
+            <!-- Dark Credit Text -->
+            <div class="color-card" onclick="copyHex('#A1D99B')">
+                <div class="color-preview" style="background-color: #1C3118; color: #A1D99B;">#A1D99B / #1C3118</div>
+                <div class="color-details">
+                    <div class="color-name">Success / Credit (Dark)</div>
+                    <div class="color-meta">Text: #A1D99B | Bg: #1C3118</div>
+                </div>
+            </div>
+
+            <!-- Light Debit Text -->
+            <div class="color-card" onclick="copyHex('#D32F2F')">
+                <div class="color-preview" style="background-color: #FFEBEE; color: #D32F2F;">#D32F2F / #FFEBEE</div>
+                <div class="color-details">
+                    <div class="color-name">Error / Debit (Light)</div>
+                    <div class="color-meta">Text: #D32F2F | Bg: #FFEBEE</div>
+                </div>
+            </div>
+
+            <!-- Dark Debit Text -->
+            <div class="color-card" onclick="copyHex('#FF6B6B')">
+                <div class="color-preview" style="background-color: #3D1515; color: #FF6B6B;">#FF6B6B / #3D1515</div>
+                <div class="color-details">
+                    <div class="color-name">Error / Debit (Dark)</div>
+                    <div class="color-meta">Text: #FF6B6B | Bg: #3D1515</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Card Gradient Sets -->
+    <section>
+        <div class="section-header">
+            <h2 class="section-title">RuPay-Style Custom Card Palettes</h2>
+            <p class="section-desc">Gradients and atmospheric glow pairs defined for custom card render states. Hover to test hover scaling.</p>
+        </div>
+
+        <div class="grid-3">
+            <!-- Emerald Theme -->
+            <div class="color-card" style="cursor: default;">
+                <div class="bank-card-preview" style="background: linear-gradient(135deg, #0a2f1f 0%, #145a3c 50%, #1a7a52 100%);">
+                    <div class="glow-overlay-1" style="background-color: #34d399"></div>
+                    <div class="glow-overlay-2" style="background-color: #059669"></div>
+                    <div class="shimmer-overlay"></div>
+                    
+                    <div class="card-header-row">
+                        <span class="card-bank-name">Emerald Bank</span>
+                        <div class="card-chip"></div>
+                    </div>
+                    <div class="card-number">•••• •••• •••• 9876</div>
+                    <div class="card-footer">
+                        <div>
+                            <div class="card-holder">Card Holder</div>
+                            <div class="card-holder-name">RuPay Emerald</div>
+                        </div>
+                        <div class="card-network">RuPay</div>
+                    </div>
+                </div>
+                <div class="color-details" style="cursor: pointer;" onclick="copyHex('#0a2f1f, #145a3c, #1a7a52')">
+                    <div class="color-name">Emerald Gradient Palette</div>
+                    <div class="color-meta">#0a2f1f → #145a3c → #1a7a52</div>
+                    <div class="color-meta" style="margin-top: 4px;">Glow: #34d399 (TR) | #059669 (BL)</div>
+                </div>
+            </div>
+
+            <!-- Forest Theme -->
+            <div class="color-card" style="cursor: default;">
+                <div class="bank-card-preview" style="background: linear-gradient(135deg, #071a11 0%, #0e3a22 50%, #166534 100%);">
+                    <div class="glow-overlay-1" style="background-color: #22c55e"></div>
+                    <div class="glow-overlay-2" style="background-color: #15803d"></div>
+                    <div class="shimmer-overlay"></div>
+                    
+                    <div class="card-header-row">
+                        <span class="card-bank-name">Forest Savings</span>
+                        <div class="card-chip"></div>
+                    </div>
+                    <div class="card-number">•••• •••• •••• 5432</div>
+                    <div class="card-footer">
+                        <div>
+                            <div class="card-holder">Card Holder</div>
+                            <div class="card-holder-name">RuPay Forest</div>
+                        </div>
+                        <div class="card-network">RuPay</div>
+                    </div>
+                </div>
+                <div class="color-details" style="cursor: pointer;" onclick="copyHex('#071a11, #0e3a22, #166534')">
+                    <div class="color-name">Forest Gradient Palette</div>
+                    <div class="color-meta">#071a11 → #0e3a22 → #166534</div>
+                    <div class="color-meta" style="margin-top: 4px;">Glow: #22c55e (TR) | #15803d (BL)</div>
+                </div>
+            </div>
+
+            <!-- Teal Theme -->
+            <div class="color-card" style="cursor: default;">
+                <div class="bank-card-preview" style="background: linear-gradient(135deg, #042f2e 0%, #115e59 50%, #1a7a74 100%);">
+                    <div class="glow-overlay-1" style="background-color: #2dd4bf"></div>
+                    <div class="glow-overlay-2" style="background-color: #0d9488"></div>
+                    <div class="shimmer-overlay"></div>
+                    
+                    <div class="card-header-row">
+                        <span class="card-bank-name">Teal International</span>
+                        <div class="card-chip"></div>
+                    </div>
+                    <div class="card-number">•••• •••• •••• 1098</div>
+                    <div class="card-footer">
+                        <div>
+                            <div class="card-holder">Card Holder</div>
+                            <div class="card-holder-name">RuPay Teal</div>
+                        </div>
+                        <div class="card-network">RuPay</div>
+                    </div>
+                </div>
+                <div class="color-details" style="cursor: pointer;" onclick="copyHex('#042f2e, #115e59, #1a7a74')">
+                    <div class="color-name">Teal Gradient Palette</div>
+                    <div class="color-meta">#042f2e → #115e59 → #1a7a74</div>
+                    <div class="color-meta" style="margin-top: 4px;">Glow: #2dd4bf (TR) | #0d9488 (BL)</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Typography System -->
+    <section>
+        <div class="section-header">
+            <h2 class="section-title">Typography System (Space Grotesk)</h2>
+            <p class="section-desc">Responsive sizing system mapped from React Native Paper configurations. Double click sample texts to edit and preview.</p>
+        </div>
+
+        <div class="interactive-prompt">💡 Double click any text in the "Live Preview" column to edit and test rendering live!</div>
+
+        <table class="typo-table">
+            <thead>
+                <tr>
+                    <th style="width: 20%">Role / Level</th>
+                    <th style="width: 25%">Specifications</th>
+                    <th style="width: 55%">Live Preview</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="typo-name">displayLarge</td>
+                    <td class="typo-spec">Size: 57px | LH: 64px | LS: 0px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 57px; line-height: 64px; letter-spacing: 0px; font-weight: 700;">57px Display</div></td>
+                </tr>
+                <tr>
+                    <td class="typo-name">displayMedium</td>
+                    <td class="typo-spec">Size: 45px | LH: 52px | LS: 0px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 45px; line-height: 52px; letter-spacing: 0px; font-weight: 700;">45px Display</div></td>
+                </tr>
+                <tr>
+                    <td class="typo-name">displaySmall</td>
+                    <td class="typo-spec">Size: 36px | LH: 44px | LS: 0px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 36px; line-height: 44px; letter-spacing: 0px; font-weight: 600;">36px Display</div></td>
+                </tr>
+                <tr>
+                    <td class="typo-name">headlineLarge</td>
+                    <td class="typo-spec">Size: 32px | LH: 40px | LS: 0px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 32px; line-height: 40px; letter-spacing: 0px; font-weight: 700;">Large Headline</div></td>
+                </tr>
+                <tr>
+                    <td class="typo-name">headlineMedium</td>
+                    <td class="typo-spec">Size: 28px | LH: 36px | LS: 0px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 28px; line-height: 36px; letter-spacing: 0px; font-weight: 700;">Merchant QRs</div></td>
+                </tr>
+                <tr>
+                    <td class="typo-name">headlineSmall</td>
+                    <td class="typo-spec">Size: 24px | LH: 32px | LS: 0px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 24px; line-height: 32px; letter-spacing: 0px; font-weight: 600;">Small Headline</div></td>
+                </tr>
+                <tr>
+                    <td class="typo-name">titleLarge</td>
+                    <td class="typo-spec">Size: 22px | LH: 28px | LS: 0px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 22px; line-height: 28px; letter-spacing: 0px; font-weight: 700;">Card Details Title</div></td>
+                </tr>
+                <tr>
+                    <td class="typo-name">titleMedium</td>
+                    <td class="typo-spec">Size: 16px | LH: 24px | LS: 0.15px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 16px; line-height: 24px; letter-spacing: 0.15px; font-weight: 600;">Account Holder Title</div></td>
+                </tr>
+                <tr>
+                    <td class="typo-name">bodyLarge</td>
+                    <td class="typo-spec">Size: 16px | LH: 24px | LS: 0.15px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 16px; line-height: 24px; letter-spacing: 0.15px; font-weight: 400;">Body text description goes here. Interactive elements use standard sizes.</div></td>
+                </tr>
+                <tr>
+                    <td class="typo-name">bodyMedium</td>
+                    <td class="typo-spec">Size: 14px | LH: 20px | LS: 0.25px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 14px; line-height: 20px; letter-spacing: 0.25px; font-weight: 400;">Keep IFSC and account details easy to find.</div></td>
+                </tr>
+                <tr>
+                    <td class="typo-name">labelLarge</td>
+                    <td class="typo-spec">Size: 14px | LH: 20px | LS: 0.1px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 14px; line-height: 20px; letter-spacing: 0.1px; font-weight: 700; text-transform: uppercase;">CARD COLOUR</div></td>
+                </tr>
+                <tr>
+                    <td class="typo-name">labelMedium</td>
+                    <td class="typo-spec">Size: 12px | LH: 16px | LS: 0.5px</td>
+                    <td><div class="typo-sample" contenteditable="true" style="font-size: 12px; line-height: 16px; letter-spacing: 0.5px; font-weight: 600; text-transform: uppercase;">SAVINGS ACCOUNT</div></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<script>
+    function toggleTheme() {
+        const body = document.documentElement;
+        const currentTheme = body.getAttribute('data-theme') || 'dark';
+        const btnText = document.getElementById('theme-text');
+        const btnIcon = document.getElementById('theme-icon');
+        
+        if (currentTheme === 'dark') {
+            body.setAttribute('data-theme', 'light');
+            btnText.innerText = 'DARK MODE';
+            btnIcon.innerText = '🌙';
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            btnText.innerText = 'LIGHT MODE';
+            btnIcon.innerText = '☀️';
+        }
+    }
+
+    function copyHex(hex) {
+        navigator.clipboard.writeText(hex).then(() => {
+            const toast = document.getElementById('toast');
+            toast.innerText = 'Copied "' + hex + '" to clipboard!';
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+</script>
+</body>
+</html>

@@ -212,7 +212,7 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
                     onPress={() => setForm(p => ({ ...p, network: n.key }))}
                     style={[
                       styles.networkBtn,
-                      { borderColor: isSelected ? '#C9F158' : theme.colors.outline },
+                      { borderColor: isSelected ? '#AAEF00' : theme.colors.outline },
                       isSelected && { backgroundColor: theme.dark ? '#1a1a1a' : '#f5f5f5' },
                     ]}
                     activeOpacity={0.8}

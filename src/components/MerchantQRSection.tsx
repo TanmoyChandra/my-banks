@@ -155,7 +155,7 @@ const fsStyles = StyleSheet.create({
   upiButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#C9F158',
+    backgroundColor: '#AAEF00',
     borderRadius: 50,
     paddingVertical: 10,
     paddingHorizontal: 22,
@@ -225,7 +225,7 @@ function MerchantCard({ merchant }: { merchant: MerchantQR }) {
   const textColor = theme.colors.onSurface;
   const subColor  = theme.colors.onSurfaceVariant;
   const borderColor = isDark ? theme.colors.outlineVariant : theme.colors.outline;
-  const accentColor = '#C9F158';
+  const accentColor = '#AAEF00';
   const qrActiveColor = isDark ? accentColor : '#1a1a1a';
 
   const toggle = () => {
