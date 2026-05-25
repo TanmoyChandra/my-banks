@@ -19,9 +19,8 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon-foreground.png",
-        "backgroundImage": "./assets/adaptive-icon-background.png",
         "monochromeImage": "./assets/adaptive-icon-monochrome.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#B7FF2A"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.mybanks.app",
