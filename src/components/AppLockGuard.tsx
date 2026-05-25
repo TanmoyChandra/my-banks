@@ -16,7 +16,7 @@ export default function AppLockGuard({ children }: { children: React.ReactNode }
     let appStateSub: any;
     
     if (isAppLockEnabled) {
-      if (!isUnlocked) {
+      if (!isUnlocked && AppState.currentState === 'active') {
         authenticate();
       }
 
@@ -63,7 +63,10 @@ export default function AppLockGuard({ children }: { children: React.ReactNode }
       if (result.success) {
         setIsUnlocked(true);
       } else {
-        alert(`Authentication failed: ${result.error || 'Unknown error'}`);
+        // Skip alerting for user, application, or system cancellations to prevent errors when transitioning background/foreground
+        if (result.error !== 'user_cancel' && result.error !== 'app_cancel' && result.error !== 'system_cancel') {
+          alert(`Authentication failed: ${result.error || 'Unknown error'}`);
+        }
       }
     } catch (error: any) {
       alert(`Authentication error: ${error.message || error}`);
