@@ -23,6 +23,14 @@ export interface CardEntry {
   billingDate?: number; // Day of month (1–31) when bill generates
 }
 
+export interface BillingCycle {
+  id: string;
+  cardId: string;
+  name: string; // e.g., "Nov 2026", "Initial Cycle"
+  startDate: string; // ISO string
+  isClosed: boolean;
+}
+
 export interface BankAccount {
   id: string;
   bankName: string;
@@ -44,6 +52,7 @@ export interface CardTransaction {
   date: string; // ISO date string
   payee?: string; // who this was paid for/by
   isFlagged?: boolean; // whether this transaction is flagged
+  billingCycleId?: string; // Associated billing cycle ID
 }
 
 export type TabType = 'qr' | 'cards' | 'accounts';

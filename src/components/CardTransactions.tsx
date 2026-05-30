@@ -7,6 +7,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Appbar, FAB, Avatar, List, Chip, Paragraph, Surface, Menu } from 'react-native-paper';
 import Modal from 'react-native-modal';
@@ -40,6 +41,7 @@ function TransactionModal({
 }: {
   visible: boolean;
   cardId: string;
+  billingCycleId: string | null;
   initialData?: CardTransaction | null;
   onClose: () => void;
 }) {
@@ -99,6 +101,7 @@ function TransactionModal({
 
     const txData = {
       cardId,
+      billingCycleId: billingCycleId || undefined,
       type: txType,
       amount: val,
       description: description.trim(),
@@ -420,9 +423,41 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
   const deleteTransaction = useWalletStore((s) => s.deleteTransaction);
   const updateTransaction = useWalletStore((s) => s.updateTransaction);
 
+  const billingCycles = useWalletStore((s) => s.billingCycles);
+  const addBillingCycle = useWalletStore((s) => s.addBillingCycle);
+  const deleteBillingCycle = useWalletStore((s) => s.deleteBillingCycle);
+  const migrateLegacyTransactionsForCard = useWalletStore((s) => s.migrateLegacyTransactionsForCard);
+
+  const cardCycles = useMemo(() => 
+    billingCycles.filter(c => c.cardId === card.id).sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()),
+    [billingCycles, card.id]
+  );
+
+  useEffect(() => {
+    migrateLegacyTransactionsForCard(card.id);
+  }, [card.id, migrateLegacyTransactionsForCard]);
+
+  const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
+  const newlyCreatedRef = useRef(false);
+
+  useEffect(() => {
+    if (cardCycles.length > 0) {
+      if (!activeCycleId || newlyCreatedRef.current) {
+        setActiveCycleId(cardCycles[0].id);
+        newlyCreatedRef.current = false;
+      }
+    }
+  }, [cardCycles, activeCycleId]);
+
+  const [newCycleDialog, setNewCycleDialog] = useState(false);
+  const [newCycleName, setNewCycleName] = useState('');
+  const [cycleMenuVisible, setCycleMenuVisible] = useState(false);
+  const [deleteCycleDialogMode, setDeleteCycleDialogMode] = useState(false);
+  const [deleteCycleNameInput, setDeleteCycleNameInput] = useState('');
+
   const cardTxs = useMemo(
-    () => transactions.filter((t) => t.cardId === card.id),
-    [transactions, card.id]
+    () => transactions.filter((t) => t.cardId === card.id && (!activeCycleId || t.billingCycleId === activeCycleId)),
+    [transactions, card.id, activeCycleId]
   );
 
   const totalDue = useMemo(() => {
@@ -557,7 +592,54 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
       <Appbar.Header style={{ backgroundColor: bgColor }}>
         <Appbar.BackAction onPress={onBack} />
         <Appbar.Content title={cardLabel} titleStyle={{ fontWeight: '700', fontFamily: 'SpaceGrotesk', textAlign: 'center' }} />
-        <Appbar.Action icon="dots-vertical" onPress={() => {}} />
+        <Menu
+          visible={cycleMenuVisible}
+          onDismiss={() => setCycleMenuVisible(false)}
+          anchor={
+            <Appbar.Action icon="calendar" onPress={() => setCycleMenuVisible(true)} />
+          }
+          contentStyle={{ backgroundColor: theme.colors.surface }}
+        >
+          {cardCycles.map(c => (
+            <Menu.Item 
+              key={c.id} 
+              onPress={() => {
+                setActiveCycleId(c.id);
+                setCycleMenuVisible(false);
+              }} 
+              title={c.name}
+              titleStyle={{ 
+                color: activeCycleId === c.id ? theme.colors.primary : theme.colors.onSurface, 
+                fontWeight: activeCycleId === c.id ? '700' : '400',
+                fontFamily: 'SpaceGrotesk'
+              }}
+              leadingIcon={activeCycleId === c.id ? "check" : "circle-outline"}
+            />
+          ))}
+          <Menu.Item 
+            onPress={() => {
+              setCycleMenuVisible(false);
+              const now = new Date();
+              setNewCycleName(now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+              setNewCycleDialog(true);
+            }} 
+            title="Start New Cycle"
+            titleStyle={{ fontFamily: 'SpaceGrotesk' }}
+            leadingIcon="plus"
+          />
+          {cardCycles.length > 0 && (
+            <Menu.Item 
+              onPress={() => {
+                setCycleMenuVisible(false);
+                setDeleteCycleNameInput('');
+                setDeleteCycleDialogMode(true);
+              }} 
+              title="Delete Current Cycle"
+              titleStyle={{ fontFamily: 'SpaceGrotesk', color: theme.colors.error }}
+              leadingIcon="delete"
+            />
+          )}
+        </Menu>
       </Appbar.Header>
 
       <View style={[styles.totalCard, { overflow: 'hidden' }]}>
@@ -650,7 +732,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
                 activeOpacity={0.8}
                 style={{
                   paddingHorizontal: 16,
-                  paddingVertical: 10,
+                  paddingVertical: 6,
                   borderRadius: 20,
                   backgroundColor: isActive
                     ? theme.colors.primaryContainer
@@ -743,6 +825,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
       <TransactionModal
         visible={modalVisible}
         cardId={card.id}
+        billingCycleId={activeCycleId}
         initialData={editingTx}
         onClose={() => {
           setModalVisible(false);
@@ -787,6 +870,79 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
               }}
             >
               Unflag
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        <Dialog visible={newCycleDialog} onDismiss={() => setNewCycleDialog(false)} style={{ backgroundColor: theme.colors.surface }}>
+          <Dialog.Title style={{ color: theme.colors.onSurface }}>Start New Cycle</Dialog.Title>
+          <Dialog.Content>
+            <PaperInput
+              mode="outlined"
+              label="Cycle Name"
+              value={newCycleName}
+              onChangeText={setNewCycleName}
+              placeholder="e.g. Nov 2026"
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setNewCycleDialog(false)}>Cancel</Button>
+            <Button 
+              onPress={() => {
+                const name = newCycleName.trim();
+                if (name) {
+                  const isDuplicate = cardCycles.some(c => c.name.toLowerCase() === name.toLowerCase());
+                  if (isDuplicate) {
+                    Alert.alert('Duplicate Name', 'A billing cycle with this name already exists.');
+                    return;
+                  }
+
+                  addBillingCycle({
+                    cardId: card.id,
+                    name,
+                    startDate: new Date().toISOString(),
+                    isClosed: false,
+                  });
+                  newlyCreatedRef.current = true;
+                  setNewCycleDialog(false);
+                }
+              }}
+            >
+              Create
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        <Dialog visible={deleteCycleDialogMode} onDismiss={() => setDeleteCycleDialogMode(false)} style={{ backgroundColor: theme.colors.surface }}>
+          <Dialog.Title style={{ color: theme.colors.onSurface }}>Delete Cycle</Dialog.Title>
+          <Dialog.Content>
+            <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 12 }}>
+              Are you sure you want to delete this cycle? All transactions in this cycle will be lost.{'\n\n'}
+              <Text style={{ color: theme.colors.error, fontWeight: '700' }}>
+                Type "{cardCycles.find(c => c.id === activeCycleId)?.name}" to confirm.
+              </Text>
+            </Text>
+            <PaperInput
+              mode="outlined"
+              label="Cycle Name"
+              value={deleteCycleNameInput}
+              onChangeText={setDeleteCycleNameInput}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setDeleteCycleDialogMode(false)}>Cancel</Button>
+            <Button 
+              textColor={theme.colors.error}
+              disabled={deleteCycleNameInput.trim().toLowerCase() !== cardCycles.find(c => c.id === activeCycleId)?.name.toLowerCase()}
+              onPress={() => {
+                if (activeCycleId) {
+                  deleteBillingCycle(activeCycleId);
+                  setActiveCycleId(null);
+                  setDeleteCycleDialogMode(false);
+                }
+              }}
+            >
+              Delete
             </Button>
           </Dialog.Actions>
         </Dialog>

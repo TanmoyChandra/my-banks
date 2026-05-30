@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { QREntry, CardEntry, BankAccount, CardTransaction, MerchantQR } from '../types';
+import { QREntry, CardEntry, BankAccount, CardTransaction, MerchantQR, BillingCycle } from '../types';
 import { encryptLocal, decryptLocal } from '../utils/crypto';
 
 const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -13,6 +13,7 @@ interface WalletState {
   transactions: CardTransaction[];
   merchantQRs: MerchantQR[];
   payees: string[];
+  billingCycles: BillingCycle[];
 
   addUpi: (entry: Omit<QREntry, 'id'>) => void;
   updateUpi: (id: string, entry: Omit<QREntry, 'id'>) => void;
@@ -31,6 +32,12 @@ interface WalletState {
   updateTransaction: (id: string, tx: Omit<CardTransaction, 'id'>) => void;
   deleteTransaction: (id: string) => void;
   getTransactionsForCard: (cardId: string) => CardTransaction[];
+  migrateLegacyTransactionsForCard: (cardId: string) => void;
+
+  // Billing Cycles CRUD
+  addBillingCycle: (cycle: Omit<BillingCycle, 'id'>) => void;
+  updateBillingCycle: (id: string, cycle: Omit<BillingCycle, 'id'>) => void;
+  deleteBillingCycle: (id: string) => void;
 
   // Merchant QR CRUD
   addMerchantQR: (entry: Omit<MerchantQR, 'id'>) => void;
@@ -51,6 +58,7 @@ export const useWalletStore = create<WalletState>()(
       transactions: [],
       merchantQRs: [],
       payees: ['Me'],
+      billingCycles: [],
 
       // UPI CRUD
       addUpi: (entry) =>
@@ -68,8 +76,9 @@ export const useWalletStore = create<WalletState>()(
       deleteCard: (id) =>
         set((s) => ({
           cards: s.cards.filter((c) => c.id !== id),
-          // also purge all transactions for the deleted card
+          // also purge all transactions and billing cycles for the deleted card
           transactions: s.transactions.filter((t) => t.cardId !== id),
+          billingCycles: s.billingCycles.filter((b) => b.cardId !== id),
         })),
 
       // Account CRUD
@@ -91,6 +100,38 @@ export const useWalletStore = create<WalletState>()(
         set((s) => ({ transactions: s.transactions.filter((t) => t.id !== id) })),
       getTransactionsForCard: (cardId) =>
         get().transactions.filter((t) => t.cardId === cardId),
+      migrateLegacyTransactionsForCard: (cardId) =>
+        set((s) => {
+          const cardTxs = s.transactions.filter(t => t.cardId === cardId);
+          const legacyTxs = cardTxs.filter(t => !t.billingCycleId);
+          if (legacyTxs.length === 0) return s; // Nothing to migrate
+          
+          const newCycle: BillingCycle = {
+            id: generateId(),
+            cardId,
+            name: 'Initial Cycle',
+            startDate: new Date().toISOString(),
+            isClosed: false,
+          };
+          
+          return {
+            billingCycles: [...s.billingCycles, newCycle],
+            transactions: s.transactions.map(t => 
+              (t.cardId === cardId && !t.billingCycleId) ? { ...t, billingCycleId: newCycle.id } : t
+            )
+          };
+        }),
+
+      // Billing Cycle CRUD
+      addBillingCycle: (cycle) =>
+        set((s) => ({ billingCycles: [{ ...cycle, id: generateId() }, ...s.billingCycles] })),
+      updateBillingCycle: (id, cycle) =>
+        set((s) => ({ billingCycles: s.billingCycles.map((b) => (b.id === id ? { ...cycle, id } : b)) })),
+      deleteBillingCycle: (id) =>
+        set((s) => ({ 
+          billingCycles: s.billingCycles.filter((b) => b.id !== id),
+          transactions: s.transactions.filter((t) => t.billingCycleId !== id),
+        })),
 
       // Merchant QR CRUD
       addMerchantQR: (entry) =>
