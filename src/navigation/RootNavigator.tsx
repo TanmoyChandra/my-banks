@@ -21,6 +21,7 @@ import SetupMerchantQR from '../components/setup/SetupMerchantQR';
 import SettingsScreen from '../components/SettingsScreen';
 import OnboardingFlow from '../features/onboarding/OnboardingFlow';
 import BackupRestoreSettings from '../components/BackupRestoreSettings';
+import CalculatorSection from '../components/CalculatorSection';
 
 const Stack = createNativeStackNavigator();
 const BottomTab = createBottomTabNavigator();
@@ -31,6 +32,7 @@ const TAB_META: Record<string, { focused: string; unfocused: string }> = {
   Cards:     { focused: 'card-bulleted',    unfocused: 'card-bulleted-outline' },
   Merchants: { focused: 'store',            unfocused: 'store-outline' },
   Accounts:  { focused: 'bank',             unfocused: 'bank-outline' },
+  Calculator:{ focused: 'percent',          unfocused: 'percent-outline' },
   Settings:  { focused: 'cog',              unfocused: 'cog-outline' },
 };
 
@@ -90,6 +92,7 @@ function MainScreen({ navigation }: any) {
         <BottomTab.Screen name="Cards">{() => <CardsTab navigation={navigation} />}</BottomTab.Screen>
         <BottomTab.Screen name="Merchants">{() => <MerchantsTab />}</BottomTab.Screen>
         <BottomTab.Screen name="Accounts">{() => <AccountsTab />}</BottomTab.Screen>
+        <BottomTab.Screen name="Calculator" options={{ title: 'Calculator' }}>{() => <CalculatorTab />}</BottomTab.Screen>
         <BottomTab.Screen name="Settings">{() => <SettingsTab navigation={navigation} />}</BottomTab.Screen>
       </BottomTab.Navigator>
     </View>
@@ -135,6 +138,15 @@ function MerchantsTab() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <MerchantQRSection />
+    </View>
+  );
+}
+
+function CalculatorTab() {
+  const theme = useTheme();
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <CalculatorSection />
     </View>
   );
 }
