@@ -8,11 +8,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Dimensions,
+  FlatList,
+  InteractionManager,
+  ActivityIndicator,
 } from 'react-native';
 import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Appbar, FAB, Avatar, List, Chip, Paragraph, Surface, Menu } from 'react-native-paper';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Swipeable } from 'react-native-gesture-handler';
+import { Swipeable, FlingGestureHandler, Directions, State } from 'react-native-gesture-handler';
 import { DatePickerModal } from 'react-native-paper-dates';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CardEntry, CardTransaction } from '../types';
@@ -411,6 +415,121 @@ function TransactionRow({
   );
 }
 
+const { width: SCREEN_W } = Dimensions.get('window');
+
+function CycleCard({ cycle, transactions, card, daysUntilBilling, palette, fmt, theme }: any) {
+  const payees = useWalletStore(s => s.payees);
+
+  const cycleTxs = useMemo(
+    () => transactions.filter((t: any) => t.cardId === card.id && t.billingCycleId === cycle.id),
+    [transactions, card.id, cycle.id]
+  );
+
+  const totalDue = useMemo(() => {
+    return cycleTxs.reduce((sum: number, t: any) => {
+      return t.type === 'debit' ? sum + t.amount : sum - t.amount;
+    }, 0);
+  }, [cycleTxs]);
+
+  const duesByPayee = useMemo(() => {
+    const dues: Record<string, number> = {};
+    payees.forEach((p: string) => dues[p] = 0);
+    cycleTxs.forEach((tx: any) => {
+      let p = tx.payee || 'Me';
+      if (p.toLowerCase() === 'me' || p.toLowerCase() === 'general') p = 'Me';
+      if (dues[p] === undefined) dues[p] = 0;
+      dues[p] += tx.type === 'debit' ? tx.amount : -tx.amount;
+    });
+    return dues;
+  }, [cycleTxs, payees]);
+
+  const spent = useMemo(() => cycleTxs.filter((t: any) => t.type === 'debit').reduce((s: number, t: any) => s + t.amount, 0), [cycleTxs]);
+  const kept = useMemo(() => cycleTxs.filter((t: any) => t.type === 'credit').reduce((s: number, t: any) => s + t.amount, 0), [cycleTxs]);
+
+  return (
+    <View style={{ width: SCREEN_W, paddingHorizontal: 16 }}>
+      <View style={[styles.totalCard, { overflow: 'hidden', marginHorizontal: 0 }]}>
+        <LinearGradient
+          colors={[palette.from, palette.via, palette.to]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(255,255,255,0.07)', 'rgba(255,255,255,0.12)', 'rgba(255,255,255,0.07)', 'transparent']}
+          start={{ x: 0.2, y: 0 }}
+          end={{ x: 0.8, y: 1 }}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        />
+        <View style={[styles.glow1, { backgroundColor: palette.glow1 }]} pointerEvents="none" />
+        <View style={[styles.glow2, { backgroundColor: palette.glow2 }]} pointerEvents="none" />
+
+        <View style={{ position: 'absolute', top: 18, right: -38, width: 130, backgroundColor: theme.colors.primary, transform: [{ rotate: '45deg' }], zIndex: 10, alignItems: 'center', justifyContent: 'center', paddingVertical: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 3, elevation: 5 }}>
+          <Text style={{ color: theme.colors.onPrimary, fontSize: 9, fontWeight: '800', fontFamily: 'SpaceGrotesk', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+            {cycle.name}
+          </Text>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={[styles.totalLabel, { color: 'rgba(255,255,255,0.7)', marginBottom: 0 }]}>Total due</Text>
+        </View>
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginTop: 4 }}>
+          <Text style={[styles.totalAmount, { color: '#FFFFFF' }]}>
+            ₹ {fmt(Math.abs(totalDue))}
+          </Text>
+          {daysUntilBilling !== null && (
+            <View style={{
+              backgroundColor: daysUntilBilling <= 3 ? 'rgba(255,107,107,0.2)' : 'rgba(161,217,155,0.2)',
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              borderRadius: 20,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 4,
+              marginLeft: 12,
+            }}>
+              <IconButton
+                icon="calendar-clock"
+                size={14}
+                iconColor={daysUntilBilling <= 3 ? '#FF8F8F' : '#A1D99B'}
+                style={{ margin: 0, width: 16, height: 16 }}
+              />
+              <Text style={{
+                fontSize: 11,
+                fontWeight: '800',
+                fontFamily: 'SpaceGrotesk',
+                color: daysUntilBilling <= 3 ? '#FF8F8F' : '#A1D99B',
+              }}>
+                {daysUntilBilling === 0 ? 'Bill today!' : `${daysUntilBilling}d to bill`}
+              </Text>
+            </View>
+          )}
+        </View>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+          {Object.entries(duesByPayee).filter(([_, amt]) => amt !== 0).map(([p, amt]) => (
+            <View key={p} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: p === 'Me' ? '#FFFFFF' : 'rgba(255,255,255,0.5)' }} />
+              <Text style={{ fontSize: 11, fontFamily: 'SpaceGrotesk', color: 'rgba(255,255,255,0.7)' }}>{p}: <Text style={{ fontWeight: '700', color: '#FFFFFF' }}>₹ {fmt(Math.abs(amt))}</Text></Text>
+            </View>
+          ))}
+        </View>
+        <View style={styles.statsRowNew}>
+          <View>
+            <Text style={[styles.statLabelNew, { color: 'rgba(255,255,255,0.7)' }]}>Spent amount</Text>
+            <Text style={[styles.statValueNew, { color: '#FFFFFF' }]}>₹ {fmt(spent)}</Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={[styles.statLabelNew, { color: 'rgba(255,255,255,0.7)' }]}>Amount Kept</Text>
+            <Text style={[styles.statValueNew, { color: '#FFFFFF' }]}>₹ {fmt(kept)}</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 // ─── Main Screen ───────────────────────────────────────────────
 export default function CardTransactions({ card, onBack }: CardTransactionsProps) {
   const theme = useTheme();
@@ -429,7 +548,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
   const migrateLegacyTransactionsForCard = useWalletStore((s) => s.migrateLegacyTransactionsForCard);
 
   const cardCycles = useMemo(() => 
-    billingCycles.filter(c => c.cardId === card.id).sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()),
+    billingCycles.filter(c => c.cardId === card.id).sort((a,b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()),
     [billingCycles, card.id]
   );
 
@@ -442,9 +561,11 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
 
   useEffect(() => {
     if (cardCycles.length > 0) {
-      if (!activeCycleId || newlyCreatedRef.current) {
-        setActiveCycleId(cardCycles[0].id);
+      if (newlyCreatedRef.current) {
+        setActiveCycleId(cardCycles[cardCycles.length - 1].id);
         newlyCreatedRef.current = false;
+      } else if (!activeCycleId) {
+        setActiveCycleId(cardCycles[0].id);
       }
     }
   }, [cardCycles, activeCycleId]);
@@ -460,42 +581,49 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
     [transactions, card.id, activeCycleId]
   );
 
-  const totalDue = useMemo(() => {
-    return cardTxs.reduce((sum, t) => {
-      return t.type === 'debit' ? sum + t.amount : sum - t.amount;
-    }, 0);
-  }, [cardTxs]);
+  const listRef = useRef<FlatList>(null);
 
-  const daysUntilBilling = useMemo(() => {
-    if (!card.billingDate) return null;
-    const today = new Date();
-    const todayDate = today.getDate();
-    const billingDay = card.billingDate;
-    if (todayDate === billingDay) return 0;
-    // Next billing date
-    const next = new Date(today.getFullYear(), today.getMonth(), billingDay);
-    if (next <= today) {
-      next.setMonth(next.getMonth() + 1);
+  useEffect(() => {
+    if (activeCycleId && cardCycles.length > 0 && listRef.current) {
+      const index = cardCycles.findIndex(c => c.id === activeCycleId);
+      if (index !== -1) {
+        listRef.current.scrollToIndex({ index, animated: true });
+      }
     }
-    const diffMs = next.getTime() - today.getTime();
-    return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  }, [card.billingDate]);
+  }, [activeCycleId, cardCycles]);
 
-  const payees = useWalletStore(s => s.payees);
+  const handleFlingLeft = () => {
+    if (activeCycleId && cardCycles.length > 0) {
+      const idx = cardCycles.findIndex(c => c.id === activeCycleId);
+      if (idx !== -1 && idx < cardCycles.length - 1) {
+        setActiveCycleId(cardCycles[idx + 1].id);
+      }
+    }
+  };
 
-  const duesByPayee = useMemo(() => {
-    const dues: Record<string, number> = {};
-    payees.forEach(p => dues[p] = 0);
-    cardTxs.forEach(tx => {
-      let p = tx.payee || 'Me';
-      if (p.toLowerCase() === 'me' || p.toLowerCase() === 'general') p = 'Me';
-      if (dues[p] === undefined) dues[p] = 0;
-      dues[p] += tx.type === 'debit' ? tx.amount : -tx.amount;
-    });
-    return dues;
-  }, [cardTxs, payees]);
+  const handleFlingRight = () => {
+    if (activeCycleId && cardCycles.length > 0) {
+      const idx = cardCycles.findIndex(c => c.id === activeCycleId);
+      if (idx > 0) {
+        setActiveCycleId(cardCycles[idx - 1].id);
+      }
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<string>('All');
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const prevCycleId = useRef(activeCycleId);
+
+  useEffect(() => {
+    if (activeCycleId !== prevCycleId.current) {
+      setIsTransitioning(true);
+      prevCycleId.current = activeCycleId;
+      const handle = InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => setIsTransitioning(false), 10);
+      });
+      return () => handle.cancel();
+    }
+  }, [activeCycleId]);
 
   const otherPayees = useMemo(() => {
     const payeesSet = new Set<string>();
@@ -576,15 +704,43 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
     setDeleteDialog(id);
   };
 
-  const handleToggleFlag = (tx: CardTransaction) => {
-    if (tx.isFlagged) {
-      setUnflagDialog(tx);
-    } else {
-      updateTransaction(tx.id, { ...tx, isFlagged: true });
+  const daysUntilBilling = useMemo(() => {
+    if (!card.billingDate) return null;
+    const today = new Date();
+    const todayDate = today.getDate();
+    const billingDay = card.billingDate;
+    if (todayDate === billingDay) return 0;
+    const next = new Date(today.getFullYear(), today.getMonth(), billingDay);
+    if (next <= today) {
+      next.setMonth(next.getMonth() + 1);
     }
-  };
+    const diffMs = next.getTime() - today.getTime();
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  }, [card.billingDate]);
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    InteractionManager.runAfterInteractions(() => {
+      setIsLoading(false);
+    });
+  }, []);
 
   const palette = getCardColors(card.color);
+
+  if (isLoading) {
+    return (
+      <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: 0 }]}>
+        <Appbar.Header style={{ backgroundColor: bgColor }}>
+          <Appbar.BackAction onPress={onBack} />
+          <Appbar.Content title={cardLabel} titleStyle={{ fontWeight: '700', fontFamily: 'SpaceGrotesk', textAlign: 'center' }} />
+        </Appbar.Header>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: bgColor, paddingTop: 0 }]}>
@@ -642,79 +798,56 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
         </Menu>
       </Appbar.Header>
 
-      <View style={[styles.totalCard, { overflow: 'hidden' }]}>
-        <LinearGradient
-          colors={[palette.from, palette.via, palette.to]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-
-        {/* Holographic shimmer overlay matching BankCard */}
-        <LinearGradient
-          colors={['transparent', 'rgba(255,255,255,0.07)', 'rgba(255,255,255,0.12)', 'rgba(255,255,255,0.07)', 'transparent']}
-          start={{ x: 0.2, y: 0 }}
-          end={{ x: 0.8, y: 1 }}
-          style={StyleSheet.absoluteFill}
-          pointerEvents="none"
-        />
-
-        {/* Ambient glow effects matching BankCard */}
-        <View style={[styles.glow1, { backgroundColor: palette.glow1 }]} pointerEvents="none" />
-        <View style={[styles.glow2, { backgroundColor: palette.glow2 }]} pointerEvents="none" />
-
-        <Text style={[styles.totalLabel, { color: 'rgba(255,255,255,0.7)' }]}>Total due</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-          <Text style={[styles.totalAmount, { color: '#FFFFFF' }]}>
-            ₹ {fmt(Math.abs(totalDue))}
-          </Text>
-          {daysUntilBilling !== null && (
-            <View style={{
-              backgroundColor: daysUntilBilling <= 3 ? 'rgba(255,107,107,0.2)' : 'rgba(161,217,155,0.2)',
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-              borderRadius: 20,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              marginLeft: 12,
-            }}>
-              <IconButton
-                icon="calendar-clock"
-                size={14}
-                iconColor={daysUntilBilling <= 3 ? '#FF8F8F' : '#A1D99B'}
-                style={{ margin: 0, width: 16, height: 16 }}
+      <FlingGestureHandler
+        direction={Directions.LEFT}
+        onHandlerStateChange={({ nativeEvent }) => {
+          if (nativeEvent.state === State.ACTIVE) handleFlingLeft();
+        }}
+      >
+        <FlingGestureHandler
+          direction={Directions.RIGHT}
+          onHandlerStateChange={({ nativeEvent }) => {
+            if (nativeEvent.state === State.ACTIVE) handleFlingRight();
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <View style={{ marginTop: 8 }}>
+              <FlatList
+                ref={listRef}
+                data={cardCycles}
+                keyExtractor={c => c.id}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                snapToInterval={SCREEN_W}
+                snapToAlignment="start"
+                decelerationRate="fast"
+                onScrollToIndexFailed={info => {
+                  setTimeout(() => {
+                    listRef.current?.scrollToIndex({ index: info.index, animated: false });
+                  }, 50);
+                }}
+                onMomentumScrollEnd={(e) => {
+                  const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_W);
+                  const newCycle = cardCycles[index];
+                  if (newCycle && newCycle.id !== activeCycleId) {
+                    setActiveCycleId(newCycle.id);
+                  }
+                }}
+                renderItem={({ item: cycle }) => (
+                  <CycleCard 
+                    cycle={cycle} 
+                    transactions={transactions} 
+                    card={card} 
+                    daysUntilBilling={daysUntilBilling} 
+                    palette={palette} 
+                    fmt={fmt}
+                    theme={theme}
+                  />
+                )}
               />
-              <Text style={{
-                fontSize: 11,
-                fontWeight: '800',
-                fontFamily: 'SpaceGrotesk',
-                color: daysUntilBilling <= 3 ? '#FF8F8F' : '#A1D99B',
-              }}>
-                {daysUntilBilling === 0 ? 'Bill today!' : `${daysUntilBilling}d to bill`}
-              </Text>
             </View>
-          )}
-        </View>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
-          {Object.entries(duesByPayee).filter(([_, amt]) => amt !== 0).map(([p, amt]) => (
-            <View key={p} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: p === 'Me' ? '#FFFFFF' : 'rgba(255,255,255,0.5)' }} />
-              <Text style={{ fontSize: 11, fontFamily: 'SpaceGrotesk', color: 'rgba(255,255,255,0.7)' }}>{p}: <Text style={{ fontWeight: '700', color: '#FFFFFF' }}>₹ {fmt(Math.abs(amt))}</Text></Text>
-            </View>
-          ))}
-        </View>
-        <View style={styles.statsRowNew}>
-          <View>
-            <Text style={[styles.statLabelNew, { color: 'rgba(255,255,255,0.7)' }]}>Spent amount</Text>
-            <Text style={[styles.statValueNew, { color: '#FFFFFF' }]}>₹ {fmt(cardTxs.filter(t => t.type === 'debit').reduce((s, t) => s + t.amount, 0))}</Text>
-          </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={[styles.statLabelNew, { color: 'rgba(255,255,255,0.7)' }]}>Amount Kept</Text>
-            <Text style={[styles.statValueNew, { color: '#FFFFFF' }]}>₹ {fmt(cardTxs.filter(t => t.type === 'credit').reduce((s, t) => s + t.amount, 0))}</Text>
-          </View>
-        </View>
-      </View>
+
 
       {/* ── Dynamic Tabs ── */}
       <View style={{ marginHorizontal: 16, marginBottom: 12, marginTop: 4 }}>
@@ -761,11 +894,16 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
         </ScrollView>
       </View>
 
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
-        showsVerticalScrollIndicator={false}
-      >
+      {isTransitioning ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="small" color={theme.colors.primary} />
+        </View>
+      ) : (
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
+          showsVerticalScrollIndicator={false}
+        >
 
         {Object.keys(groupedTxs).map(dateKey => (
           <View key={dateKey} style={styles.dateGroup}>
@@ -809,6 +947,10 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
           </View>
         )}
       </ScrollView>
+      )}
+      </View>
+      </FlingGestureHandler>
+      </FlingGestureHandler>
 
       {/* ── FAB ── */}
       <FAB
