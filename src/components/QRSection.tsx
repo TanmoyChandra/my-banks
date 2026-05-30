@@ -9,17 +9,19 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   View,
+  Animated,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import { captureRef } from 'react-native-view-shot';
 import { useNavigation } from '@react-navigation/native';
-import { Button, IconButton, Text, useTheme, Avatar } from 'react-native-paper';
+import { Button, IconButton, Text, useTheme, Avatar, Icon } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 import { QREntry } from '../types';
 import { findBankByName } from '../constants/banks';
 import { useUiStore } from '../store/useUiStore';
+import MerchantQRSection from './MerchantQRSection';
 
 const initials = (name: string) => name ? name.charAt(0).toUpperCase() : '?';
 
@@ -140,13 +142,38 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
   const cardWidth = Math.min(screenWidth - PAGE_SIDE_PADDING * 2.5, 450);
   const snapWidth = cardWidth + PAGE_GAP;
+  
+  const [activeTab, setActiveTab] = useState<'my_qr' | 'merchant_qr'>('my_qr');
+  const tabAnim = useRef(new Animated.Value(0)).current;
+
+  const handleTabChange = (tab: 'my_qr' | 'merchant_qr') => {
+    if (tab === activeTab) return;
+    setActiveTab(tab);
+    Animated.spring(tabAnim, {
+      toValue: tab === 'my_qr' ? 0 : 1,
+      useNativeDriver: true,
+      bounciness: 4,
+      speed: 12,
+    }).start();
+  };
+
+  // Interpolations for smooth transitions
+  const tabIndicatorTranslate = tabAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, (screenWidth - 48 - 8) / 2] // (containerWidth - padding) / 2
+  });
+
+  const myQrOpacity = tabAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+  const merchantOpacity = tabAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  const myQrTranslate = tabAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -20] });
+  const merchantTranslate = tabAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] });
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <View style={styles.sectionIntro}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <View style={{ flex: 1, marginRight: 16 }}>
-            <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>My QR codes</Text>
+            <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>UPI / QR Codes</Text>
             <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
               Easily share your QR codes to receive payments from any UPI app.
             </Text>
@@ -164,42 +191,95 @@ const QRSection: React.FC<QRSectionProps> = ({ entries }) => {
             )}
           </TouchableOpacity>
         </View>
+
+        {/* Segmented Tabs */}
+        <View style={[styles.tabContainer, { backgroundColor: theme.dark ? '#2A2A2A' : '#F2F2F7' }]}>
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                width: '50%',
+                backgroundColor: theme.colors.surface,
+                borderRadius: 8,
+                top: 4, bottom: 4, left: 4,
+                shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
+                transform: [{ translateX: tabIndicatorTranslate }]
+              }
+            ]}
+          />
+          <TouchableOpacity
+            style={[styles.tabButton, { flexDirection: 'row', justifyContent: 'center', gap: 6 }]}
+            onPress={() => handleTabChange('my_qr')}
+            activeOpacity={1}
+          >
+            <Icon source="qrcode" size={16} color={activeTab === 'my_qr' ? theme.colors.onSurface : '#8E8E93'} />
+            <Text style={[styles.tabText, activeTab === 'my_qr' && { color: theme.colors.onSurface, fontWeight: '700' }]}>My UPI/QRs</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabButton, { flexDirection: 'row', justifyContent: 'center', gap: 6 }]}
+            onPress={() => handleTabChange('merchant_qr')}
+            activeOpacity={1}
+          >
+            <Icon source="storefront-outline" size={16} color={activeTab === 'merchant_qr' ? theme.colors.onSurface : '#8E8E93'} />
+            <Text style={[styles.tabText, activeTab === 'merchant_qr' && { color: theme.colors.onSurface, fontWeight: '700' }]}>Merchant UPI/QRs</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      <View style={styles.carouselWrapper}>
-        <FlatList
-          data={[...entries, { id: 'add-placeholder', isAdd: true } as any]}
-          horizontal
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => {
-            if (item.isAdd) {
-              return (
-                <View style={[styles.page, { width: cardWidth + PAGE_GAP }]}>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => navigation.navigate('SetupQR')}
-                    style={[styles.payCard, { 
-                      width: cardWidth, 
-                      backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF', 
-                      justifyContent: 'center', 
-                      height: Math.min(cardWidth - 92, 180) + 190,
-                      borderWidth: 0
-                    }]}
-                  >
-                    <Avatar.Icon size={64} icon="plus" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
-                    <Text style={{ marginTop: 16, color: theme.colors.onSurfaceVariant, fontFamily: 'SpaceGrotesk', fontWeight: '600' }}>Add new QR code</Text>
-                  </TouchableOpacity>
-                </View>
-              );
-            }
-            return <QRPayCard entry={item as QREntry} width={cardWidth} />;
-          }}
-          showsHorizontalScrollIndicator={false}
-          snapToInterval={snapWidth}
-          decelerationRate="fast"
-          contentContainerStyle={styles.carouselContent}
-          style={{ flexGrow: 0 }}
-        />
+      <View style={{ flex: 1 }}>
+        <Animated.View 
+          style={[
+            StyleSheet.absoluteFill, 
+            { opacity: myQrOpacity, transform: [{ translateX: myQrTranslate }], zIndex: activeTab === 'my_qr' ? 1 : 0 }
+          ]} 
+          pointerEvents={activeTab === 'my_qr' ? 'auto' : 'none'}
+        >
+          <View style={styles.carouselWrapper}>
+            <FlatList
+              data={[...entries, { id: 'add-placeholder', isAdd: true } as any]}
+              horizontal
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => {
+                if (item.isAdd) {
+                  return (
+                    <View style={[styles.page, { width: cardWidth + PAGE_GAP }]}>
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => navigation.navigate('SetupQR')}
+                        style={[styles.payCard, { 
+                          width: cardWidth, 
+                          backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF', 
+                          justifyContent: 'center', 
+                          height: Math.min(cardWidth - 92, 180) + 190,
+                          borderWidth: 0
+                        }]}
+                      >
+                        <Avatar.Icon size={64} icon="plus" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
+                        <Text style={{ marginTop: 16, color: theme.colors.onSurfaceVariant, fontFamily: 'SpaceGrotesk', fontWeight: '600' }}>Add new QR code</Text>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                }
+                return <QRPayCard entry={item as QREntry} width={cardWidth} />;
+              }}
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={snapWidth}
+              decelerationRate="fast"
+              contentContainerStyle={styles.carouselContent}
+              style={{ flexGrow: 0 }}
+            />
+          </View>
+        </Animated.View>
+
+        <Animated.View 
+          style={[
+            StyleSheet.absoluteFill, 
+            { opacity: merchantOpacity, transform: [{ translateX: merchantTranslate }], zIndex: activeTab === 'merchant_qr' ? 1 : 0 }
+          ]} 
+          pointerEvents={activeTab === 'merchant_qr' ? 'auto' : 'none'}
+        >
+          <MerchantQRSection hideHeader />
+        </Animated.View>
       </View>
     </View>
   );
@@ -209,9 +289,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  sectionIntro: { paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
+  sectionIntro: { paddingHorizontal: 24, paddingBottom: 16, paddingTop: 8 },
   introTitle: { fontSize: 28, fontWeight: '700', marginBottom: 6, fontFamily: 'SpaceGrotesk', letterSpacing: -0.5 },
   introText: { fontSize: 14, fontFamily: 'SpaceGrotesk', lineHeight: 20 },
+  tabContainer: {
+    flexDirection: 'row',
+    marginTop: 20,
+    borderRadius: 12,
+    padding: 4,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  tabText: {
+    fontSize: 13,
+    fontFamily: 'SpaceGrotesk',
+    color: '#8E8E93',
+  },
   carouselWrapper: {
     flex: 1,
     justifyContent: 'center',

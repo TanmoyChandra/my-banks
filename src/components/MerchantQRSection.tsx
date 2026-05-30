@@ -372,7 +372,7 @@ function MerchantCard({ merchant }: { merchant: MerchantQR }) {
 }
 
 // ── Main Section ──────────────────────────────────────────────
-export default function MerchantQRSection() {
+export default function MerchantQRSection({ hideHeader }: { hideHeader?: boolean }) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
@@ -382,30 +382,32 @@ export default function MerchantQRSection() {
   const merchants = useWalletStore(s => s.merchantQRs);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
+    <View style={[styles.container, !hideHeader && { paddingTop: insets.top + 16 }]}>
       {/* Header — same pattern as other sections */}
-      <View style={styles.sectionIntro}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <View style={{ flex: 1, marginRight: 16 }}>
-            <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Merchant QRs</Text>
-            <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
-              Tap a merchant to pay instantly via UPI or QR.
-            </Text>
+      {!hideHeader && (
+        <View style={styles.sectionIntro}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <View style={{ flex: 1, marginRight: 16 }}>
+              <Text style={[styles.introTitle, { color: theme.colors.onSurface }]}>Merchant QRs</Text>
+              <Text style={[styles.introText, { color: theme.dark ? '#a1a1aa' : '#52525b' }]}>
+                Tap a merchant to pay instantly via UPI or QR.
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
+              {userImage ? (
+                <Avatar.Image size={40} source={{ uri: userImage }} />
+              ) : (
+                <Avatar.Text
+                  size={40}
+                  label={initials}
+                  style={{ backgroundColor: theme.colors.primaryContainer }}
+                  labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
+                />
+              )}
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-            {userImage ? (
-              <Avatar.Image size={40} source={{ uri: userImage }} />
-            ) : (
-              <Avatar.Text
-                size={40}
-                label={initials}
-                style={{ backgroundColor: theme.colors.primaryContainer }}
-                labelStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '700' }}
-              />
-            )}
-          </TouchableOpacity>
         </View>
-      </View>
+      )}
 
       {/* List */}
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

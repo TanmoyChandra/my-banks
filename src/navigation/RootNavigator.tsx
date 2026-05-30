@@ -12,7 +12,6 @@ import { CardEntry } from '../types';
 import QRSection from '../components/QRSection';
 import CardsSection from '../components/CardsSection';
 import BankAccountsSection from '../components/BankAccountsSection';
-import MerchantQRSection from '../components/MerchantQRSection';
 import CardTransactions from '../components/CardTransactions';
 import SetupQR from '../components/setup/SetupQR';
 import SetupCards from '../components/setup/SetupCards';
@@ -30,7 +29,6 @@ const BottomTab = createBottomTabNavigator();
 const TAB_META: Record<string, { focused: string; unfocused: string }> = {
   QR:        { focused: 'qrcode-scan',      unfocused: 'qrcode' },
   Cards:     { focused: 'card-bulleted',    unfocused: 'card-bulleted-outline' },
-  Merchants: { focused: 'store',            unfocused: 'store-outline' },
   Accounts:  { focused: 'bank',             unfocused: 'bank-outline' },
   Calculator:{ focused: 'percent',          unfocused: 'percent-outline' },
   Settings:  { focused: 'cog',              unfocused: 'cog-outline' },
@@ -90,7 +88,6 @@ function MainScreen({ navigation }: any) {
       >
         <BottomTab.Screen name="QR">{() => <QRTab />}</BottomTab.Screen>
         <BottomTab.Screen name="Cards">{() => <CardsTab navigation={navigation} />}</BottomTab.Screen>
-        <BottomTab.Screen name="Merchants">{() => <MerchantsTab />}</BottomTab.Screen>
         <BottomTab.Screen name="Accounts">{() => <AccountsTab />}</BottomTab.Screen>
         <BottomTab.Screen name="Calculator" options={{ title: 'Calculator' }}>{() => <CalculatorTab />}</BottomTab.Screen>
         <BottomTab.Screen name="Settings">{() => <SettingsTab navigation={navigation} />}</BottomTab.Screen>
@@ -129,15 +126,6 @@ function AccountsTab() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <BankAccountsSection accounts={accounts} />
-    </View>
-  );
-}
-
-function MerchantsTab() {
-  const theme = useTheme();
-  return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <MerchantQRSection />
     </View>
   );
 }
