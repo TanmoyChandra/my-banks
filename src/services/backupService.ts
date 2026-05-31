@@ -34,24 +34,7 @@ export interface BackupResult {
 // ── Export backup ──────────────────────────────────────────────
 export async function exportBackup(payload: BackupPayload): Promise<BackupResult> {
   try {
-    // 1. Process merchant QRs: embed images as Base64 so they survive cross-device restores
-    const processedMerchantQRs = await Promise.all(
-      payload.wallet.merchantQRs.map(async (qr) => {
-        try {
-          if (qr.imageUri && !qr.imageUri.startsWith('data:')) {
-            const base64 = await FileSystem.readAsStringAsync(qr.imageUri, {
-              encoding: 'base64',
-            });
-            return { ...qr, imageUri: `data:image/jpeg;base64,${base64}` };
-          }
-        } catch (err) {
-          console.warn(`Failed to read image for QR ${qr.id}`, err);
-        }
-        return qr;
-      })
-    );
-
-    payload.wallet.merchantQRs = processedMerchantQRs;
+    // 1. (Removed) Merchant QRs no longer use images, so no base64 processing is needed.
 
     // 2. Serialize Payload
     const json = JSON.stringify(payload);
@@ -188,33 +171,7 @@ export async function importBackup(): Promise<
       return { success: false, error: 'This file does not appear to be a MyBanks backup.' };
     }
 
-    // 6. Process merchant QRs: write embedded Base64 images back to local filesystem
-    if (payload.wallet.merchantQRs && payload.wallet.merchantQRs.length > 0) {
-      const documentsDir = FileSystem.documentDirectory + 'merchant_qrs/';
-      await FileSystem.makeDirectoryAsync(documentsDir, { intermediates: true });
-
-      payload.wallet.merchantQRs = await Promise.all(
-        payload.wallet.merchantQRs.map(async (qr) => {
-          if (qr.imageUri && qr.imageUri.startsWith('data:image')) {
-            try {
-              // Extract base64 part
-              const base64Data = qr.imageUri.split(',')[1];
-              const ext = qr.imageUri.split(';')[0].split('/')[1] || 'jpg';
-              const localUri = `${documentsDir}${qr.id}.${ext}`;
-              
-              await FileSystem.writeAsStringAsync(localUri, base64Data, {
-                encoding: 'base64',
-              });
-              
-              return { ...qr, imageUri: localUri };
-            } catch (err) {
-              console.warn(`Failed to restore image for QR ${qr.id}`, err);
-            }
-          }
-          return qr;
-        })
-      );
-    }
+    // 6. (Removed) Merchant QRs no longer use images, so no base64 restoration is needed.
 
     return { success: true, payload };
   } catch (e: any) {

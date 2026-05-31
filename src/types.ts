@@ -62,7 +62,8 @@ export interface MerchantQR {
   id: string;
   name: string;        // Merchant name e.g. "Swiggy"
   category?: string;   // e.g. "Food", "Fuel"
-  upiId?: string;      // Decoded UPI ID if available
-  imageUri: string;    // Local image URI from gallery
+  upiId?: string;      // Decoded UPI ID (now mandatory in UI, optional in type for legacy)
+  qrValue?: string;    // Raw QR value if extracted from an image
+  imageUri?: string;   // Local image URI from gallery (deprecated/optional)
   notes?: string;
 }

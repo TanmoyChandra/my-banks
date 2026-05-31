@@ -31,3 +31,8 @@ npm run lan
 
 apk build
 npx eas-cli build -p android --profile preview
+
+
+### expo log out and login
+expo logout
+expo login
