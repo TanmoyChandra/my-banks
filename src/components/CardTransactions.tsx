@@ -592,20 +592,39 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
     }
   }, [activeCycleId, cardCycles]);
 
+  const flingInProgress = useRef(false);
+
   const handleFlingLeft = () => {
+    if (flingInProgress.current) return;
     if (activeCycleId && cardCycles.length > 0) {
       const idx = cardCycles.findIndex(c => c.id === activeCycleId);
       if (idx !== -1 && idx < cardCycles.length - 1) {
-        setActiveCycleId(cardCycles[idx + 1].id);
+        flingInProgress.current = true;
+        setIsTransitioning(true);
+        listRef.current?.scrollToIndex({ index: idx + 1, animated: true });
+        
+        // Wait for native animation to finish before blocking JS thread with heavy recalculations
+        setTimeout(() => {
+          setActiveCycleId(cardCycles[idx + 1].id);
+          flingInProgress.current = false;
+        }, 350);
       }
     }
   };
 
   const handleFlingRight = () => {
+    if (flingInProgress.current) return;
     if (activeCycleId && cardCycles.length > 0) {
       const idx = cardCycles.findIndex(c => c.id === activeCycleId);
       if (idx > 0) {
-        setActiveCycleId(cardCycles[idx - 1].id);
+        flingInProgress.current = true;
+        setIsTransitioning(true);
+        listRef.current?.scrollToIndex({ index: idx - 1, animated: true });
+        
+        setTimeout(() => {
+          setActiveCycleId(cardCycles[idx - 1].id);
+          flingInProgress.current = false;
+        }, 350);
       }
     }
   };
@@ -616,10 +635,9 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
 
   useEffect(() => {
     if (activeCycleId !== prevCycleId.current) {
-      setIsTransitioning(true);
       prevCycleId.current = activeCycleId;
       const handle = InteractionManager.runAfterInteractions(() => {
-        setTimeout(() => setIsTransitioning(false), 10);
+        setIsTransitioning(false);
       });
       return () => handle.cancel();
     }
@@ -699,6 +717,23 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
 
   const [deleteDialog, setDeleteDialog] = useState<string | null>(null);
   const [unflagDialog, setUnflagDialog] = useState<CardTransaction | null>(null);
+
+  const handleCycleChange = (id: string) => {
+    setCycleMenuVisible(false);
+    if (activeCycleId && cardCycles.length > 0 && id !== activeCycleId) {
+      const idx = cardCycles.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        flingInProgress.current = true;
+        setIsTransitioning(true);
+        listRef.current?.scrollToIndex({ index: idx, animated: true });
+        
+        setTimeout(() => {
+          setActiveCycleId(id);
+          flingInProgress.current = false;
+        }, 350);
+      }
+    }
+  };
 
   const handleDelete = (id: string) => {
     setDeleteDialog(id);
