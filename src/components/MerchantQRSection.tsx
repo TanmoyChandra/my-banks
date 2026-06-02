@@ -213,7 +213,8 @@ export default function MerchantQRSection({ hideHeader }: { hideHeader?: boolean
 const styles = StyleSheet.create({
   carouselWrapper: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    marginTop: 20,
   },
   carouselContent: {
     paddingLeft: PAGE_SIDE_PADDING,
