@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -40,6 +40,7 @@ const formatDate = (iso: string) => {
 function TransactionModal({
   visible,
   cardId,
+  billingCycleId,
   initialData,
   onClose,
 }: {
@@ -303,17 +304,17 @@ function TransactionModal({
 }
 
 // ─── Transaction Row ───────────────────────────────────────────
-function TransactionRow({
+const TransactionRow = React.memo(({
   tx,
   onEdit,
   onDelete,
   onToggleFlag,
 }: {
   tx: CardTransaction;
-  onEdit: () => void;
-  onDelete: () => void;
-  onToggleFlag: () => void;
-}) {
+  onEdit: (tx: CardTransaction) => void;
+  onDelete: (id: string) => void;
+  onToggleFlag: (tx: CardTransaction) => void;
+}) => {
   const theme = useTheme();
   const swipeableRef = useRef<any>(null);
 
@@ -329,7 +330,7 @@ function TransactionRow({
 
   const handleEditTap = () => {
     swipeableRef.current?.close();
-    onEdit();
+    onEdit(tx);
   };
 
   const renderLeftActions = () => (
@@ -345,7 +346,7 @@ function TransactionRow({
   const renderRightActions = () => (
     <TouchableOpacity 
       style={{ width: 80, backgroundColor: theme.colors.errorContainer, justifyContent: 'center', alignItems: 'center' }}
-      onPress={onDelete}
+      onPress={() => onDelete(tx.id)}
       activeOpacity={0.8}
     >
       <IconButton icon="delete" iconColor={theme.colors.onErrorContainer} />
@@ -393,7 +394,7 @@ function TransactionRow({
             {displayAmount}
           </Text>
           <TouchableOpacity
-            onPress={onToggleFlag}
+            onPress={() => onToggleFlag(tx)}
             style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}
             activeOpacity={0.7}
           >
@@ -413,11 +414,11 @@ function TransactionRow({
       </View>
     </Swipeable>
   );
-}
+});
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
-function CycleCard({ cycle, transactions, card, daysUntilBilling, palette, fmt, theme }: any) {
+const CycleCard = React.memo(({ cycle, transactions, card, daysUntilBilling, palette, fmt, theme }: any) => {
   const payees = useWalletStore(s => s.payees);
 
   const cycleTxs = useMemo(
@@ -528,7 +529,7 @@ function CycleCard({ cycle, transactions, card, daysUntilBilling, palette, fmt, 
       </View>
     </View>
   );
-}
+});
 
 // ─── Main Screen ───────────────────────────────────────────────
 export default function CardTransactions({ card, onBack }: CardTransactionsProps) {
@@ -735,9 +736,22 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
     }
   };
 
-  const handleDelete = (id: string) => {
+  const handleEditTransaction = useCallback((tx: CardTransaction) => {
+    setEditingTx(tx);
+    setModalVisible(true);
+  }, []);
+
+  const handleDeleteTransaction = useCallback((id: string) => {
     setDeleteDialog(id);
-  };
+  }, []);
+
+  const handleToggleFlagTransaction = useCallback((tx: CardTransaction) => {
+    if (tx.isFlagged) {
+      setUnflagDialog(tx);
+    } else {
+      updateTransaction(tx.id, { ...tx, isFlagged: true });
+    }
+  }, [updateTransaction]);
 
   const daysUntilBilling = useMemo(() => {
     if (!card.billingDate) return null;
@@ -949,12 +963,9 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
                   {index > 0 && <View style={[styles.txDivider, { backgroundColor: theme.colors.surfaceVariant }]} />}
                   <TransactionRow 
                     tx={tx} 
-                    onEdit={() => {
-                      setEditingTx(tx);
-                      setModalVisible(true);
-                    }}
-                    onDelete={() => handleDelete(tx.id)} 
-                    onToggleFlag={() => handleToggleFlag(tx)}
+                    onEdit={handleEditTransaction}
+                    onDelete={handleDeleteTransaction} 
+                    onToggleFlag={handleToggleFlagTransaction}
                   />
                 </View>
               ))}

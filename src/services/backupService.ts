@@ -16,6 +16,7 @@ export interface BackupPayload {
     transactions: any[];
     merchantQRs: any[];
     payees?: string[];
+    billingCycles?: any[];
   };
   preferences: {
     userName: string;

@@ -322,12 +322,12 @@ const styles = StyleSheet.create({
   },
   payCard: {
     alignItems: 'center',
-    borderRadius: 32,
-    borderWidth: 1,
+    borderRadius: 16,
+    borderWidth: 0,
     marginRight: PAGE_GAP,
-    paddingBottom: 16,
+    paddingBottom: 32,
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 32,
   },
   nameRow: {
     alignItems: 'center',

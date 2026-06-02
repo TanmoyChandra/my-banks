@@ -50,6 +50,7 @@ function ConfirmImportModal({
     { label: 'Bank Accounts', count: payload.wallet.accounts.length, icon: '🏦' },
     { label: 'Merchant QRs', count: payload.wallet.merchantQRs.length, icon: '🏪' },
     { label: 'Transactions', count: payload.wallet.transactions.length, icon: '📋' },
+    { label: 'Billing Cycles', count: payload.wallet.billingCycles?.length || 0, icon: '🔄' },
   ];
 
   return (
@@ -132,6 +133,7 @@ export default function BackupRestoreSettings() {
   const transactions = useWalletStore(s => s.transactions);
   const merchantQRs = useWalletStore(s => s.merchantQRs);
   const payees = useWalletStore(s => s.payees);
+  const billingCycles = useWalletStore(s => s.billingCycles);
 
   // UI store
   const userName = useUiStore(s => s.userName);
@@ -153,7 +155,7 @@ export default function BackupRestoreSettings() {
       magic: FILE_MAGIC,
       version: BACKUP_VERSION,
       exportedAt: new Date().toISOString(),
-      wallet: { upis, cards, accounts, transactions, merchantQRs, payees },
+      wallet: { upis, cards, accounts, transactions, merchantQRs, payees, billingCycles },
       preferences: { userName, userImage, isDark: isDarkPref, isAppLockEnabled },
     };
 
@@ -201,6 +203,7 @@ export default function BackupRestoreSettings() {
       accounts: pendingPayload.wallet.accounts,
       transactions: pendingPayload.wallet.transactions,
       merchantQRs: pendingPayload.wallet.merchantQRs,
+      billingCycles: pendingPayload.wallet.billingCycles || [],
     });
 
     // Use the Zustand internal API directly
@@ -211,6 +214,7 @@ export default function BackupRestoreSettings() {
       transactions: pendingPayload.wallet.transactions,
       merchantQRs: pendingPayload.wallet.merchantQRs,
       payees: pendingPayload.wallet.payees || ['Me'],
+      billingCycles: pendingPayload.wallet.billingCycles || [],
     });
 
     // Restore UI preferences
@@ -227,7 +231,7 @@ export default function BackupRestoreSettings() {
   };
 
   // ── Helpers ─────────────────────────────────────────────────
-  const totalItems = upis.length + cards.length + accounts.length + merchantQRs.length;
+  const totalItems = upis.length + cards.length + accounts.length + merchantQRs.length + billingCycles.length;
 
   const ActionCard = ({
     icon, title, subtitle, onPress, status, color, textColor,

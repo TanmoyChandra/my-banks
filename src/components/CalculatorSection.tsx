@@ -147,7 +147,7 @@ export default function CalculatorSection() {
     const x = parseFloat(c1X);
     const y = parseFloat(c1Y);
     if (!isNaN(x) && !isNaN(y)) {
-      setC1Res(((x / 100) * y).toFixed(2));
+      setC1Res(((x / 100) * y).toFixed(3));
     } else {
       setC1Res('');
     }
@@ -157,7 +157,7 @@ export default function CalculatorSection() {
     const x = parseFloat(c2X);
     const y = parseFloat(c2Y);
     if (!isNaN(x) && !isNaN(y) && y !== 0) {
-      setC2Res(((x / y) * 100).toFixed(2));
+      setC2Res(((x / y) * 100).toFixed(3));
     } else {
       setC2Res('');
     }
@@ -168,7 +168,7 @@ export default function CalculatorSection() {
     const y = parseFloat(c3Y);
     if (!isNaN(x) && !isNaN(y) && x !== 0) {
       const diff = y - x;
-      setC3Res(((diff / Math.abs(x)) * 100).toFixed(2) + '%');
+      setC3Res(((diff / Math.abs(x)) * 100).toFixed(3) + '%');
     } else {
       setC3Res('');
     }

@@ -9,6 +9,7 @@ import {
   Alert
 } from 'react-native';
 import * as Sharing from 'expo-sharing';
+import * as Clipboard from 'expo-clipboard';
 import { captureRef } from 'react-native-view-shot';
 import { useNavigation } from '@react-navigation/native';
 import { Button, Text, useTheme, Avatar, Icon } from 'react-native-paper';
@@ -24,6 +25,10 @@ const MerchantPayCard = ({ merchant, width }: { merchant: MerchantQR; width: num
   const upiLink = merchant.qrValue || (merchant.upiId ? `upi://pay?pa=${merchant.upiId}&pn=${encodeURIComponent(merchant.name)}&cu=INR` : '');
   const qrSize = Math.min(width - 92, 180);
   const viewRef = useRef<View>(null);
+
+  const handleCopyUPI = async () => {
+    if (merchant.upiId) await Clipboard.setStringAsync(merchant.upiId);
+  };
 
   const handleShare = async () => {
     if (!merchant.upiId) return;
@@ -76,12 +81,26 @@ const MerchantPayCard = ({ merchant, width }: { merchant: MerchantQR; width: num
 
         <View style={[styles.qrFrame, !merchant.upiId && { opacity: 0.2 }]}>
           {merchant.upiId ? (
-            <QRCode
-              value={upiLink}
-              size={qrSize}
-              color={mainTextColor}
-              backgroundColor="transparent"
-            />
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              <QRCode
+                value={upiLink}
+                size={qrSize}
+                color={mainTextColor}
+                backgroundColor="transparent"
+                ecl="H"
+              />
+              <View style={{
+                position: 'absolute',
+                width: qrSize * 0.25,
+                height: qrSize * 0.25,
+                borderRadius: qrSize * 0.125,
+                backgroundColor: 'white',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Icon source="storefront-outline" size={qrSize * 0.15} color="#000" />
+              </View>
+            </View>
           ) : (
             <View style={{ width: qrSize, height: qrSize, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: cardBorder, borderStyle: 'dashed', borderRadius: 16 }}>
               <Avatar.Icon icon="qrcode-scan" size={64} color={subTextColor} style={{ backgroundColor: 'transparent' }} />
@@ -101,10 +120,15 @@ const MerchantPayCard = ({ merchant, width }: { merchant: MerchantQR; width: num
           </Text>
         </View>
 
-        <View style={styles.upiRow}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={handleCopyUPI}
+          style={styles.upiRow}
+          disabled={!merchant.upiId}
+        >
           <Text style={[styles.upiLabel, { color: subTextColor }]}>UPI ID:</Text>
           <Text style={[styles.upiValue, { color: mainTextColor }]}>{merchant.upiId || 'Not found'}</Text>
-        </View>
+        </TouchableOpacity>
       </View>
       
       <View style={{ flexDirection: 'row', gap: 8, width, marginTop: 16 }}>
@@ -200,12 +224,12 @@ const styles = StyleSheet.create({
   },
   payCard: {
     alignItems: 'center',
-    borderRadius: 32,
-    borderWidth: 1,
+    borderRadius: 16,
+    borderWidth: 0,
     marginRight: PAGE_GAP,
-    paddingBottom: 16,
+    paddingBottom: 32,
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 32,
   },
   nameRow: {
     alignItems: 'center',
