@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
-import { Image, ScrollView, StyleSheet, View, TouchableOpacity, useWindowDimensions } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  Image, ScrollView, StyleSheet, View, TouchableOpacity,
+  useWindowDimensions, LayoutAnimation, PanResponder, Animated,
+  UIManager, Platform,
+} from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { Button, Text, useTheme, Avatar } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -11,6 +15,11 @@ import { CardEntry } from '../types';
 import { getCardColors } from '../constants/cardColors';
 import { useUiStore } from '../store/useUiStore';
 import { useWalletStore } from '../store/useWalletStore';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 // Network logo PNGs
 const VISA_PNG       = require('../../assets/Visa.png');
@@ -161,7 +170,14 @@ function RuPayLogo({ size }: { size: number }) {
 }
 
 // ── BankCard ─────────────────────────────────────────────────
-const BankCard: React.FC<{ card: CardEntry; cardWidth: number; totalDue: number; onPress: () => void }> = ({ card, cardWidth, totalDue, onPress }) => {
+const BankCard: React.FC<{
+  card: CardEntry;
+  cardWidth: number;
+  totalDue: number;
+  onPress: () => void;
+  onLongPressCard?: (evt: any) => void;
+  onPressOutCard?: () => void;
+}> = ({ card, cardWidth, totalDue, onPress, onLongPressCard, onPressOutCard }) => {
   const [showFull, setShowFull] = useState(false);
   const palette = getCardColors(card.color);
   const network = getNetwork(card);
@@ -182,6 +198,9 @@ const BankCard: React.FC<{ card: CardEntry; cardWidth: number; totalDue: number;
       <TouchableOpacity
         activeOpacity={0.92}
         onPress={() => setShowFull(v => !v)}
+        onLongPress={onLongPressCard}
+        onPressOut={onPressOutCard}
+        delayLongPress={450}
         style={[styles.cardFace, { width: cardWidth, height: cardHeight, borderRadius: 20 }]}
       >
         <LinearGradient
@@ -342,8 +361,145 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
   const userName = useUiStore(s => s.userName);
   const userImage = useUiStore(s => s.userImage);
   const transactions = useWalletStore(s => s.transactions);
+  const reorderCards = useWalletStore(s => s.reorderCards);
   const initials = userName ? userName.charAt(0).toUpperCase() : '?';
   const cardWidth = Math.min(screenW - 32, 420);
+
+  // ── Drag state (React state for re-renders) ────────────────────
+  const [localCards, setLocalCards] = useState<CardEntry[]>(cards);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  // ── Refs — used inside PanResponder callbacks to avoid stale closures ──
+  const localCardsRef = useRef<CardEntry[]>(cards);
+  const draggingIndexRef = useRef<number | null>(null);
+  const hoverIndexRef = useRef<number | null>(null);
+  const isDraggingRef = useRef(false);
+  const dragCommencedRef = useRef(false);
+  const dragActivationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartPageYRef = useRef(0);
+  const touchStartScrollRef = useRef(0);
+  const scrollOffsetRef = useRef(0);
+  // Animated value for real-time card translation while dragging
+  const dragTranslateY = useRef(new Animated.Value(0)).current;
+
+  // Keep localCardsRef in sync with state
+  useEffect(() => { localCardsRef.current = localCards; }, [localCards]);
+
+  // Sync when a card is added / deleted externally
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      setLocalCards(cards);
+      localCardsRef.current = cards;
+    }
+  }, [cards]);
+
+  // card face + action row (marginTop 16 + buttons ~48) + cardBlock marginBottom (24)
+  const ITEM_HEIGHT = Math.round(cardWidth * (240 / 380)) + 88;
+
+
+  // ── finish-drag ref so PanResponder callbacks are never stale ──
+  const finishDragRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    finishDragRef.current = () => {
+      // Reset translation BEFORE state updates so there's no positional flash on drop
+      dragTranslateY.setValue(0);
+      isDraggingRef.current = false;
+      const from = draggingIndexRef.current;
+      const to   = hoverIndexRef.current;
+      if (from !== null && to !== null && from !== to) {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        const newCards = [...localCardsRef.current];
+        const [moved] = newCards.splice(from, 1);
+        newCards.splice(to, 0, moved);
+        localCardsRef.current = newCards;
+        setLocalCards([...newCards]);
+        reorderCards(newCards.map(c => c.id));
+      }
+      draggingIndexRef.current = null;
+      hoverIndexRef.current    = null;
+      setDraggingIndex(null);
+      setHoverIndex(null);
+    };
+  }, [reorderCards]);
+
+  // ── Single PanResponder on the list container ────────────────
+  // Only claims the responder when drag mode is already active (after long-press).
+  // This way all normal card taps/buttons keep working.
+  const listPR = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder:        () => false,
+      onStartShouldSetPanResponderCapture: () => false,
+      // Steal responder on first move after long-press fires
+      onMoveShouldSetPanResponder:         () => isDraggingRef.current,
+      onMoveShouldSetPanResponderCapture:  () => isDraggingRef.current,
+      onPanResponderTerminationRequest:    () => false,
+
+      onPanResponderGrant: () => {
+        // PanResponder has claimed the gesture — drag is truly underway
+        if (dragActivationTimerRef.current) {
+          clearTimeout(dragActivationTimerRef.current);
+          dragActivationTimerRef.current = null;
+        }
+        dragCommencedRef.current = true;
+        // touchStartPageYRef was already set in onLongPressCard
+        touchStartScrollRef.current = scrollOffsetRef.current;
+      },
+
+      onPanResponderMove: (evt) => {
+        if (!isDraggingRef.current) return;
+        const screenDy = evt.nativeEvent.pageY - touchStartPageYRef.current;
+        const scrollDy = scrollOffsetRef.current - touchStartScrollRef.current;
+        const dy = screenDy + scrollDy;
+        // Update the card's visual position in real-time (1:1 with finger)
+        dragTranslateY.setValue(dy);
+        // Update the hover-slot indicator
+        const from   = draggingIndexRef.current ?? 0;
+        const maxIdx = localCardsRef.current.length - 1;
+        const newIdx = Math.max(0, Math.min(from + Math.round(dy / ITEM_HEIGHT), maxIdx));
+        if (newIdx !== hoverIndexRef.current) {
+          hoverIndexRef.current = newIdx;
+          setHoverIndex(newIdx);
+        }
+      },
+
+      onPanResponderRelease: () => finishDragRef.current(),
+
+      onPanResponderTerminate: () => {
+        dragTranslateY.setValue(0);
+        isDraggingRef.current    = false;
+        dragCommencedRef.current = false;
+        draggingIndexRef.current = null;
+        hoverIndexRef.current    = null;
+        setDraggingIndex(null);
+        setHoverIndex(null);
+      },
+    })
+  ).current;
+
+  // Helper: activate drag from the card's onLongPress
+  const activateDrag = (index: number, pageY: number) => {
+    dragTranslateY.setValue(0);      // start from zero relative to card's resting position
+    isDraggingRef.current    = true;
+    dragCommencedRef.current = false;
+    draggingIndexRef.current = index;
+    hoverIndexRef.current    = index;
+    touchStartPageYRef.current  = pageY;
+    touchStartScrollRef.current = scrollOffsetRef.current;
+    setDraggingIndex(index);
+    setHoverIndex(index);
+    // Safety: auto-cancel if no finger movement starts within 600 ms
+    if (dragActivationTimerRef.current) clearTimeout(dragActivationTimerRef.current);
+    dragActivationTimerRef.current = setTimeout(() => {
+      if (isDraggingRef.current && !dragCommencedRef.current) {
+        isDraggingRef.current    = false;
+        draggingIndexRef.current = null;
+        hoverIndexRef.current    = null;
+        setDraggingIndex(null);
+        setHoverIndex(null);
+      }
+    }, 600);
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
@@ -370,35 +526,93 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {cards.map(card => {
-          const cardTxs = transactions.filter((t) => t.cardId === card.id);
-          const totalDue = cardTxs.reduce((sum, t) => t.type === 'debit' ? sum + t.amount : sum - t.amount, 0);
+      <View style={{ flex: 1 }} {...listPR.panHandlers}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={e => { scrollOffsetRef.current = e.nativeEvent.contentOffset.y; }}
+        scrollEventThrottle={16}
+      >
+        {localCards.map((card, index) => {
+          const cardTxs  = transactions.filter(t => t.cardId === card.id);
+          const totalDue = cardTxs.reduce((s, t) => t.type === 'debit' ? s + t.amount : s - t.amount, 0);
+          const isDragging = draggingIndex === index;
+
+          const showLineBefore = (
+            hoverIndex === index && draggingIndex !== null &&
+            draggingIndex !== index && draggingIndex > index
+          );
+          const showLineAfter = (
+            hoverIndex === index && draggingIndex !== null &&
+            draggingIndex !== index && draggingIndex < index
+          );
+
           return (
-            <BankCard
-              key={card.id}
-              card={card}
-              cardWidth={cardWidth}
-              totalDue={totalDue}
-              onPress={() => onCardPress(card)}
-            />
+            <React.Fragment key={card.id}>
+              {showLineBefore && (
+                <View style={[styles.insertionLine, { width: cardWidth }]}>
+                  <View style={styles.insertionDot} />
+                  <View style={styles.insertionBar} />
+                  <View style={styles.insertionDot} />
+                </View>
+              )}
+
+              <Animated.View
+                style={isDragging ? [
+                  styles.cardLifted,
+                  { transform: [{ translateY: dragTranslateY }] },
+                ] : undefined}
+              >
+                <BankCard
+                  card={card}
+                  cardWidth={cardWidth}
+                  totalDue={totalDue}
+                  onPress={() => onCardPress(card)}
+                  onLongPressCard={(evt) => activateDrag(index, evt.nativeEvent.pageY)}
+                  onPressOutCard={() => {
+                    // If drag was activated but finger lifted before any movement, cancel
+                    if (isDraggingRef.current && !dragCommencedRef.current) {
+                      setTimeout(() => {
+                        if (isDraggingRef.current && !dragCommencedRef.current) {
+                          isDraggingRef.current    = false;
+                          draggingIndexRef.current = null;
+                          hoverIndexRef.current    = null;
+                          setDraggingIndex(null);
+                          setHoverIndex(null);
+                        }
+                      }, 80);
+                    }
+                  }}
+                />
+              </Animated.View>
+
+              {showLineAfter && (
+                <View style={[styles.insertionLine, { width: cardWidth }]}>
+                  <View style={styles.insertionDot} />
+                  <View style={styles.insertionBar} />
+                  <View style={styles.insertionDot} />
+                </View>
+              )}
+            </React.Fragment>
           );
         })}
+
+        {/* Add-card button */}
         <View style={styles.cardBlock}>
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => navigation.navigate('SetupCards')}
-            style={[styles.cardFace, { 
-              width: cardWidth, 
-              height: Math.round(cardWidth * (240 / 380)), 
-              borderRadius: 20, 
-              backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF', 
-              justifyContent: 'center', 
+            style={[styles.cardFace, {
+              width: cardWidth,
+              height: Math.round(cardWidth * (240 / 380)),
+              borderRadius: 20,
+              backgroundColor: theme.dark ? '#2A2A2A' : '#FFFFFF',
+              justifyContent: 'center',
               alignItems: 'center',
               shadowOpacity: 0,
               elevation: 0,
               borderTopWidth: 0,
-              borderLeftWidth: 0
+              borderLeftWidth: 0,
             }]}
           >
             <Avatar.Icon size={64} icon="plus" style={{ backgroundColor: 'transparent' }} color={theme.colors.onSurfaceVariant} />
@@ -406,6 +620,7 @@ const CardsSection: React.FC<CardsSectionProps> = ({ cards, onCardPress = () => 
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </View>
     </View>
   );
 };
@@ -418,7 +633,35 @@ const styles = StyleSheet.create({
   scrollContent: { paddingHorizontal: 16, paddingBottom: 96 },
 
   // ── Card block ───────────────────────────────────────────────
-  cardBlock: { marginBottom: 32, alignItems: 'center' },
+  cardBlock: { marginBottom: 24, alignItems: 'center' },
+  // Lifted appearance while dragging — no opacity fade, card stays fully visible
+  cardLifted: {
+    zIndex: 10,
+    elevation: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.45,
+    shadowRadius: 24,
+  },
+  // ── Insertion line shown at the drop-target position ──────────
+  insertionLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 6,
+  },
+  insertionDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#6366f1',
+  },
+  insertionBar: {
+    flex: 1,
+    height: 3,
+    backgroundColor: '#6366f1',
+    marginHorizontal: 4,
+    borderRadius: 2,
+  },
   cardFace: {
     overflow: 'hidden',
     shadowColor: '#000',

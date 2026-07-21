@@ -12,6 +12,7 @@ import {
   FlatList,
   InteractionManager,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { Text, IconButton, useTheme, TextInput as PaperInput, SegmentedButtons, Portal, Dialog, Button, Appbar, FAB, Avatar, List, Chip, Paragraph, Surface, Menu } from 'react-native-paper';
 import Modal from 'react-native-modal';
@@ -416,10 +417,169 @@ const TransactionRow = React.memo(({
   );
 });
 
+const TogglingChip = ({ items }: { items: any[] }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!items || items.length <= 1) return;
+
+    const interval = setInterval(() => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        setCurrentIndex((prev) => (prev + 1) % items.length);
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      });
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [items, fadeAnim]);
+
+  if (!items || items.length === 0) return null;
+
+  const currentItem = items[currentIndex] || items[0];
+
+  return (
+    <View style={{
+      backgroundColor: currentItem.type === 'due' ? 'rgba(255,107,107,0.2)' : 'rgba(161,217,155,0.2)',
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
+      <Animated.View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, opacity: fadeAnim }}>
+        <IconButton
+          icon={currentItem.type === 'due' ? 'alert-circle' : 'calendar-clock'}
+          size={14}
+          iconColor={currentItem.type === 'due' ? '#FF8F8F' : '#A1D99B'}
+          style={{ margin: 0, width: 16, height: 16 }}
+        />
+        <Text style={{
+          fontSize: 11,
+          fontWeight: '800',
+          fontFamily: 'SpaceGrotesk',
+          color: currentItem.type === 'due' ? '#FF8F8F' : '#A1D99B',
+        }}>
+          {currentItem.text}
+        </Text>
+      </Animated.View>
+    </View>
+  );
+};
+
 const { width: SCREEN_W } = Dimensions.get('window');
 
-const CycleCard = React.memo(({ cycle, transactions, card, daysUntilBilling, palette, fmt, theme }: any) => {
+const CycleCard = React.memo(({ cycle, transactions, card, onEditCycle, palette, fmt, theme }: any) => {
   const payees = useWalletStore(s => s.payees);
+
+  const paymentInfo = useMemo(() => {
+    if (!card.billingDate) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (cycle.billingDate) {
+      const cycleBillDate = new Date(cycle.billingDate);
+      cycleBillDate.setHours(0, 0, 0, 0);
+
+      const diffToBillMs = cycleBillDate.getTime() - today.getTime();
+      const diffToBillDays = Math.ceil(diffToBillMs / (1000 * 60 * 60 * 24));
+
+      if (diffToBillDays > 0) {
+        return [{
+          text: `${diffToBillDays} Day${diffToBillDays > 1 ? 's' : ''} Until Bill`,
+          type: 'bill',
+        }];
+      } else {
+        if (card.dueDaysAfterBilling !== undefined && card.dueDaysAfterBilling !== null) {
+          const dueDate = new Date(cycleBillDate);
+          dueDate.setDate(dueDate.getDate() + card.dueDaysAfterBilling);
+
+          const diffMs = dueDate.getTime() - today.getTime();
+          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+          let chips = [];
+          if (diffDays < 0) {
+            chips.push({ text: `Overdue by ${Math.abs(diffDays)} Day${Math.abs(diffDays) > 1 ? 's' : ''}`, type: 'due' });
+          } else if (diffDays === 0) {
+            chips.push({ text: 'Due Today', type: 'due' });
+          } else if (diffDays === 1) {
+            const dateStr = dueDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+            chips.push({ text: `Due: ${dateStr}`, type: 'due' });
+            chips.push({ text: '1 Day Left', type: 'due', noIcon: true });
+          } else if (diffDays > 1) {
+            const dateStr = dueDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+            chips.push({ text: `Due: ${dateStr}`, type: 'due' });
+            chips.push({ text: `${diffDays} Days Left`, type: 'due', noIcon: true });
+          }
+
+          return chips;
+        } else {
+          return null;
+        }
+      }
+    }
+
+    if (card.dueDaysAfterBilling !== undefined && card.dueDaysAfterBilling !== null) {
+      const getBillingDateForMonth = (year: number, month: number, day: number) => {
+        const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+        return new Date(year, month, Math.min(day, lastDayOfMonth));
+      };
+
+      let lastBillDate = getBillingDateForMonth(today.getFullYear(), today.getMonth(), card.billingDate);
+
+      if (today.getTime() < lastBillDate.getTime()) {
+        lastBillDate = getBillingDateForMonth(today.getFullYear(), today.getMonth() - 1, card.billingDate);
+      }
+
+      const dueDate = new Date(lastBillDate);
+      dueDate.setDate(dueDate.getDate() + card.dueDaysAfterBilling);
+
+      const diffMs = dueDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      let chips = [];
+      if (diffDays < 0) {
+        chips.push({ text: `Overdue by ${Math.abs(diffDays)} Day${Math.abs(diffDays) > 1 ? 's' : ''}`, type: 'due' });
+      } else if (diffDays === 0) {
+        chips.push({ text: 'Due Today', type: 'due' });
+      } else if (diffDays === 1) {
+        const dateStr = dueDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+        chips.push({ text: `Due: ${dateStr}`, type: 'due' });
+        chips.push({ text: '1 Day Left', type: 'due', noIcon: true });
+      } else if (diffDays > 1) {
+        const dateStr = dueDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+        chips.push({ text: `Due: ${dateStr}`, type: 'due' });
+        chips.push({ text: `${diffDays} Days Left`, type: 'due', noIcon: true });
+      }
+
+      return chips;
+    }
+
+    const exactToday = new Date();
+    const todayDate = exactToday.getDate();
+    const billingDay = card.billingDate;
+    if (todayDate === billingDay) return [{ text: 'Bill today!', type: 'due' }];
+    const next = new Date(exactToday.getFullYear(), exactToday.getMonth(), billingDay);
+    if (next <= exactToday) {
+      next.setMonth(next.getMonth() + 1);
+    }
+    const diffMsLegacy = next.getTime() - exactToday.getTime();
+    const daysUntilBilling = Math.ceil(diffMsLegacy / (1000 * 60 * 60 * 24));
+
+    return [{
+      text: `${daysUntilBilling}d to bill`,
+      type: 'bill',
+    }];
+  }, [card.billingDate, card.dueDaysAfterBilling, cycle.billingDate]);
 
   const cycleTxs = useMemo(
     () => transactions.filter((t: any) => t.cardId === card.id && t.billingCycleId === cycle.id),
@@ -474,37 +634,17 @@ const CycleCard = React.memo(({ cycle, transactions, card, daysUntilBilling, pal
 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={[styles.totalLabel, { color: 'rgba(255,255,255,0.7)', marginBottom: 0 }]}>Total due</Text>
+          <IconButton icon="pencil" size={16} iconColor="rgba(255,255,255,0.7)" style={{ margin: 0, marginLeft: 4, width: 24, height: 24 }} onPress={() => onEditCycle(cycle)} />
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginTop: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: 12, marginTop: 4 }}>
           <Text style={[styles.totalAmount, { color: '#FFFFFF' }]}>
             ₹ {fmt(Math.abs(totalDue))}
           </Text>
-          {daysUntilBilling !== null && (
-            <View style={{
-              backgroundColor: daysUntilBilling <= 3 ? 'rgba(255,107,107,0.2)' : 'rgba(161,217,155,0.2)',
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-              borderRadius: 20,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              marginLeft: 12,
-            }}>
-              <IconButton
-                icon="calendar-clock"
-                size={14}
-                iconColor={daysUntilBilling <= 3 ? '#FF8F8F' : '#A1D99B'}
-                style={{ margin: 0, width: 16, height: 16 }}
-              />
-              <Text style={{
-                fontSize: 11,
-                fontWeight: '800',
-                fontFamily: 'SpaceGrotesk',
-                color: daysUntilBilling <= 3 ? '#FF8F8F' : '#A1D99B',
-              }}>
-                {daysUntilBilling === 0 ? 'Bill today!' : `${daysUntilBilling}d to bill`}
-              </Text>
+          
+          {paymentInfo !== null && paymentInfo.length > 0 && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 12 }}>
+              <TogglingChip items={paymentInfo} />
             </View>
           )}
         </View>
@@ -545,6 +685,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
 
   const billingCycles = useWalletStore((s) => s.billingCycles);
   const addBillingCycle = useWalletStore((s) => s.addBillingCycle);
+  const updateBillingCycle = useWalletStore((s) => s.updateBillingCycle);
   const deleteBillingCycle = useWalletStore((s) => s.deleteBillingCycle);
   const migrateLegacyTransactionsForCard = useWalletStore((s) => s.migrateLegacyTransactionsForCard);
 
@@ -573,6 +714,22 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
 
   const [newCycleDialog, setNewCycleDialog] = useState(false);
   const [newCycleName, setNewCycleName] = useState('');
+  const [newCycleBillingDate, setNewCycleBillingDate] = useState<Date>(new Date());
+  const [showNewCycleDatePicker, setShowNewCycleDatePicker] = useState(false);
+  
+  const [editCycleDialog, setEditCycleDialog] = useState(false);
+  const [editCycleId, setEditCycleId] = useState<string | null>(null);
+  const [editCycleName, setEditCycleName] = useState('');
+  const [editCycleBillingDate, setEditCycleBillingDate] = useState<Date>(new Date());
+  const [showEditCycleDatePicker, setShowEditCycleDatePicker] = useState(false);
+
+  const handleEditCycle = useCallback((cycle: any) => {
+    setEditCycleId(cycle.id);
+    setEditCycleName(cycle.name);
+    setEditCycleBillingDate(cycle.billingDate ? new Date(cycle.billingDate) : new Date(cycle.startDate));
+    setEditCycleDialog(true);
+  }, []);
+
   const [cycleMenuVisible, setCycleMenuVisible] = useState(false);
   const [deleteCycleDialogMode, setDeleteCycleDialogMode] = useState(false);
   const [deleteCycleNameInput, setDeleteCycleNameInput] = useState('');
@@ -753,19 +910,70 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
     }
   }, [updateTransaction]);
 
-  const daysUntilBilling = useMemo(() => {
+  const paymentInfo = useMemo(() => {
     if (!card.billingDate) return null;
+
     const today = new Date();
-    const todayDate = today.getDate();
+    today.setHours(0, 0, 0, 0);
+
+    if (card.dueDaysAfterBilling !== undefined && card.dueDaysAfterBilling !== null) {
+      const getBillingDateForMonth = (year: number, month: number, day: number) => {
+        const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+        return new Date(year, month, Math.min(day, lastDayOfMonth));
+      };
+
+      let lastBillDate = getBillingDateForMonth(today.getFullYear(), today.getMonth(), card.billingDate);
+
+      if (today.getTime() < lastBillDate.getTime()) {
+        lastBillDate = getBillingDateForMonth(today.getFullYear(), today.getMonth() - 1, card.billingDate);
+      }
+
+      const dueDate = new Date(lastBillDate);
+      dueDate.setDate(dueDate.getDate() + card.dueDaysAfterBilling);
+
+      const diffMs = dueDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      let text = '';
+      let isUrgent = false;
+
+      if (diffDays < 0) {
+        text = `Overdue by ${Math.abs(diffDays)} Day${Math.abs(diffDays) > 1 ? 's' : ''}`;
+        isUrgent = true;
+      } else if (diffDays === 0) {
+        text = 'Due Today';
+        isUrgent = true;
+      } else if (diffDays === 1) {
+        text = 'Due Tomorrow';
+        isUrgent = true;
+      } else if (diffDays > 1 && diffDays <= 7) {
+        text = `${diffDays} Days Left`;
+        isUrgent = diffDays <= 3;
+      } else {
+        const dateStr = dueDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+        text = `Due on ${dateStr}`;
+        isUrgent = false;
+      }
+
+      return { text, isUrgent };
+    }
+
+    const exactToday = new Date();
+    const todayDate = exactToday.getDate();
     const billingDay = card.billingDate;
-    if (todayDate === billingDay) return 0;
-    const next = new Date(today.getFullYear(), today.getMonth(), billingDay);
-    if (next <= today) {
+    if (todayDate === billingDay) return { text: 'Bill today!', isUrgent: true };
+    const next = new Date(exactToday.getFullYear(), exactToday.getMonth(), billingDay);
+    if (next <= exactToday) {
       next.setMonth(next.getMonth() + 1);
     }
-    const diffMs = next.getTime() - today.getTime();
-    return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  }, [card.billingDate]);
+    const diffMsLegacy = next.getTime() - exactToday.getTime();
+    const daysUntilBilling = Math.ceil(diffMsLegacy / (1000 * 60 * 60 * 24));
+
+    return {
+      text: `${daysUntilBilling}d to bill`,
+      isUrgent: daysUntilBilling <= 3,
+    };
+  }, [card.billingDate, card.dueDaysAfterBilling]);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -825,7 +1033,8 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
             onPress={() => {
               setCycleMenuVisible(false);
               const now = new Date();
-              setNewCycleName(now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+              setNewCycleName('');
+              setNewCycleBillingDate(now);
               setNewCycleDialog(true);
             }} 
             title="Start New Cycle"
@@ -888,7 +1097,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
                     cycle={cycle} 
                     transactions={transactions} 
                     card={card} 
-                    daysUntilBilling={daysUntilBilling} 
+                    onEditCycle={handleEditCycle} 
                     palette={palette} 
                     fmt={fmt}
                     theme={theme}
@@ -1065,38 +1274,126 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
         <Dialog visible={newCycleDialog} onDismiss={() => setNewCycleDialog(false)} style={{ backgroundColor: theme.colors.surface }}>
           <Dialog.Title style={{ color: theme.colors.onSurface }}>Start New Cycle</Dialog.Title>
           <Dialog.Content>
+            <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8, fontFamily: 'SpaceGrotesk', fontSize: 13 }}>Billing Date *</Text>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => setShowNewCycleDatePicker(true)}>
+              <View pointerEvents="none">
+                <PaperInput
+                  mode="outlined"
+                  value={newCycleBillingDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  style={{ marginBottom: 16 }}
+                  right={<PaperInput.Icon icon="calendar" />}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <DatePickerModal
+              locale="en"
+              mode="single"
+              visible={showNewCycleDatePicker}
+              onDismiss={() => setShowNewCycleDatePicker(false)}
+              date={newCycleBillingDate}
+              onConfirm={(params) => {
+                setShowNewCycleDatePicker(false);
+                if (params.date) setNewCycleBillingDate(params.date);
+              }}
+              animationType="slide"
+              presentationStyle="formSheet"
+            />
+
+            <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8, fontFamily: 'SpaceGrotesk', fontSize: 13 }}>Cycle Name (Optional)</Text>
             <PaperInput
               mode="outlined"
-              label="Cycle Name"
               value={newCycleName}
               onChangeText={setNewCycleName}
-              placeholder="e.g. Nov 2026"
+              placeholder={`e.g. ${newCycleBillingDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} Cycle`}
             />
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setNewCycleDialog(false)}>Cancel</Button>
             <Button 
               onPress={() => {
-                const name = newCycleName.trim();
-                if (name) {
-                  const isDuplicate = cardCycles.some(c => c.name.toLowerCase() === name.toLowerCase());
-                  if (isDuplicate) {
-                    Alert.alert('Duplicate Name', 'A billing cycle with this name already exists.');
-                    return;
-                  }
-
-                  addBillingCycle({
-                    cardId: card.id,
-                    name,
-                    startDate: new Date().toISOString(),
-                    isClosed: false,
-                  });
-                  newlyCreatedRef.current = true;
-                  setNewCycleDialog(false);
+                const autoName = `${newCycleBillingDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} Cycle`;
+                const finalName = newCycleName.trim() || autoName;
+                
+                const isDuplicate = cardCycles.some(c => c.name.toLowerCase() === finalName.toLowerCase());
+                if (isDuplicate) {
+                  Alert.alert('Duplicate Name', 'A billing cycle with this name already exists. Please choose a different name.');
+                  return;
                 }
+
+                addBillingCycle({
+                  cardId: card.id,
+                  name: finalName,
+                  startDate: new Date().toISOString(),
+                  billingDate: newCycleBillingDate.toISOString(),
+                  isClosed: false,
+                });
+                newlyCreatedRef.current = true;
+                setNewCycleDialog(false);
               }}
             >
               Create
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+
+        <Dialog visible={editCycleDialog} onDismiss={() => setEditCycleDialog(false)} style={{ backgroundColor: theme.colors.surface }}>
+          <Dialog.Title style={{ color: theme.colors.onSurface }}>Edit Cycle</Dialog.Title>
+          <Dialog.Content>
+            <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8, fontFamily: 'SpaceGrotesk', fontSize: 13 }}>Billing Date *</Text>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => setShowEditCycleDatePicker(true)}>
+              <View pointerEvents="none">
+                <PaperInput
+                  mode="outlined"
+                  value={editCycleBillingDate.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  style={{ marginBottom: 16 }}
+                  right={<PaperInput.Icon icon="calendar" />}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <DatePickerModal
+              locale="en"
+              mode="single"
+              visible={showEditCycleDatePicker}
+              onDismiss={() => setShowEditCycleDatePicker(false)}
+              date={editCycleBillingDate}
+              onConfirm={(params) => {
+                setShowEditCycleDatePicker(false);
+                if (params.date) setEditCycleBillingDate(params.date);
+              }}
+              animationType="slide"
+              presentationStyle="formSheet"
+            />
+
+            <Text style={{ color: theme.colors.onSurfaceVariant, marginBottom: 8, fontFamily: 'SpaceGrotesk', fontSize: 13 }}>Cycle Name</Text>
+            <PaperInput
+              mode="outlined"
+              value={editCycleName}
+              onChangeText={setEditCycleName}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setEditCycleDialog(false)}>Cancel</Button>
+            <Button 
+              onPress={() => {
+                const autoName = `${editCycleBillingDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} Cycle`;
+                const finalName = editCycleName.trim() || autoName;
+                
+                if (editCycleId) {
+                  const existingCycle = cardCycles.find(c => c.id === editCycleId);
+                  if (existingCycle) {
+                    updateBillingCycle(editCycleId, {
+                      ...existingCycle,
+                      name: finalName,
+                      billingDate: editCycleBillingDate.toISOString(),
+                    });
+                  }
+                }
+                setEditCycleDialog(false);
+              }}
+            >
+              Save
             </Button>
           </Dialog.Actions>
         </Dialog>

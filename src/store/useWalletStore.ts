@@ -22,6 +22,7 @@ interface WalletState {
   addCard: (card: Omit<CardEntry, 'id'>) => void;
   updateCard: (id: string, card: Omit<CardEntry, 'id'>) => void;
   deleteCard: (id: string) => void;
+  reorderCards: (orderedIds: string[]) => void;
 
   addAccount: (account: Omit<BankAccount, 'id'>) => void;
   updateAccount: (id: string, account: Omit<BankAccount, 'id'>) => void;
@@ -79,6 +80,12 @@ export const useWalletStore = create<WalletState>()(
           // also purge all transactions and billing cycles for the deleted card
           transactions: s.transactions.filter((t) => t.cardId !== id),
           billingCycles: s.billingCycles.filter((b) => b.cardId !== id),
+        })),
+      reorderCards: (orderedIds) =>
+        set((s) => ({
+          cards: orderedIds
+            .map((id) => s.cards.find((c) => c.id === id))
+            .filter(Boolean) as CardEntry[],
         })),
 
       // Account CRUD

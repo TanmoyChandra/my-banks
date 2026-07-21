@@ -33,6 +33,7 @@ export const CARD_COLORS: ColorOption[] = [
 
   // ── Reds / Rose ───────────────────────────────────────────
   { key: 'crimson',  label: 'Crimson',  from: '#1a0000', via: '#4c0519', to: '#7f1d1d',   glow1: '#f87171', glow2: '#b91c1c' },
+  { key: 'magenta',  label: 'Magenta',  from: '#7A003F', via: '#991165', to: '#B8228B',   glow1: '#ff7eb3', glow2: '#f472b6' },
 
   // ── Neutral / Dark ───────────────────────────────────────
   { key: 'graphite', label: 'Graphite', from: '#111111', via: '#2a2a2a', to: '#404040',   glow1: '#9ca3af', glow2: '#6b7280' },

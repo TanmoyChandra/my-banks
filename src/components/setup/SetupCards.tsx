@@ -53,6 +53,7 @@ const emptyForm = (): Omit<CardEntry, 'id'> => ({
   nickname: '',
   color: FIRST_COLOR,
   billingDate: undefined,
+  dueDaysAfterBilling: undefined,
 });
 
 function CardRow({ 
@@ -283,19 +284,34 @@ const SetupCards: React.FC<SetupCardsProps> = ({ cards, onAdd, onUpdate, onDelet
             />
 
             {form.type === 'Credit' && (
-              <TextInput
-                label="Billing Date (optional, 1–31)"
-                value={form.billingDate !== undefined ? String(form.billingDate) : ''}
-                onChangeText={v => {
-                  const n = parseInt(v.replace(/\D/g, ''));
-                  setForm(p => ({ ...p, billingDate: (!v || isNaN(n)) ? undefined : Math.min(31, Math.max(1, n)) }));
-                }}
-                mode="outlined"
-                style={styles.input}
-                keyboardType="numeric"
-                maxLength={2}
-                placeholder="e.g. 5 for the 5th of every month"
-              />
+              <>
+                <TextInput
+                  label="Billing Date (optional, 1–31)"
+                  value={form.billingDate !== undefined ? String(form.billingDate) : ''}
+                  onChangeText={v => {
+                    const n = parseInt(v.replace(/\D/g, ''));
+                    setForm(p => ({ ...p, billingDate: (!v || isNaN(n)) ? undefined : Math.min(31, Math.max(1, n)) }));
+                  }}
+                  mode="outlined"
+                  style={styles.input}
+                  keyboardType="numeric"
+                  maxLength={2}
+                  placeholder="e.g. 5 for the 5th of every month"
+                />
+                <TextInput
+                  label="Due After Billing (Days)"
+                  value={form.dueDaysAfterBilling !== undefined ? String(form.dueDaysAfterBilling) : ''}
+                  onChangeText={v => {
+                    const n = parseInt(v.replace(/\D/g, ''));
+                    setForm(p => ({ ...p, dueDaysAfterBilling: (!v || isNaN(n)) ? undefined : Math.max(0, n) }));
+                  }}
+                  mode="outlined"
+                  style={styles.input}
+                  keyboardType="numeric"
+                  maxLength={3}
+                  placeholder="e.g. 15"
+                />
+              </>
             )}
 
             <ColorPicker

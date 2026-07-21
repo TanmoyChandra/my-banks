@@ -16,12 +16,24 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { enGB, registerTranslation } from 'react-native-paper-dates';
 
 import AppLockGuard from './src/components/AppLockGuard';
+import * as Notifications from 'expo-notifications';
+import { usePaymentNotifications } from './src/hooks/usePaymentNotifications';
 
 registerTranslation('en', enGB);
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function App() {
   const isDark = useUiStore((s) => s.isDark);
   const theme = isDark ? darkTheme : lightTheme;
+
+  usePaymentNotifications();
 
   const [fontsLoaded] = useFonts({
     SpaceGrotesk: SpaceGrotesk_400Regular,

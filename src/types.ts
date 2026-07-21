@@ -21,6 +21,7 @@ export interface CardEntry {
   nickname: string;
   color?: string;
   billingDate?: number; // Day of month (1–31) when bill generates
+  dueDaysAfterBilling?: number; // Number of days after billing date when payment is due
 }
 
 export interface BillingCycle {
@@ -28,6 +29,7 @@ export interface BillingCycle {
   cardId: string;
   name: string; // e.g., "Nov 2026", "Initial Cycle"
   startDate: string; // ISO string
+  billingDate?: string; // ISO string for the specific date the bill is generated
   isClosed: boolean;
 }
 
