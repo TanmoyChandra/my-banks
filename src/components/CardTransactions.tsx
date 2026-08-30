@@ -20,6 +20,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable, FlingGestureHandler, Directions, State } from 'react-native-gesture-handler';
 import { DatePickerModal } from 'react-native-paper-dates';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import * as XLSX from 'xlsx';
+import { Checkbox } from 'react-native-paper';
 import { CardEntry, CardTransaction } from '../types';
 import { useWalletStore } from '../store/useWalletStore';
 import { getCardColors } from '../constants/cardColors';
@@ -301,6 +305,176 @@ function TransactionModal({
         </Dialog>
       </Portal>
     </>
+  );
+}
+
+// ─── Export Data Modal ──────────────────────────────────────
+function ExportDataModal({
+  visible,
+  transactions,
+  bankName,
+  cycleName,
+  onClose,
+}: {
+  visible: boolean;
+  transactions: CardTransaction[];
+  bankName: string;
+  cycleName: string;
+  onClose: () => void;
+}) {
+  const theme = useTheme();
+  const [includeSpent, setIncludeSpent] = useState(true);
+  const [includeReceived, setIncludeReceived] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'csv' | 'excel'>('csv');
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const filtered = transactions.filter(tx => {
+        if (tx.type === 'debit' && includeSpent) return true;
+        if (tx.type === 'credit' && includeReceived) return true;
+        return false;
+      });
+
+      if (filtered.length === 0) {
+        Alert.alert('No Data', 'There are no transactions matching the selected criteria.');
+        setIsExporting(false);
+        return;
+      }
+
+      const exportData = filtered.map(tx => ({
+        Date: new Date(tx.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+        Time: new Date(tx.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+        Description: tx.description,
+        Payee: tx.payee || 'General',
+        Type: tx.type === 'debit' ? 'Spent' : 'Received',
+        Amount: tx.amount
+      }));
+
+      const safeBankName = bankName.replace(/[^a-zA-Z0-9-]/g, '_');
+      const safeCycleName = cycleName.replace(/[^a-zA-Z0-9-]/g, '_');
+      const todayStr = new Date().toISOString().split('T')[0];
+      const fileName = `${safeBankName}_${safeCycleName}_${todayStr}`;
+
+      if (exportFormat === 'csv') {
+        const header = ['Date', 'Time', 'Description', 'Payee', 'Type', 'Amount'];
+        const csvRows = [
+          header.join(','),
+          ...exportData.map(row => [
+            `"${row.Date}"`,
+            `"${row.Time}"`,
+            `"${row.Description.replace(/"/g, '""')}"`,
+            `"${row.Payee.replace(/"/g, '""')}"`,
+            `"${row.Type}"`,
+            row.Amount
+          ].join(','))
+        ];
+        const csvString = csvRows.join('\n');
+        
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}.csv`;
+        await FileSystem.writeAsStringAsync(fileUri, csvString, { encoding: 'utf8' });
+        
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'text/csv',
+          dialogTitle: 'Export CSV Data'
+        });
+      } else {
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+        
+        const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+        const fileUri = `${FileSystem.cacheDirectory}${fileName}.xlsx`;
+        await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: 'base64' });
+        
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          dialogTitle: 'Export Excel Data'
+        });
+      }
+      
+      onClose();
+    } catch (e) {
+      Alert.alert('Export Failed', 'An error occurred while exporting data.');
+      console.error(e);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const bgColor = theme.colors.elevation.level3;
+  const textColor = theme.colors.onSurface;
+  const subColor = theme.colors.onSurfaceVariant;
+  const borderColor = theme.colors.outlineVariant;
+
+  return (
+    <Modal
+      isVisible={visible}
+      onBackdropPress={onClose}
+      onSwipeComplete={onClose}
+      swipeDirection={['down']}
+      style={{ margin: 0, justifyContent: 'flex-end' }}
+    >
+      <View style={[styles.modalSheet, { backgroundColor: bgColor, borderColor }]}>
+        <View style={[styles.handle, { backgroundColor: subColor }]} />
+        <Text style={[styles.modalTitle, { color: textColor }]}>Export Data</Text>
+
+        <Text style={{ color: subColor, marginBottom: 12, fontFamily: 'SpaceGrotesk', fontWeight: '700' }}>DATA TO INCLUDE</Text>
+        
+        <TouchableOpacity 
+          style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }} 
+          onPress={() => setIncludeSpent(!includeSpent)}
+          activeOpacity={0.7}
+        >
+          <Checkbox status={includeSpent ? 'checked' : 'unchecked'} color={theme.colors.primary} />
+          <Text style={{ color: textColor, fontFamily: 'SpaceGrotesk', fontSize: 16 }}>Spent/Paid amounts</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }} 
+          onPress={() => setIncludeReceived(!includeReceived)}
+          activeOpacity={0.7}
+        >
+          <Checkbox status={includeReceived ? 'checked' : 'unchecked'} color={theme.colors.primary} />
+          <Text style={{ color: textColor, fontFamily: 'SpaceGrotesk', fontSize: 16 }}>Received/Kept amounts</Text>
+        </TouchableOpacity>
+
+        <Text style={{ color: subColor, marginBottom: 12, fontFamily: 'SpaceGrotesk', fontWeight: '700' }}>FORMAT</Text>
+        <SegmentedButtons
+          value={exportFormat}
+          onValueChange={(val) => setExportFormat(val as 'csv' | 'excel')}
+          buttons={[
+            { value: 'csv', label: 'CSV' },
+            { value: 'excel', label: 'Excel (.xlsx)' },
+          ]}
+          style={{ marginBottom: 32 }}
+        />
+
+        <View style={styles.modalActions}>
+          <TouchableOpacity
+            style={[styles.modalCancelBtn, { borderColor }]}
+            onPress={onClose}
+            activeOpacity={0.8}
+            disabled={isExporting}
+          >
+            <Text style={[styles.modalCancelLabel, { color: textColor }]}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modalAddBtn, { backgroundColor: theme.colors.primary, opacity: isExporting ? 0.7 : 1 }]}
+            onPress={handleExport}
+            activeOpacity={0.8}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <ActivityIndicator color={theme.colors.onPrimary} size="small" />
+            ) : (
+              <Text style={[styles.modalAddLabel, { color: theme.colors.onPrimary }]}>Export</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -677,6 +851,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
   const isDark = theme.dark;
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
+  const [exportModalVisible, setExportModalVisible] = useState(false);
   const [editingTx, setEditingTx] = useState<CardTransaction | null>(null);
 
   const transactions = useWalletStore((s) => s.transactions);
@@ -1005,6 +1180,7 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
       <Appbar.Header style={{ backgroundColor: bgColor }}>
         <Appbar.BackAction onPress={onBack} />
         <Appbar.Content title={cardLabel} titleStyle={{ fontWeight: '700', fontFamily: 'SpaceGrotesk', textAlign: 'center' }} />
+        <Appbar.Action icon="export-variant" onPress={() => setExportModalVisible(true)} />
         <Menu
           visible={cycleMenuVisible}
           onDismiss={() => setCycleMenuVisible(false)}
@@ -1228,6 +1404,14 @@ export default function CardTransactions({ card, onBack }: CardTransactionsProps
           setModalVisible(false);
           setTimeout(() => setEditingTx(null), 300);
         }}
+      />
+      
+      <ExportDataModal
+        visible={exportModalVisible}
+        transactions={cardTxs}
+        bankName={card.bankName}
+        cycleName={cardCycles.find(c => c.id === activeCycleId)?.name || 'Cycle'}
+        onClose={() => setExportModalVisible(false)}
       />
 
       <Portal>
